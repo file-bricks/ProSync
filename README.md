@@ -12,6 +12,10 @@ Intelligente Backup-Synchronisation mit Datenbank-Sicherheit.
 - **Zeitgesteuerte Backups** mit konfigurierbaren Intervallen
 - **Datenbank-Indexierung** für Suche und Versionierung (optional)
 
+## Screenshots
+
+![Hauptfenster](screenshots/main.png)
+
 ## Installation
 
 ```bash
@@ -229,3 +233,29 @@ Dieses Projekt verwendet PyQt6 (GPL).
 **Version:** 3.1
 **Autor:** Lukas Geiger
 **Letzte Aktualisierung:** Februar 2026
+
+---
+
+## English
+
+Intelligent backup synchronization with database safety features and WAL checkpoint support.
+
+### Features
+
+- Smart backup sync
+- Database-aware (WAL checkpoint)
+- Incremental backups
+- Conflict resolution
+
+### Installation
+
+```bash
+git clone https://github.com/lukisch/REL-PUB_ProSync.git
+cd REL-PUB_ProSync
+pip install -r requirements.txt
+python "ProSyncStart_V3.1.py"
+```
+
+### License
+
+See [LICENSE](LICENSE) for details.
