@@ -266,7 +266,6 @@ class SearchWindow(QMainWindow):
         
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
-        self.search_timer.interval = 400 
         self.search_timer.timeout.connect(self.execute_search)
 
         central = QWidget(); self.setCentralWidget(central)
@@ -401,6 +400,10 @@ class SearchWindow(QMainWindow):
 
     def open_settings(self):
         SettingsDialog(self.manager, self).exec()
+
+    def closeEvent(self, event):
+        self.search_timer.stop()
+        super().closeEvent(event)
 
 def main():
     app = QApplication(sys.argv)

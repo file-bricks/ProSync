@@ -7,7 +7,7 @@ import shutil
 import sqlite3
 import time
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -255,6 +255,7 @@ class DatabaseSafetyManager:
                 # Schließe die Datenbankdatei selbst aus
                 if db_name not in current_excludes:
                     conn_config["exclude_patterns"].append(db_name)
+                    current_excludes.add(db_name)
                     was_changed = True
 
                 # Schließe zugehörige WAL-Dateien aus (SQLite Write-Ahead Log)
@@ -270,6 +271,7 @@ class DatabaseSafetyManager:
                 for pattern in wal_patterns:
                     if pattern not in current_excludes:
                         conn_config["exclude_patterns"].append(pattern)
+                        current_excludes.add(pattern)
                         was_changed = True
 
                 excluded_dbs.append(db)
@@ -279,6 +281,7 @@ class DatabaseSafetyManager:
                           "__pycache__", "*.pyc"]:
                 if pattern not in current_excludes:
                     conn_config["exclude_patterns"].append(pattern)
+                    current_excludes.add(pattern)
                     was_changed = True
 
             if excluded_dbs:
@@ -321,7 +324,7 @@ class DatabaseSafetyManager:
                 "critical_databases": len(critical_dbs),
                 "excluded_databases": len(excluded_dbs),
                 "total_db_size_mb": sum(db.get("size_mb", 0) for db in databases),
-                "last_check": datetime.now().isoformat(),
+                "last_check": datetime.now(timezone.utc).isoformat(),
                 "auto_configured": True,
                 "version": "3.1",
                 "connection_type": "folder"
@@ -405,7 +408,7 @@ class DatabaseSafetyManager:
                 "wal_mode": db_info.get("wal_mode", False),
                 "is_critical": db_info["is_critical"],
                 "checkpoint_enabled": conn_config.get("checkpoint_before_sync", False),
-                "last_check": datetime.now().isoformat(),
+                "last_check": datetime.now(timezone.utc).isoformat(),
                 "version": "3.1",
                 "connection_type": "file"
             }
@@ -666,7 +669,7 @@ class ConnectionDB:
         cur.execute("SELECT id FROM files WHERE content_hash=?", (content_hash,))
         row = cur.fetchone()
         if row: return row[0]
-        ts = datetime.utcnow().isoformat()
+        ts = datetime.now(timezone.utc).isoformat()
         cur.execute("INSERT INTO files(content_hash,size,first_seen) VALUES (?,?,?)",
                    (content_hash, size, ts))
         self.conn.commit()
@@ -698,7 +701,7 @@ class ConnectionDB:
         res = cur.fetchone()
         idx = (res[0] + 1) if res and res[0] else 1
 
-        ctime = datetime.now().isoformat()
+        ctime = datetime.now(timezone.utc).isoformat()
         self.conn.execute(
             "INSERT INTO versions(file_id,name,path,mtime,ctime,version_index,source_side) VALUES (?,?,?,?,?,?,?)",
             (fid, name, path, mtime, ctime, idx, side)
@@ -1486,7 +1489,7 @@ class FileConnectionDialog(QDialog):
                 source_dir = os.path.dirname(f)
                 filename = os.path.basename(f)
                 # Could suggest network path here
-                self.target_file.setText(f"[Ziel-Pfad für {filename}]")
+                self.target_file.setPlaceholderText(f"[Ziel-Pfad für {filename}]")
 
     def analyze_file(self):
         """Analyze source file and show recommendations."""
@@ -2049,7 +2052,11 @@ class MainWindow(QMainWindow):
                 self.populate_list()
 
         elif res == act_edit:
-            dlg = ConnectionDialog(self, existing=conn)
+            conn_type = conn.get("type", ConnectionType.FOLDER)
+            if conn_type == ConnectionType.FILE:
+                dlg = FileConnectionDialog(self, existing=conn)
+            else:
+                dlg = ConnectionDialog(self, existing=conn)
             if dlg.exec():
                 self.cfg.add_or_update_connection(dlg.get_result())
                 self.scheduler.update_all()
