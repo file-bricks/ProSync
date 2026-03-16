@@ -10,15 +10,15 @@ import subprocess
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QListWidget, QListWidgetItem,
     QToolBar, QMenu, QHBoxLayout, QPushButton, QProgressBar, QLabel,
     QDialog, QFormLayout, QLineEdit, QComboBox, QCheckBox, QDialogButtonBox,
     QFileDialog, QMessageBox, QSystemTrayIcon, QStyle, QSizePolicy, QSplitter,
     QTextEdit
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject, QTimer, QLockFile, QDir
-from PyQt6.QtGui import QAction, QActionGroup, QIcon
+from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir
+from PySide6.QtGui import QAction, QActionGroup, QIcon
 
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
@@ -820,10 +820,10 @@ class FileSyncWorker(QThread):
     - No directory scanning needed
     """
 
-    progress = pyqtSignal(int, str)
-    status = pyqtSignal(str)
-    finished = pyqtSignal()
-    error = pyqtSignal(str)
+    progress = Signal(int, str)
+    status = Signal(str)
+    finished = Signal()
+    error = Signal(str)
 
     def __init__(self, cfg):
         super().__init__()
@@ -921,11 +921,11 @@ class FolderSyncWorker(QThread):
     Now respects exclude_patterns for databases.
     """
 
-    progress = pyqtSignal(int, str)
-    status = pyqtSignal(str)
-    finished = pyqtSignal()
-    error = pyqtSignal(str)
-    sync_report = pyqtSignal(dict)  # emits report dict after each run
+    progress = Signal(int, str)
+    status = Signal(str)
+    finished = Signal()
+    error = Signal(str)
+    sync_report = Signal(dict)  # emits report dict after each run
 
     def __init__(self, cfg, db=None):
         super().__init__()
@@ -1124,7 +1124,7 @@ class ConnectionScheduler(QObject):
     führt dann die eigentliche Synchronisation durch.
     """
 
-    trigger_sync = pyqtSignal(dict)
+    trigger_sync = Signal(dict)
 
     def __init__(self, cfg):
         super().__init__()

@@ -19,12 +19,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Mock PyQt6 imports if not available
 try:
-    from PyQt6.QtWidgets import QApplication
-    from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import Qt, QThread, Signal, QObject
 except ImportError:
     print("PyQt6 nicht verfügbar - Mock-Klassen werden verwendet")
     class QThread: pass
-    class pyqtSignal:
+    class Signal:
         def __init__(self, *args): pass
     class QObject: pass
 

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Mock PyQt6 falls nicht verfügbar
 try:
-    from PyQt6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication
 except ImportError:
     print("PyQt6 nicht verfügbar - Mock-Klassen werden verwendet")
     class QApplication:

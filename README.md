@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ### Erforderliche Pakete
 
-- PyQt6
+- PySide6
 - (Optional) PyPDF2 fuer PDF-Vorschau im Reader
 - (Optional) python-docx fuer Word-Vorschau im Reader
 
@@ -226,7 +226,7 @@ Grosse Dateien oder langsame Netzwerkverbindung. `update` statt `mirror` fuer sc
 
 GPL v3 - Siehe [LICENSE](LICENSE)
 
-Dieses Projekt verwendet PyQt6 (GPL).
+Dieses Projekt verwendet PySide6 (LGPL).
 
 ---
 
@@ -264,7 +264,7 @@ pip install -r requirements.txt
 
 #### Required Packages
 
-- PyQt6
+- PySide6
 - (Optional) PyPDF2 for PDF preview in Reader
 - (Optional) python-docx for Word preview in Reader
 
@@ -466,4 +466,4 @@ Check `exclude_patterns` in the config. Critical DBs are automatically excluded 
 
 GPL v3 - See [LICENSE](LICENSE)
 
-This project uses PyQt6 (GPL).
+This project uses PySide6 (LGPL).

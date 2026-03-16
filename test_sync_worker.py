@@ -13,8 +13,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Mock PyQt6 falls nicht verfügbar
 try:
-    from PyQt6.QtWidgets import QApplication
-    from PyQt6.QtCore import QCoreApplication
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QCoreApplication
     HAS_PYQT = True
 except ImportError:
     print("PyQt6 nicht verfügbar - limitierte Tests")

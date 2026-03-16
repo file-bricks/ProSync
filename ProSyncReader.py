@@ -3,12 +3,12 @@ import os
 import json
 import sqlite3
 import subprocess
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QLineEdit, QListWidget,
     QListWidgetItem, QPushButton, QFileDialog, QDialog, QDialogButtonBox,
     QHBoxLayout, QTextEdit, QLabel, QSplitter, QMenu
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from prosync_utils import open_file_cross_platform, open_folder_cross_platform
 from logger import log_error
 
@@ -97,8 +97,8 @@ class SearchWorker(QThread):
     results_found Signal mit gefundenen Dateien.
     """
 
-    results_found = pyqtSignal(list) # List of dicts
-    finished = pyqtSignal()
+    results_found = Signal(list) # List of dicts
+    finished = Signal()
 
     def __init__(self, manager, term):
         """
@@ -162,7 +162,7 @@ class SearchWorker(QThread):
         self.finished.emit()
 
 class PreviewWorker(QThread):
-    preview_ready = pyqtSignal(str)
+    preview_ready = Signal(str)
 
     def __init__(self, path):
         super().__init__()
