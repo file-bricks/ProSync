@@ -122,8 +122,8 @@ ProSync erkennt kritische Datenbanken automatisch und wendet sichere Einstellung
 WAL (Write-Ahead Logging) speichert SQLite-Aenderungen in einer separaten `-wal`-Datei.
 Ein Checkpoint fuehrt diese Aenderungen in die Haupt-DB-Datei zurueck.
 
-**Ohne Checkpoint:** Inkonsistente Backups moeglich!
-**Mit Checkpoint:** Garantiert eine konsistente DB-Kopie.
+**Ohne Checkpoint:** Inkonsistente Backups moeglich.
+**Mit Checkpoint:** Konsistente DB-Kopie intendiert (abhaengig von SQLite-Checkpoint-Implementierung, keine Gewaehr).
 
 ## Konfigurationsdatei
 
