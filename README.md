@@ -10,6 +10,7 @@ Intelligente Backup-Synchronisation mit Datenbankschutz.
 - **WAL Checkpoint** fuer SQLite-Dateien vor dem Kopieren
 - **System Tray Integration** fuer Hintergrundbetrieb
 - **Geplante Backups** mit konfigurierbaren Intervallen
+- **Batch-Sync** fuer mehrere ausgewaehlte Verbindungen in einem Lauf
 - **Datenbank-Indexierung** fuer Suche und Versionierung (optional)
 
 ## Screenshots
@@ -43,6 +44,12 @@ START.bat
 ```
 
 Die Anwendung startet im System Tray. Rechtsklick auf das Icon fuer Optionen.
+
+### Batch-Ausfuehrung
+
+Waehle mehrere Aufgaben mit `Ctrl` oder `Shift` in der Liste aus und starte sie gesammelt mit
+`▶ Batch starten` oder per Kontextmenue. ProSync arbeitet die Auswahl nacheinander ab,
+doppelte IDs werden ignoriert und der Batch wird bei Fehlern oder manuellem Stop kontrolliert beendet.
 
 ## Synchronisationsmodi
 
@@ -127,7 +134,8 @@ Ein Checkpoint fuehrt diese Aenderungen in die Haupt-DB-Datei zurueck.
 
 ## Konfigurationsdatei
 
-`ProSync_config.json` - Wird automatisch erstellt und verwaltet.
+`ProSync_config.json` - Wird lokal automatisch erstellt und verwaltet. Die Datei ist ignoriert, weil sie persönliche Quell-/Zielpfade enthalten kann.
+Ein sicheres Beispiel liegt in `ProSync_config.example.json`.
 
 ### Beispiel (Ordner-Verbindung):
 
@@ -224,15 +232,15 @@ Grosse Dateien oder langsame Netzwerkverbindung. `update` statt `mirror` fuer sc
 
 ## Lizenz
 
-GPL v3 - Siehe [LICENSE](LICENSE)
+GPL-3.0-only - Siehe [LICENSE](LICENSE)
 
 Dieses Projekt verwendet PySide6 (LGPL).
 
 ---
 
-**Version:** 3.1
+**Version:** 3.2
 **Autor:** Lukas Geiger
-**Zuletzt aktualisiert:** Februar 2026
+**Zuletzt aktualisiert:** April 2026
 
 ---
 
@@ -250,6 +258,7 @@ Intelligent backup synchronization with database safety.
 - **WAL Checkpoint** for SQLite files before copying
 - **System Tray Integration** for background operation
 - **Scheduled Backups** with configurable intervals
+- **Batch Sync** for multiple selected connections in one run
 - **Database Indexing** for search and versioning (optional)
 
 ### Screenshots
@@ -283,6 +292,12 @@ START.bat
 ```
 
 The application starts in the system tray. Right-click the icon for options.
+
+#### Batch Execution
+
+Select multiple tasks with `Ctrl` or `Shift` in the list and launch them together via
+`▶ Batch starten` or the context menu. ProSync runs the selection sequentially,
+ignores duplicate IDs, and stops the batch cleanly on errors or manual cancellation.
 
 ### Synchronization Modes
 
@@ -363,11 +378,12 @@ WAL (Write-Ahead Logging) stores SQLite changes in a separate `-wal` file.
 A checkpoint merges these changes back into the main DB file.
 
 **Without checkpoint:** Inconsistent backups possible!
-**With checkpoint:** Guarantees a consistent DB copy.
+**With checkpoint:** Intended to create a consistent DB copy, depending on SQLite checkpoint behavior.
 
 ### Configuration File
 
-`ProSync_config.json` - Automatically created and managed.
+`ProSync_config.json` - Automatically created and managed locally. The file is ignored because it can contain personal source/target paths.
+A safe example is tracked as `ProSync_config.example.json`.
 
 #### Example (Folder Connection):
 
@@ -464,7 +480,7 @@ Check `exclude_patterns` in the config. Critical DBs are automatically excluded 
 
 ### License
 
-GPL v3 - See [LICENSE](LICENSE)
+GPL-3.0-only - See [LICENSE](LICENSE)
 
 This project uses PySide6 (LGPL).
 
@@ -472,7 +488,7 @@ This project uses PySide6 (LGPL).
 
 ## Haftung / Liability
 
-Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse aus GPL-3.0 / MIT / Apache-2.0 §§ 15–16 (je nach gewählter Lizenz).
+Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse aus GPL-3.0-only.
 
 Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.
 

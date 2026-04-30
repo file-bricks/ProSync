@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QToolBar, QMenu, QHBoxLayout, QPushButton, QProgressBar, QLabel,
     QDialog, QFormLayout, QLineEdit, QComboBox, QCheckBox, QDialogButtonBox,
     QFileDialog, QMessageBox, QSystemTrayIcon, QStyle, QSizePolicy, QSplitter,
+    QAbstractItemView,
     QTextEdit
 )
 from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir
@@ -23,11 +24,27 @@ from PySide6.QtGui import QAction, QActionGroup, QIcon
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
 
+
+def _configure_windows_utf8_streams() -> None:
+    """Use UTF-8 console streams on Windows without replacing capture objects."""
+    if sys.platform != 'win32':
+        return
+
+    for stream_name in ("stdout", "stderr"):
+        stream = getattr(sys, stream_name, None)
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8")
+        except (AttributeError, OSError, ValueError):
+            # Test runners and embedded hosts may expose non-standard streams.
+            # Keeping the existing object intact is safer than replacing it.
+            pass
+
+
 # Windows UTF-8 Fix
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+_configure_windows_utf8_streams()
 
 # Windows Registry Support (Optional)
 try:
@@ -607,6 +624,100 @@ class ConfigManager:
         self.data["connections"] = [c for c in self.data.get("connections", [])
                                     if c.get("id") != conn_id]
         self.save()
+
+
+class BatchSyncQueue:
+    """
+    Verwaltet einen deduplizierten Batch-Lauf aus mehreren Verbindungen.
+
+    Die Queue arbeitet Verbindungen in der Auswahl-Reihenfolge ab und
+    verhindert doppelte IDs innerhalb desselben Batch-Laufs.
+    """
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """Setzt den kompletten Batch-Status zurück."""
+        self.pending = []
+        self.current = None
+        self.completed = []
+        self.total = 0
+
+    def start(self, connections):
+        """
+        Initialisiert einen neuen Batch-Lauf.
+
+        Args:
+            connections: Ausgewählte Connection-Dicts
+
+        Returns:
+            Deduplizierte Liste der geplanten Verbindungen
+        """
+        self.reset()
+        seen_ids = set()
+        for conn in connections:
+            conn_id = conn.get("id")
+            if not conn_id or conn_id in seen_ids:
+                continue
+            seen_ids.add(conn_id)
+            self.pending.append(conn)
+        self.total = len(self.pending)
+        return list(self.pending)
+
+    @property
+    def active(self):
+        """True, solange noch Batch-Arbeit läuft oder aussteht."""
+        return self.current is not None or bool(self.pending)
+
+    @property
+    def completed_count(self):
+        """Anzahl bereits erfolgreich abgearbeiteter Verbindungen."""
+        return len(self.completed)
+
+    @property
+    def remaining_count(self):
+        """Anzahl noch nicht gestarteter Verbindungen."""
+        return len(self.pending)
+
+    def next_connection(self):
+        """
+        Gibt die nächste Verbindung für den Batch-Lauf zurück.
+
+        Returns:
+            Connection-Dict oder None wenn nichts mehr aussteht
+        """
+        if self.current is not None:
+            return self.current
+        if not self.pending:
+            return None
+        self.current = self.pending.pop(0)
+        return self.current
+
+    def mark_current_finished(self):
+        """
+        Markiert die aktuelle Batch-Verbindung als erfolgreich abgeschlossen.
+
+        Returns:
+            Die abgeschlossene Verbindung oder None
+        """
+        if self.current is None:
+            return None
+        finished = self.current
+        self.completed.append(finished)
+        self.current = None
+        return finished
+
+    def cancel_pending(self):
+        """
+        Verwirft alle noch wartenden Batch-Verbindungen.
+
+        Returns:
+            Liste der verworfenen Verbindungen
+        """
+        skipped = list(self.pending)
+        self.pending.clear()
+        return skipped
 
 # ---------------- DB ----------------
 DDL = """
@@ -1616,6 +1727,9 @@ class MainWindow(QMainWindow):
         self.resize(900, 600)
         self.cfg = cfg
         self.worker = None
+        self.batch_queue = BatchSyncQueue()
+        self._worker_had_error = False
+        self._stop_requested = False
 
         self.scheduler = ConnectionScheduler(cfg)
         self.scheduler.trigger_sync.connect(self.on_auto_sync_triggered)
@@ -1675,7 +1789,9 @@ class MainWindow(QMainWindow):
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         self.list = QListWidget()
+        self.list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.list.itemClicked.connect(self.on_item_select)
+        self.list.itemSelectionChanged.connect(self.refresh_selection_state)
         self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self.open_context_menu)
 
@@ -1808,25 +1924,57 @@ class MainWindow(QMainWindow):
 
             item.setData(Qt.ItemDataRole.UserRole, c)
             self.list.addItem(item)
+        self.refresh_selection_state()
 
-    def add_folder_connection(self):
-        """V3.1: Add folder connection."""
-        dlg = ConnectionDialog(self)
-        if dlg.exec():
-            self.cfg.add_or_update_connection(dlg.get_result())
-            self.scheduler.update_all()
-            self.populate_list()
+    def get_selected_connections(self):
+        """Liest die aktuell ausgewählten Verbindungen dedupliziert aus."""
+        items = self.list.selectedItems()
+        if not items and self.list.currentItem():
+            items = [self.list.currentItem()]
 
-    def add_file_connection(self):
-        """V3.1 NEW: Add file connection."""
-        dlg = FileConnectionDialog(self)
-        if dlg.exec():
-            self.cfg.add_or_update_connection(dlg.get_result())
-            self.scheduler.update_all()
-            self.populate_list()
+        selected = []
+        seen_ids = set()
+        for item in items:
+            conn = item.data(Qt.ItemDataRole.UserRole)
+            conn_id = conn.get("id")
+            if not conn_id or conn_id in seen_ids:
+                continue
+            seen_ids.add(conn_id)
+            selected.append(conn)
+        return selected
 
-    def on_item_select(self, item):
-        data = item.data(Qt.ItemDataRole.UserRole)
+    def refresh_selection_state(self):
+        """Aktualisiert Detailanzeige und Button-Status anhand der Auswahl."""
+        selected = self.get_selected_connections()
+        selected_count = len(selected)
+        is_running = bool(self.worker and self.worker.isRunning())
+
+        if selected_count > 1:
+            preview_names = ", ".join(conn["name"] for conn in selected[:3])
+            if selected_count > 3:
+                preview_names += f" … (+{selected_count - 3})"
+            self.lbl_info.setText(
+                f"📦 Batch-Auswahl ({selected_count} Aufgaben)\n"
+                f"{preview_names}"
+            )
+            self.btn_run.setText("▶ Batch starten")
+            self.btn_run.setEnabled(not is_running)
+            self.btn_pause.setEnabled(False)
+            self.btn_stop.setEnabled(is_running)
+            return
+
+        self.btn_run.setText("▶ Start Sync")
+        if selected_count == 1:
+            self._show_connection_details(selected[0])
+            return
+
+        self.lbl_info.setText("Wähle eine Aufgabe...")
+        self.btn_run.setEnabled(not is_running)
+        self.btn_pause.setEnabled(False)
+        self.btn_stop.setEnabled(is_running)
+
+    def _show_connection_details(self, data):
+        """Zeigt die Details der aktuell ausgewählten Verbindung an."""
         conn_type = data.get("type", ConnectionType.FOLDER)
 
         # V3.1: Different info display for FILE vs FOLDER
@@ -1878,11 +2026,63 @@ class MainWindow(QMainWindow):
         else:
             self.btn_pause.setText("⏸ Pause")
 
+    def add_folder_connection(self):
+        """V3.1: Add folder connection."""
+        dlg = ConnectionDialog(self)
+        if dlg.exec():
+            self.cfg.add_or_update_connection(dlg.get_result())
+            self.scheduler.update_all()
+            self.populate_list()
+
+    def add_file_connection(self):
+        """V3.1 NEW: Add file connection."""
+        dlg = FileConnectionDialog(self)
+        if dlg.exec():
+            self.cfg.add_or_update_connection(dlg.get_result())
+            self.scheduler.update_all()
+            self.populate_list()
+
+    def on_item_select(self, _item):
+        self.refresh_selection_state()
+
     def start_sync(self):
-        item = self.list.currentItem()
-        if not item:
+        selected = self.get_selected_connections()
+        if not selected:
             return
-        self.run_sync_logic(item.data(Qt.ItemDataRole.UserRole))
+        if len(selected) > 1:
+            self.start_batch_sync(selected)
+            return
+        self.run_sync_logic(selected[0])
+
+    def start_batch_sync(self, connections):
+        """Startet einen sequenziellen Batch-Lauf über mehrere Verbindungen."""
+        if self.worker is not None and self.worker.isRunning():
+            QMessageBox.warning(self, "Beschäftigt",
+                              "Es läuft bereits ein Synchronisationsvorgang.")
+            return
+
+        planned = self.batch_queue.start(connections)
+        if len(planned) < 2:
+            if planned:
+                self.run_sync_logic(planned[0])
+            return
+
+        self.progress.setValue(0)
+        self.lbl_status.setText(f"Batch gestartet ({len(planned)} Aufgaben).")
+        self.notify("ProSync", f"▶ Batch gestartet: {len(planned)} Aufgaben",
+                   self.NotificationType.INFO, 2500)
+        self._run_next_batch_sync()
+
+    def _run_next_batch_sync(self):
+        """Startet die nächste Verbindung aus der aktiven Batch-Queue."""
+        conn = self.batch_queue.next_connection()
+        if conn is None:
+            return
+
+        current_index = self.batch_queue.completed_count + 1
+        total = self.batch_queue.total
+        self.lbl_status.setText(f"[Batch {current_index}/{total}] Starte {conn['name']}...")
+        self.run_sync_logic(conn)
 
     def run_sync_logic(self, conn_data):
         if self.worker is not None and self.worker.isRunning():
@@ -1890,6 +2090,8 @@ class MainWindow(QMainWindow):
                               "Es läuft bereits ein Synchronisationsvorgang.")
             return
 
+        self._worker_had_error = False
+        self._stop_requested = False
         self.btn_run.setEnabled(False)
         self.btn_stop.setEnabled(True)
         self.btn_pause.setEnabled(True)
@@ -1927,10 +2129,13 @@ class MainWindow(QMainWindow):
 
     def _handle_worker_error(self, error_msg: str):
         """V3.2 NEW: Zentraler Error-Handler mit Notification."""
+        self._worker_had_error = True
         QMessageBox.critical(self, "Fehler", error_msg)
         self.notify_error(error_msg[:100])  # Kürzen für Toast
-        # Buttons zurücksetzen
-        self.btn_run.setEnabled(True)
+        if self.batch_queue.total > 1 and self.batch_queue.current is not None:
+            self.lbl_status.setText(
+                f"Batch-Fehler bei {self.batch_queue.current.get('name', 'Unbekannt')}."
+            )
         self.btn_stop.setEnabled(False)
         self.btn_pause.setEnabled(False)
 
@@ -1948,15 +2153,25 @@ class MainWindow(QMainWindow):
     def on_auto_sync_triggered(self, conn):
         if self.worker is not None and self.worker.isRunning():
             return
+        if self.batch_queue.active:
+            return
         self.lbl_status.setText(f"[Auto] Starte Sync für {conn['name']}...")
         # V3.2 NEW: Toast bei Auto-Sync
         self.notify_auto_sync(conn.get("name", "Unbekannt"))
         self.run_sync_logic(conn)
 
     def stop_worker(self):
+        self._stop_requested = True
+        if self.batch_queue.active:
+            skipped = self.batch_queue.cancel_pending()
+            if skipped:
+                self.lbl_status.setText(
+                    f"Breche Batch ab... ({len(skipped)} verbleibend)"
+                )
         if self.worker:
             self.worker.kill()
-            self.lbl_status.setText("Breche ab...")
+            if self.batch_queue.total <= 1:
+                self.lbl_status.setText("Breche ab...")
 
     def _save_sync_report(self, report: dict) -> None:
         """Persist a sync-run report as JSON and keep the last 100 entries."""
@@ -1991,15 +2206,70 @@ class MainWindow(QMainWindow):
             log_warning(f"Konnte Sync-Report nicht speichern: {exc}")
 
     def worker_finished(self):
+        conn_name = self.worker.cfg.get("name", "Sync") if self.worker else "Sync"
+        had_error = self._worker_had_error
+        stop_requested = self._stop_requested
+        is_batch_run = self.batch_queue.total > 1
+
+        self._worker_had_error = False
+        self._stop_requested = False
+        self.worker = None
+
         self.btn_run.setEnabled(True)
         self.btn_stop.setEnabled(False)
         self.btn_pause.setEnabled(False)
         self.btn_pause.setText("⏸ Pause")
+
+        if stop_requested:
+            self.progress.setValue(0)
+            if is_batch_run:
+                self.batch_queue.reset()
+                self.lbl_status.setText("Batch abgebrochen.")
+            else:
+                self.lbl_status.setText("Abgebrochen.")
+            self.refresh_selection_state()
+            return
+
+        if is_batch_run:
+            if had_error:
+                self.batch_queue.cancel_pending()
+                self.batch_queue.reset()
+                self.progress.setValue(0)
+                self.lbl_status.setText(f"Batch abgebrochen bei {conn_name}.")
+                self.refresh_selection_state()
+                return
+
+            self.batch_queue.mark_current_finished()
+            completed = self.batch_queue.completed_count
+            total = self.batch_queue.total
+            remaining = self.batch_queue.remaining_count
+
+            if remaining > 0:
+                self.progress.setValue(0)
+                self.lbl_status.setText(
+                    f"Batch-Fortschritt: {completed}/{total} abgeschlossen, {remaining} verbleibend."
+                )
+                QTimer.singleShot(0, self._run_next_batch_sync)
+                return
+
+            self.batch_queue.reset()
+            self.progress.setValue(100)
+            self.lbl_status.setText(f"Batch abgeschlossen ({completed}/{total}).")
+            self.notify("ProSync", f"✓ Batch abgeschlossen: {completed} Aufgaben",
+                       self.NotificationType.SUCCESS, 3000)
+            self.refresh_selection_state()
+            return
+
+        if had_error:
+            self.progress.setValue(0)
+            self.refresh_selection_state()
+            return
+
         self.progress.setValue(100)
         self.lbl_status.setText("Fertig.")
         # V3.2 CHANGED: Verwende zentrale Notification-Methode
-        conn_name = self.worker.cfg.get("name", "Sync") if self.worker else "Sync"
         self.notify_sync_finished(conn_name, success=True)
+        self.refresh_selection_state()
         self.worker = None
 
     def audit_all_connections(self):
@@ -2076,8 +2346,15 @@ class MainWindow(QMainWindow):
 
         conn = item.data(Qt.ItemDataRole.UserRole)
         autosync = conn.get("autosync", {"enabled": False, "interval_minutes": 15})
+        selected_connections = self.get_selected_connections()
 
         menu = QMenu()
+        batch_action = None
+        if len(selected_connections) > 1:
+            batch_action = menu.addAction(
+                f"Batch aus Auswahl starten ({len(selected_connections)})"
+            )
+            menu.addSeparator()
         act_edit = menu.addAction("Bearbeiten")
         act_del = menu.addAction("Löschen")
         menu.addSeparator()
@@ -2101,7 +2378,10 @@ class MainWindow(QMainWindow):
 
         res = menu.exec(self.list.viewport().mapToGlobal(pos))
 
-        if res == act_del:
+        if res == batch_action:
+            self.start_batch_sync(selected_connections)
+
+        elif res == act_del:
             if self.worker and self.worker.isRunning() and self.worker.conn_id == conn['id']:
                 return
             if QMessageBox.question(self, "Löschen", "Aufgabe löschen?") == QMessageBox.StandardButton.Yes:

@@ -37,6 +37,7 @@ def create_test_sqlite_db(path: str, wal_mode: bool = False):
     conn = sqlite3.connect(path)
     conn.execute("CREATE TABLE test (id INTEGER PRIMARY KEY, data TEXT)")
     conn.execute("INSERT INTO test (data) VALUES ('test')")
+    conn.commit()
 
     if wal_mode:
         conn.execute("PRAGMA journal_mode=WAL")
