@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added
+- GitHub Actions Smoke-Test-Workflow für Python 3.10 bis 3.12
+- Gemeinsamer lokaler/CI-Teststarter `run_tests.py`
+
+### Geändert / Changed
+- `.gitignore` deckt lokale Test-, Coverage- und Datenbank-Nebendateien vollständiger ab
+- `requirements.txt` auf den aktuellen Projektstand 3.2.0 nachgezogen
+- README dokumentiert lokale Datenschutzgrenzen, Tests und CI-Prüfung
+
 ## [3.2.0] - 2026-05-01
 
 ### Hinzugefuegt / Added

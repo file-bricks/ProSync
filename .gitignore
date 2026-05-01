@@ -13,6 +13,12 @@ __pycache__/
 .eggs/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # ---- Virtuelle Umgebungen ----
 venv/
@@ -37,6 +43,15 @@ credentials.json
 client_secret*.json
 token.json
 ProSync_config.json
+*.db
+*.db3
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.db-journal
+*.mdb
+*.accdb
 *.pem
 *.key
 keyring/

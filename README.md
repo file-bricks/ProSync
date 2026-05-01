@@ -53,6 +53,19 @@ in denselben Ausgabeordner, damit die Suchoberflaeche auch im Frozen-Modus
 weiterhin separat gestartet werden kann.
 Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versioniert.
 
+## Qualitätssicherung
+
+```bash
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_sync_worker.py
+python run_tests.py
+```
+
+GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
+
+## Datenschutz und lokale Dateien
+
+`ProSync_config.json`, Logs, Build-Artefakte und lokale Host-Notizen bleiben außerhalb des Repositories. Die getrackte Datei `ProSync_config.example.json` enthält nur eine leere Beispielstruktur und keine persönlichen Quell- oder Zielpfade.
+
 ### Batch-Ausfuehrung
 
 Waehle mehrere Aufgaben mit `Ctrl` oder `Shift` in der Liste aus und starte sie gesammelt mit
@@ -307,6 +320,19 @@ The application starts in the system tray. Right-click the icon for options.
 `dist/ProSync/ProSync.exe` and copies `ProSyncReader.exe` into the same output
 folder so the search UI can still be launched separately in frozen mode.
 Build artifacts in `build/`, `dist/`, and `releases/` are intentionally not versioned.
+
+### Quality Checks
+
+```bash
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_sync_worker.py
+python run_tests.py
+```
+
+GitHub Actions runs the same smoke tests on Python 3.10, 3.11, and 3.12.
+
+### Privacy and Local Files
+
+`ProSync_config.json`, logs, build artifacts, and local host notes stay outside the repository. The tracked `ProSync_config.example.json` contains only an empty example structure and no personal source or target paths.
 
 #### Batch Execution
 
