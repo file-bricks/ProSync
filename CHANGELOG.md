@@ -13,6 +13,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - `.gitignore` deckt lokale Test-, Coverage- und Datenbank-Nebendateien vollständiger ab
 - `requirements.txt` auf den aktuellen Projektstand 3.2.0 nachgezogen
 - README dokumentiert lokale Datenschutzgrenzen, Tests und CI-Prüfung
+- CI installiert die nötigen Qt-Laufzeitbibliotheken für PySide6 auf Ubuntu-Runnern
 
 ## [3.2.0] - 2026-05-01
 
