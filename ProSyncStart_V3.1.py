@@ -46,6 +46,13 @@ def _configure_windows_utf8_streams() -> None:
 # Windows UTF-8 Fix
 _configure_windows_utf8_streams()
 
+
+def app_base_dir() -> str:
+    """Return the runtime directory for local and frozen builds."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
 # Windows Registry Support (Optional)
 try:
     import winreg
@@ -1831,7 +1838,7 @@ class MainWindow(QMainWindow):
         self.scheduler.update_all()
 
     def setup_tray_icon(self):
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ICO_TRAY.ico")
+        icon_path = os.path.join(app_base_dir(), "ICO_TRAY.ico")
         if os.path.exists(icon_path):
             self.tray_icon.setIcon(QIcon(icon_path))
         else:
@@ -2416,17 +2423,21 @@ class MainWindow(QMainWindow):
             self.populate_list()
 
     def open_reader(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        reader_path = os.path.join(script_dir, "ProSyncReader.py")
+        base_dir = app_base_dir()
+        if getattr(sys, "frozen", False):
+            reader_path = os.path.join(base_dir, "ProSyncReader.exe")
+            launch_cmd = [reader_path]
+        else:
+            reader_path = os.path.join(base_dir, "ProSyncReader.py")
+            launch_cmd = [sys.executable, reader_path]
         if os.path.exists(reader_path):
             if sys.platform == "win32":
-                subprocess.Popen([sys.executable, reader_path],
-                               creationflags=subprocess.CREATE_NO_WINDOW)
+                subprocess.Popen(launch_cmd, creationflags=subprocess.CREATE_NO_WINDOW)
             else:
-                subprocess.Popen([sys.executable, reader_path])
+                subprocess.Popen(launch_cmd)
         else:
             QMessageBox.warning(self, "Nicht gefunden",
-                              "ProSyncReader.py nicht gefunden.")
+                              "ProSyncReader wurde nicht gefunden.")
 
     def closeEvent(self, event):
         if self.tray_icon.isVisible():
@@ -2467,7 +2478,7 @@ def main() -> None:
     app.setStyle("Fusion")
 
     cfg = ConfigManager(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "ProSync_config.json")
+        os.path.join(app_base_dir(), "ProSync_config.json")
     )
 
     win = MainWindow(cfg)

@@ -45,6 +45,13 @@ START.bat
 
 Die Anwendung startet im System Tray. Rechtsklick auf das Icon fuer Optionen.
 
+## Windows-Build
+
+Fuer einen reproduzierbaren lokalen Windows-Build steht `build_exe.bat` bereit.
+Das Skript erzeugt `dist/ProSync/ProSync.exe` und kopiert `ProSyncReader.exe`
+in denselben Ausgabeordner, damit die Suchoberflaeche auch im Frozen-Modus
+weiterhin separat gestartet werden kann.
+
 ### Batch-Ausfuehrung
 
 Waehle mehrere Aufgaben mit `Ctrl` oder `Shift` in der Liste aus und starte sie gesammelt mit
@@ -103,7 +110,7 @@ doppelte IDs werden ignoriert und der Batch wird bei Fehlern oder manuellem Stop
 
 **Ergebnis:** Konsistente DB-Backups ohne Korruption
 
-## Datenbankschutz (V3.1)
+## Datenbankschutz (V3.2)
 
 ProSync erkennt kritische Datenbanken automatisch und wendet sichere Einstellungen an:
 
@@ -240,7 +247,7 @@ Dieses Projekt verwendet PySide6 (LGPL).
 
 **Version:** 3.2
 **Autor:** Lukas Geiger
-**Zuletzt aktualisiert:** April 2026
+**Zuletzt aktualisiert:** Mai 2026
 
 ---
 
@@ -292,6 +299,12 @@ START.bat
 ```
 
 The application starts in the system tray. Right-click the icon for options.
+
+### Windows Build
+
+`build_exe.bat` provides a reproducible local Windows build. It creates
+`dist/ProSync/ProSync.exe` and copies `ProSyncReader.exe` into the same output
+folder so the search UI can still be launched separately in frozen mode.
 
 #### Batch Execution
 
@@ -351,7 +364,7 @@ ignores duplicate IDs, and stops the batch cleanly on errors or manual cancellat
 
 **Result:** Consistent DB backups without corruption
 
-### Database Protection (V3.1)
+### Database Protection (V3.2)
 
 ProSync automatically detects critical databases and applies safe settings:
 
