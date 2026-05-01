@@ -51,6 +51,7 @@ Fuer einen reproduzierbaren lokalen Windows-Build steht `build_exe.bat` bereit.
 Das Skript erzeugt `dist/ProSync/ProSync.exe` und kopiert `ProSyncReader.exe`
 in denselben Ausgabeordner, damit die Suchoberflaeche auch im Frozen-Modus
 weiterhin separat gestartet werden kann.
+Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versioniert.
 
 ### Batch-Ausfuehrung
 
@@ -305,6 +306,7 @@ The application starts in the system tray. Right-click the icon for options.
 `build_exe.bat` provides a reproducible local Windows build. It creates
 `dist/ProSync/ProSync.exe` and copies `ProSyncReader.exe` into the same output
 folder so the search UI can still be launched separately in frozen mode.
+Build artifacts in `build/`, `dist/`, and `releases/` are intentionally not versioned.
 
 #### Batch Execution
 

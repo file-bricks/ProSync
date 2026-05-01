@@ -5,6 +5,8 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-05-01
+
 ### Hinzugefuegt / Added
 - Batch-Sync ueber Mehrfachauswahl mit Kontextmenue-Einstieg und deduplizierter Queue
 - Smoke-Test `test_batch_sync_queue.py` fuer Reihenfolge, Deduplizierung und Reset-Verhalten
