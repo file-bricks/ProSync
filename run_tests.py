@@ -10,10 +10,12 @@ from pathlib import Path
 
 TEST_FILES = [
     "test_batch_sync_queue.py",
+    "test_companion_launch.py",
     "test_config_manager.py",
     "test_database_safety.py",
     "test_import_streams.py",
     "test_sync_worker.py",
+    "test_translator.py",
 ]
 
 

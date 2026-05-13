@@ -166,13 +166,12 @@ def test_config_manager():
         os.remove(test_config_path)
 
     print("=== ALLE TESTS BESTANDEN ✓ ===")
-    return True
 
 
 if __name__ == "__main__":
     try:
-        success = test_config_manager()
-        sys.exit(EXIT_SUCCESS if success else EXIT_FAILURE)
+        test_config_manager()
+        sys.exit(EXIT_SUCCESS)
     except Exception as e:
         print(f"\n❌ TEST FEHLGESCHLAGEN: {e}")
         import traceback

@@ -53,6 +53,47 @@ def app_base_dir() -> str:
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
 
+
+def resolve_profiler_launch_path(base_dir, configured_path=""):
+    """Resolve the best available ProFiler entrypoint."""
+    base_dir = Path(base_dir).expanduser()
+    sibling_root = base_dir.parent / "REL-PUB_ProFiler"
+
+    candidates = []
+    if configured_path:
+        configured = Path(configured_path).expanduser()
+        if configured.is_dir():
+            candidates.extend([
+                configured / "Profiler_Suite_V15.py",
+                configured / "ProFiler.exe",
+                configured / "dist" / "ProFiler" / "ProFiler.exe",
+                configured / "START.bat",
+            ])
+        else:
+            candidates.append(configured)
+
+    candidates.extend([
+        base_dir / "Profiler_Suite_V15.py",
+        base_dir / "ProFiler.exe",
+        base_dir / "START.bat",
+        sibling_root / "Profiler_Suite_V15.py",
+        sibling_root / "ProFiler.exe",
+        sibling_root / "START.bat",
+        sibling_root / "dist" / "ProFiler" / "ProFiler.exe",
+    ])
+
+    seen = set()
+    for candidate in candidates:
+        candidate = Path(candidate).expanduser()
+        resolved = str(candidate)
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if candidate.exists():
+            return candidate
+
+    return None
+
 # Windows Registry Support (Optional)
 try:
     import winreg
@@ -1782,6 +1823,10 @@ class MainWindow(QMainWindow):
         btn_audit.setToolTip("Prüfe alle Verbindungen auf Datenbank-Sicherheit")
         btn_audit.clicked.connect(self.audit_all_connections)
 
+        self.btn_profiler = QPushButton("📚 ProFiler öffnen")
+        self.btn_profiler.setToolTip("Startet ProFiler als Companion-App")
+        self.btn_profiler.clicked.connect(self.launch_profiler)
+
         empty = QWidget()
         empty.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
@@ -1790,6 +1835,7 @@ class MainWindow(QMainWindow):
 
         toolbar_lay.addWidget(btn_add)
         toolbar_lay.addWidget(btn_audit)  # V3 NEW
+        toolbar_lay.addWidget(self.btn_profiler)
         toolbar_lay.addWidget(empty)
         toolbar_lay.addWidget(self.btn_search)
         main_lay.addLayout(toolbar_lay)
@@ -2422,22 +2468,67 @@ class MainWindow(QMainWindow):
             self.scheduler.update_connection(conn)
             self.populate_list()
 
+    def _launch_tool_process(self, tool_path):
+        """Launch a local Python, batch or executable tool."""
+        tool_path = Path(tool_path).expanduser()
+        if tool_path.suffix.lower() == ".py":
+            launch_cmd = [sys.executable, str(tool_path)]
+        elif tool_path.suffix.lower() == ".bat":
+            launch_cmd = ["cmd", "/c", str(tool_path)]
+        else:
+            launch_cmd = [str(tool_path)]
+
+        kwargs = {"cwd": str(tool_path.parent)}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+        subprocess.Popen(launch_cmd, **kwargs)
+
     def open_reader(self):
         base_dir = app_base_dir()
         if getattr(sys, "frozen", False):
             reader_path = os.path.join(base_dir, "ProSyncReader.exe")
-            launch_cmd = [reader_path]
         else:
             reader_path = os.path.join(base_dir, "ProSyncReader.py")
-            launch_cmd = [sys.executable, reader_path]
         if os.path.exists(reader_path):
-            if sys.platform == "win32":
-                subprocess.Popen(launch_cmd, creationflags=subprocess.CREATE_NO_WINDOW)
-            else:
-                subprocess.Popen(launch_cmd)
+            self._launch_tool_process(reader_path)
         else:
             QMessageBox.warning(self, "Nicht gefunden",
                               "ProSyncReader wurde nicht gefunden.")
+
+    def launch_profiler(self):
+        """Startet ProFiler als optionale Companion-App."""
+        base_dir = Path(app_base_dir())
+        app_settings = self.cfg.data.get("app", {})
+        profiler_path = resolve_profiler_launch_path(
+            base_dir,
+            app_settings.get("profiler_path", ""),
+        )
+
+        if not profiler_path:
+            QMessageBox.warning(
+                self,
+                "ProFiler nicht gefunden",
+                "ProFiler konnte nicht automatisch gefunden werden.\n\n"
+                "Bitte lege den Pfad in ProSync_config.json unter "
+                "'app.profiler_path' fest oder platziere ProFiler neben "
+                "ProSync im gemeinsamen Software-Baum."
+            )
+            return
+
+        try:
+            self._launch_tool_process(profiler_path)
+            QMessageBox.information(
+                self,
+                "ProFiler gestartet",
+                "ProFiler wurde als optionale Companion-App gestartet.\n\n"
+                "ProSync bleibt geöffnet, beide Werkzeuge laufen unabhängig."
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Fehler",
+                f"Konnte ProFiler nicht starten:\n{str(e)}"
+            )
 
     def closeEvent(self, event):
         if self.tray_icon.isVisible():

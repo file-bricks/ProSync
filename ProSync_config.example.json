@@ -1,4 +1,7 @@
 {
-  "app": {},
+  "app": {
+    "notifications_enabled": true,
+    "profiler_path": ""
+  },
   "connections": []
 }

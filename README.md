@@ -5,13 +5,14 @@ Intelligente Backup-Synchronisation mit Datenbankschutz.
 ## Features
 
 - **Ordner-Synchronisation** (einseitig / beidseitig)
-- **Datei-Synchronisation** fuer einzelne Dateien
+- **Datei-Synchronisation** für einzelne Dateien
 - **Automatische Datenbank-Erkennung** und Schutz
-- **WAL Checkpoint** fuer SQLite-Dateien vor dem Kopieren
-- **System Tray Integration** fuer Hintergrundbetrieb
+- **WAL Checkpoint** für SQLite-Dateien vor dem Kopieren
+- **System Tray Integration** für Hintergrundbetrieb
 - **Geplante Backups** mit konfigurierbaren Intervallen
-- **Batch-Sync** fuer mehrere ausgewaehlte Verbindungen in einem Lauf
-- **Datenbank-Indexierung** fuer Suche und Versionierung (optional)
+- **Batch-Sync** für mehrere ausgewählte Verbindungen in einem Lauf
+- **Datenbank-Indexierung** für Suche und Versionierung (optional)
+- **ProFiler-Companion** -- optionaler Start von ProFiler aus dem Hauptfenster
 
 ## Screenshots
 
@@ -26,8 +27,8 @@ pip install -r requirements.txt
 ### Erforderliche Pakete
 
 - PySide6
-- (Optional) PyPDF2 fuer PDF-Vorschau im Reader
-- (Optional) python-docx fuer Word-Vorschau im Reader
+- (Optional) PyPDF2 für PDF-Vorschau im Reader
+- (Optional) python-docx für Word-Vorschau im Reader
 
 ## Verwendung
 
@@ -43,13 +44,13 @@ python ProSyncStart_V3.1.py
 START.bat
 ```
 
-Die Anwendung startet im System Tray. Rechtsklick auf das Icon fuer Optionen.
+Die Anwendung startet im System Tray. Rechtsklick auf das Icon für Optionen.
 
 ## Windows-Build
 
-Fuer einen reproduzierbaren lokalen Windows-Build steht `build_exe.bat` bereit.
+Für einen reproduzierbaren lokalen Windows-Build steht `build_exe.bat` bereit.
 Das Skript erzeugt `dist/ProSync/ProSync.exe` und kopiert `ProSyncReader.exe`
-in denselben Ausgabeordner, damit die Suchoberflaeche auch im Frozen-Modus
+in denselben Ausgabeordner, damit die Suchoberfläche auch im Frozen-Modus
 weiterhin separat gestartet werden kann.
 Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versioniert.
 
@@ -66,36 +67,36 @@ GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
 
 `ProSync_config.json`, Logs, Build-Artefakte und lokale Host-Notizen bleiben außerhalb des Repositories. Die getrackte Datei `ProSync_config.example.json` enthält nur eine leere Beispielstruktur und keine persönlichen Quell- oder Zielpfade.
 
-### Batch-Ausfuehrung
+### Batch-Ausführung
 
-Waehle mehrere Aufgaben mit `Ctrl` oder `Shift` in der Liste aus und starte sie gesammelt mit
-`▶ Batch starten` oder per Kontextmenue. ProSync arbeitet die Auswahl nacheinander ab,
+Wähle mehrere Aufgaben mit `Ctrl` oder `Shift` in der Liste aus und starte sie gesammelt mit
+`▶ Batch starten` oder per Kontextmenü. ProSync arbeitet die Auswahl nacheinander ab,
 doppelte IDs werden ignoriert und der Batch wird bei Fehlern oder manuellem Stop kontrolliert beendet.
 
 ## Synchronisationsmodi
 
 | Modus | Beschreibung | Anwendungsfall |
 |-------|-------------|----------------|
-| **mirror** | Ziel = exakte Kopie der Quelle | Vollstaendiges Backup |
-| **update** | Nur neuere Dateien uebertragen | Inkrementelles Backup |
+| **mirror** | Ziel = exakte Kopie der Quelle | Vollständiges Backup |
+| **update** | Nur neuere Dateien übertragen | Inkrementelles Backup |
 | **two_way** | Bidirektionale Synchronisation | Sync zwischen zwei Rechnern |
-| **one_way** | Quelle → Ziel, keine Loeschungen | Sichere Archivierung |
+| **one_way** | Quelle → Ziel, keine Löschungen | Sichere Archivierung |
 | **index_only** | Nur Indexierung, kein Kopieren | Dateiverwaltung ohne Sync |
 
 ## Beispielszenarien
 
 ### 1. Projektordner-Backup
 
-**Aufgabe:** Taegliches Backup eines Entwicklungsprojekts
+**Aufgabe:** Tägliches Backup eines Entwicklungsprojekts
 
 **Konfiguration:**
 - **Quelle:** `C:\Projekte\MeinProjekt`
 - **Ziel:** `D:\Backups\MeinProjekt`
 - **Modus:** `mirror`
-- **Geplant:** Taeglich um 18:00 Uhr
-- **Indexierung:** Aktiviert (fuer Suche)
+- **Geplant:** Täglich um 18:00 Uhr
+- **Indexierung:** Aktiviert (für Suche)
 
-**Ergebnis:** Vollstaendiges Backup mit Dateiversionierung und Suchfunktion
+**Ergebnis:** Vollständiges Backup mit Dateiversionierung und Suchfunktion
 
 ### 2. Synchronisation zwischen Laptop und Desktop
 
@@ -106,7 +107,7 @@ doppelte IDs werden ignoriert und der Batch wird bei Fehlern oder manuellem Stop
 - **Ziel:** `\\Desktop-PC\Dokumente`
 - **Modus:** `two_way`
 - **Geplant:** Alle 30 Minuten
-- **Konfliktloesung:** `newest` (neueste Datei gewinnt)
+- **Konfliktlösung:** `newest` (neueste Datei gewinnt)
 
 **Ergebnis:** Bidirektionaler Sync, beide PCs haben immer die aktuellen Dateien
 
@@ -128,30 +129,30 @@ doppelte IDs werden ignoriert und der Batch wird bei Fehlern oder manuellem Stop
 
 ProSync erkennt kritische Datenbanken automatisch und wendet sichere Einstellungen an:
 
-### Unterstuetzte Datenbanktypen
+### Unterstützte Datenbanktypen
 
 - **SQLite** (.sqlite, .sqlite3, .db, .db3)
 - **MS Access** (.mdb, .accdb)
 
-### Automatische Sicherheitsmassnahmen
+### Automatische Sicherheitsmaßnahmen
 
-#### Fuer Ordner-Verbindungen:
+#### Für Ordner-Verbindungen:
 - Kritische DBs (im WAL-Modus) werden **automatisch ausgeschlossen**
 - WAL-Dateien (.db-wal, .db-shm, .db-journal) werden **nie kopiert**
-- Empfehlung: **Datei-Verbindungen** fuer einzelne DBs erstellen
+- Empfehlung: **Datei-Verbindungen** für einzelne DBs erstellen
 
-#### Fuer Datei-Verbindungen:
+#### Für Datei-Verbindungen:
 - **WAL Checkpoint** wird automatisch aktiviert
 - **Einweg-Modus** wird empfohlen
 - Checkpoint vor jeder Kopieroperation
 
 ### Was ist ein WAL Checkpoint?
 
-WAL (Write-Ahead Logging) speichert SQLite-Aenderungen in einer separaten `-wal`-Datei.
-Ein Checkpoint fuehrt diese Aenderungen in die Haupt-DB-Datei zurueck.
+WAL (Write-Ahead Logging) speichert SQLite-Änderungen in einer separaten `-wal`-Datei.
+Ein Checkpoint führt diese Änderungen in die Haupt-DB-Datei zurück.
 
-**Ohne Checkpoint:** Inkonsistente Backups moeglich.
-**Mit Checkpoint:** Konsistente DB-Kopie intendiert (abhaengig von SQLite-Checkpoint-Implementierung, keine Gewaehr).
+**Ohne Checkpoint:** Inkonsistente Backups möglich.
+**Mit Checkpoint:** Konsistente DB-Kopie intendiert (abhängig von SQLite-Checkpoint-Implementierung, keine Gewähr).
 
 ## Konfigurationsdatei
 
@@ -217,43 +218,49 @@ python ProSyncReader.py
 - Volltextsuche in synchronisierten Dateien
 - Tag-basierte Suche
 - Datei-Vorschau (PDF, DOCX)
-- Direktes Oeffnen von Dateien/Ordnern
+- Direktes Öffnen von Dateien/Ordnern
+
+## ProFiler-Companion
+
+ProSync kann ProFiler direkt aus dem Hauptfenster starten. Die Suche prüft
+zuerst `app.profiler_path` in `ProSync_config.json`, danach lokale Standardpfade
+und zuletzt den gemeinsamen Software-Baum `REL-PUB_ProFiler`.
 
 ## Tipps & Best Practices
 
 ### Empfohlen:
-- **Datei-Verbindungen** fuer einzelne Datenbanken verwenden
-- **WAL Checkpoint** fuer SQLite-DBs aktivieren
+- **Datei-Verbindungen** für einzelne Datenbanken verwenden
+- **WAL Checkpoint** für SQLite-DBs aktivieren
 - Neue Verbindungen zuerst mit einem **manuellen Sync** testen
-- **exclude_patterns** fuer temporaere Dateien verwenden
+- **exclude_patterns** für temporäre Dateien verwenden
 
 ### Vermeiden:
-- **two_way** fuer kritische Datenbanken verwenden
+- **two_way** für kritische Datenbanken verwenden
 - **Laufende** Anwendungen synchronisieren
 - **.db-wal**-Dateien manuell kopieren
-- **mirror** verwenden, wenn keine Loeschungen gewuenscht sind
+- **mirror** verwenden, wenn keine Löschungen gewünscht sind
 
 ## Fehlerbehebung
 
 ### "Checkpoint failed"
-Datenbank ist gerade geoeffnet/gesperrt. Anwendung schliessen oder Timeout erhoehen.
+Datenbank ist gerade geöffnet/gesperrt. Anwendung schließen oder Timeout erhöhen.
 
-### "Sync haengt"
-Grosse Dateien oder langsame Netzwerkverbindung. `update` statt `mirror` fuer schnellere Syncs verwenden.
+### "Sync hängt"
+Große Dateien oder langsame Netzwerkverbindung. `update` statt `mirror` für schnellere Syncs verwenden.
 
 ### "Datei wurde ausgeschlossen"
-`exclude_patterns` in der Konfiguration pruefen. Kritische DBs werden automatisch ausgeschlossen (bei Ordner-Verbindungen).
+`exclude_patterns` in der Konfiguration prüfen. Kritische DBs werden automatisch ausgeschlossen (bei Ordner-Verbindungen).
 
 ## System Tray Befehle
 
-- **Linksklick:** Hauptfenster oeffnen
-- **Rechtsklick → Ausfuehren:** Verbindung manuell starten
-- **Rechtsklick → Auto-Ausfuehrung:** Geplanten Sync aktivieren
+- **Linksklick:** Hauptfenster öffnen
+- **Rechtsklick → Ausführen:** Verbindung manuell starten
+- **Rechtsklick → Auto-Ausführung:** Geplanten Sync aktivieren
 - **Rechtsklick → Beenden:** ProSync beenden
 
 ## Lizenz
 
-GPL-3.0-only - Siehe [LICENSE](LICENSE)
+MIT - Siehe [LICENSE](LICENSE)
 
 Dieses Projekt verwendet PySide6 (LGPL).
 
@@ -281,6 +288,7 @@ Intelligent backup synchronization with database safety.
 - **Scheduled Backups** with configurable intervals
 - **Batch Sync** for multiple selected connections in one run
 - **Database Indexing** for search and versioning (optional)
+- **ProFiler Companion** -- optional start of ProFiler from the main window
 
 ### Screenshots
 
@@ -487,6 +495,12 @@ python ProSyncReader.py
 - File preview (PDF, DOCX)
 - Direct opening of files/folders
 
+### ProFiler Companion
+
+ProSync can launch ProFiler directly from the main window. The search checks
+`app.profiler_path` in `ProSync_config.json` first, then local default paths,
+and finally the shared `REL-PUB_ProFiler` software tree.
+
 ### Tips & Best Practices
 
 #### Recommended:
@@ -521,7 +535,7 @@ Check `exclude_patterns` in the config. Critical DBs are automatically excluded 
 
 ### License
 
-GPL-3.0-only - See [LICENSE](LICENSE)
+MIT - See [LICENSE](LICENSE)
 
 This project uses PySide6 (LGPL).
 
@@ -529,7 +543,7 @@ This project uses PySide6 (LGPL).
 
 ## Haftung / Liability
 
-Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse aus GPL-3.0-only.
+Dieses Projekt ist eine **unentgeltliche Open-Source-Schenkung** im Sinne der §§ 516 ff. BGB. Die Haftung des Urhebers ist gemäß **§ 521 BGB** auf **Vorsatz und grobe Fahrlässigkeit** beschränkt. Ergänzend gelten die Haftungsausschlüsse aus der MIT-Lizenz.
 
 Nutzung auf eigenes Risiko. Keine Wartungszusage, keine Verfügbarkeitsgarantie, keine Gewähr für Fehlerfreiheit oder Eignung für einen bestimmten Zweck.
 
