@@ -67,6 +67,10 @@ GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
 
 `ProSync_config.json`, Logs, Build-Artefakte und lokale Host-Notizen bleiben außerhalb des Repositories. Die getrackte Datei `ProSync_config.example.json` enthält nur eine leere Beispielstruktur und keine persönlichen Quell- oder Zielpfade.
 
+Für GitHub werden nur Quellcode, Tests, Beispielkonfiguration und Projektdokumentation versioniert. Persönliche Sync-Ziele, Datenbanken, WAL-Dateien, temporäre Locks und lokale Build-Ausgaben sind über `.gitignore` ausgeschlossen.
+
+Sicherheitslücken bitte nicht als öffentliches Issue melden, sondern über GitHubs private Vulnerability-Reporting-Funktion im Tab **Security**.
+
 ### Batch-Ausführung
 
 Wähle mehrere Aufgaben mit `Ctrl` oder `Shift` in der Liste aus und starte sie gesammelt mit
@@ -341,6 +345,10 @@ GitHub Actions runs the same smoke tests on Python 3.10, 3.11, and 3.12.
 ### Privacy and Local Files
 
 `ProSync_config.json`, logs, build artifacts, and local host notes stay outside the repository. The tracked `ProSync_config.example.json` contains only an empty example structure and no personal source or target paths.
+
+The GitHub repository only tracks source code, tests, sample configuration, and project documentation. Personal sync targets, databases, WAL files, temporary locks, and local build outputs are excluded through `.gitignore`.
+
+Please report security vulnerabilities through GitHub's private vulnerability reporting flow in the **Security** tab instead of opening a public issue.
 
 #### Batch Execution
 

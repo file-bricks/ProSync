@@ -52,6 +52,9 @@ ProSync_config.json
 *.db-journal
 *.mdb
 *.accdb
+*.bak
+*.lock
+*.tmp
 *.pem
 *.key
 keyring/

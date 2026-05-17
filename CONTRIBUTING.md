@@ -2,9 +2,9 @@
 
 ## Deutsch
 
-Vielen Dank fuer Ihr Interesse, zu diesem Projekt beizutragen!
+Vielen Dank für Ihr Interesse, zu diesem Projekt beizutragen!
 
-### Wie Sie beitragen koennen
+### Wie Sie beitragen können
 
 1. **Bug melden:** Erstellen Sie ein Issue mit dem Label `bug`
 2. **Feature vorschlagen:** Erstellen Sie ein Issue mit dem Label `enhancement`
@@ -14,19 +14,19 @@ Vielen Dank fuer Ihr Interesse, zu diesem Projekt beizutragen!
 
 1. Forken Sie das Repository
 2. Erstellen Sie einen Feature-Branch: `git checkout -b feature/mein-feature`
-3. Committen Sie Ihre Aenderungen: `git commit -m "Beschreibung der Aenderung"`
+3. Committen Sie Ihre Änderungen: `git commit -m "Beschreibung der Änderung"`
 4. Pushen Sie den Branch: `git push origin feature/mein-feature`
 5. Erstellen Sie einen Pull Request
 
 ### Beitragsrechte
 
-Dieses Projekt verwendet kein separates CLA. Mit einem Pull Request bestaetigen Sie,
+Dieses Projekt verwendet kein separates CLA. Mit einem Pull Request bestätigen Sie,
 dass Sie das Recht haben, Ihren Beitrag unter der Projektlizenz einzureichen.
 
 ### Code-Richtlinien
 
 - Python: PEP 8 Stil
-- Encoding: UTF-8 fuer alle Dateien
+- Encoding: UTF-8 für alle Dateien
 - Sprache: Code und Kommentare auf Deutsch oder Englisch
 - Keine hardcoded Pfade oder API-Keys
 

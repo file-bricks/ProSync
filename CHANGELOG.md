@@ -9,12 +9,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - ProFiler-Companion: Toolbar-Button startet die optionale Companion-App über `app.profiler_path` oder den gemeinsamen Software-Baum
 - GitHub Actions Smoke-Test-Workflow für Python 3.10 bis 3.12
 - Gemeinsamer lokaler/CI-Teststarter `run_tests.py`
+- `.gitattributes` für stabile Text- und Binärbehandlung im Repository
 
 ### Geändert / Changed
 - `.gitignore` deckt lokale Test-, Coverage- und Datenbank-Nebendateien vollständiger ab
 - `requirements.txt` auf den aktuellen Projektstand 3.2.0 nachgezogen
 - README dokumentiert lokale Datenschutzgrenzen, Tests und CI-Prüfung
 - CI installiert die nötigen Qt-Laufzeitbibliotheken für PySide6 auf Ubuntu-Runnern
+- `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md` und README-Hinweise auf aktuelle Repo-Hygiene und echte deutsche Umlaute nachgezogen
 
 ## [3.2.0] - 2026-05-01
 
