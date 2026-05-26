@@ -228,7 +228,9 @@ python ProSyncReader.py
 
 ProSync kann ProFiler direkt aus dem Hauptfenster starten. Die Suche prüft
 zuerst `app.profiler_path` in `ProSync_config.json`, danach lokale Standardpfade
-und zuletzt den gemeinsamen Software-Baum `REL-PUB_ProFiler`.
+und zuletzt den gemeinsamen Software-Baum `REL-PUB_ProFiler`. Konfigurierte
+Pfade dürfen absolut, relativ zum ProSync-Ordner oder über Umgebungsvariablen
+wie `%USERPROFILE%\\...` angegeben werden.
 
 ## Tipps & Best Practices
 
@@ -507,7 +509,9 @@ python ProSyncReader.py
 
 ProSync can launch ProFiler directly from the main window. The search checks
 `app.profiler_path` in `ProSync_config.json` first, then local default paths,
-and finally the shared `REL-PUB_ProFiler` software tree.
+and finally the shared `REL-PUB_ProFiler` software tree. Configured paths may
+be absolute, relative to the ProSync folder, or use environment variables such
+as `%USERPROFILE%\\...`.
 
 ### Tips & Best Practices
 

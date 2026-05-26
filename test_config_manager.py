@@ -7,6 +7,7 @@ import os
 import sys
 import json
 import tempfile
+import importlib.util
 from pathlib import Path
 
 # Konstanten
@@ -27,6 +28,15 @@ except ImportError:
     class Signal:
         def __init__(self, *args): pass
     class QObject: pass
+
+
+def load_prosync_module():
+    """Lädt das Hauptmodul per importlib für echte ConfigManager-Checks."""
+    module_path = Path(__file__).with_name("ProSyncStart_V3.1.py")
+    spec = importlib.util.spec_from_file_location("prosync", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_config_manager():
@@ -160,6 +170,16 @@ def test_config_manager():
     cfg3 = SimpleConfigManager(test_config_path)
     assert len(cfg3.get_all()) == 0, "Korrupte Config sollte auf leer zurückfallen"
     print("✓ PASS: Korrupte Config wird korrekt behandelt\n")
+
+    # Test 8: Echte ConfigManager-Klasse sanitiert gültige Nicht-Objekt-JSONs
+    print("Test 8: Gültige Nicht-Objekt-Config")
+    with open(test_config_path, "w", encoding="utf-8") as f:
+        json.dump([], f)
+    prosync = load_prosync_module()
+    cfg4 = prosync.ConfigManager(test_config_path)
+    assert cfg4.data == {"app": {}, "connections": []}, "Nicht-Objekt-JSON sollte auf Standardstruktur zurückfallen"
+    assert cfg4.list_connections() == [], "Leere Standardstruktur sollte ohne Crash lesbar sein"
+    print("✓ PASS: Gültige Nicht-Objekt-Config wird korrekt behandelt\n")
 
     # Cleanup
     if os.path.exists(test_config_path):

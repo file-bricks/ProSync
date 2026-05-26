@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import time
 import subprocess
+import re
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
@@ -54,6 +55,25 @@ def app_base_dir() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
 
+WINDOWS_ENV_VAR_PATTERN = re.compile(r"%([^%]+)%")
+
+
+def normalize_configured_tool_path(base_dir, configured_path):
+    """Expand a configured tool path and anchor relative paths at the app root."""
+    raw_path = str(configured_path).strip()
+    if not raw_path:
+        return None
+
+    expanded_raw_path = WINDOWS_ENV_VAR_PATTERN.sub(
+        lambda match: os.environ.get(match.group(1), match.group(0)),
+        raw_path,
+    )
+    expanded_path = Path(os.path.expandvars(expanded_raw_path)).expanduser()
+    if not expanded_path.is_absolute():
+        expanded_path = Path(base_dir).expanduser() / expanded_path
+    return expanded_path
+
+
 def resolve_profiler_launch_path(base_dir, configured_path=""):
     """Resolve the best available ProFiler entrypoint."""
     base_dir = Path(base_dir).expanduser()
@@ -61,7 +81,7 @@ def resolve_profiler_launch_path(base_dir, configured_path=""):
 
     candidates = []
     if configured_path:
-        configured = Path(configured_path).expanduser()
+        configured = normalize_configured_tool_path(base_dir, configured_path)
         if configured.is_dir():
             candidates.extend([
                 configured / "Profiler_Suite_V15.py",
@@ -615,7 +635,16 @@ class ConfigManager:
         if os.path.exists(self.path):
             try:
                 with open(self.path, "r", encoding="utf-8") as f:
-                    self.data = json.load(f)
+                    loaded = json.load(f)
+                if not isinstance(loaded, dict):
+                    log_error(
+                        "Config load error: expected JSON object root, "
+                        f"got {type(loaded).__name__}"
+                    )
+                    self.data = {"app": {}, "connections": []}
+                    self.save()
+                    return
+                self.data = loaded
             except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
                 log_error(f"Config load error: {e}")
                 self.save()
