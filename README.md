@@ -57,11 +57,24 @@ Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versio
 ## Qualitätssicherung
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_portable_profile.py test_store_materials.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_linux_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 
 GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
+
+### Linux-Quell-Smoke
+
+Der zusätzliche Smoke `test_linux_platform_smoke.py` prüft den Linux-Pfad der
+Desktop-App reproduzierbar:
+
+- `xdg-open` für Datei- und Ordneröffnen
+- redigierten UTF-8-Export `prosync-profile-v1.json` mit Report-Metadaten
+- headless PySide6-Start mit Tray-Initialisierung
+- Linux-Launch ohne Windows-spezifische `creationflags`
+
+Der Lauf ist absichtlich read-only und startet keinen echten Sync gegen lokale
+Produktivordner.
 
 ## Datenschutz und lokale Dateien
 
@@ -351,7 +364,7 @@ Build artifacts in `build/`, `dist/`, and `releases/` are intentionally not vers
 ### Quality Checks
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_portable_profile.py test_store_materials.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_linux_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 

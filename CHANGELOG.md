@@ -16,6 +16,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Windows-Store-Material: `store_package.json`, `STORE_LISTING.md`, `PRIVACY_POLICY.md`, `SUPPORT.md` und `releases/windowsstore/`
 - Reproduzierbarer Generator `_WARTUNG/generate_store_screenshots.py` für Store-Screenshots und `store_assets/`
 - Smoke-Test `test_store_materials.py` für Demo-Konfiguration, Screenshot-Manifest und Store-Asset-Größen
+- Linux-Plattform-Smoke `test_linux_platform_smoke.py` für `xdg-open`, redigierten UTF-8-Export, Tray-Initialisierung und Launch ohne Windows-Flags
 
 ### Geändert / Changed
 - `.gitignore` deckt lokale Test-, Coverage- und Datenbank-Nebendateien vollständiger ab
@@ -26,8 +27,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - `app.profiler_path` akzeptiert jetzt auch relative Pfade und Windows-Umgebungsvariablen wie `%USERPROFILE%`
 - `ConfigManager` exportiert/importiert portable Profile jetzt mit echter UTF-8-Ausgabe und ohne Rekonstruktion privater Pfade
 - Importierte Austauschprofile erscheinen bewusst als lokale Entwürfe mit deaktiviertem Autosync und Pfad-Neuzuordnungs-Hinweis in der UI
-- `run_tests.py` deckt jetzt zusätzlich die Store-Material-Checks ab
+- `run_tests.py` deckt jetzt zusätzlich die Store-Material-Checks und den Linux-Smoke ab
 - Windows-Store-Pipeline ist jetzt bis zum lokalen Pretest und MSIX-Build dokumentiert; offen bleibt nur der erhöhte WACK-Lauf
+- README, Aufgabenliste, Portierungsplan und CI-Compile-Liste dokumentieren den Linux-Quellpfad jetzt explizit
 
 ### Behoben / Fixed
 - ProFiler-Companion fand konfigurierte Pfade aus `ProSync_config.json` bisher nicht, wenn sie relativ gespeichert oder über `%VAR%` referenziert waren
