@@ -1,5 +1,6 @@
 import sys
 import os
+import ntpath
 import json
 import uuid
 import hashlib
@@ -151,11 +152,11 @@ def portable_path_label(raw_path, fallback):
     if not value:
         return fallback
 
-    name = os.path.basename(value)
+    name = ntpath.basename(value) or os.path.basename(value)
     if name:
         return name
 
-    drive, _tail = os.path.splitdrive(value)
+    drive, _tail = ntpath.splitdrive(value)
     if drive:
         return f"{drive}\\"
     return fallback
