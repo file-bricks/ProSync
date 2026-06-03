@@ -97,7 +97,25 @@ _private/
 _BACKUP/
 _DEV/
 _WARTUNG/
+!_WARTUNG/
+_WARTUNG/*
+!_WARTUNG/generate_store_screenshots.py
 _alt/
 
 # ---- Logs ----
 *.log
+DECISIONS.md
+PORTIERUNGSPLAN.md
+TODO.md
+DONE.md
+
+# ---- Windows Store: track metadata, keep generated packages out ----
+!releases/
+releases/*
+!releases/windowsstore/
+releases/windowsstore/*
+!releases/windowsstore/BUILD.md
+!releases/windowsstore/WACK_PROTOCOL.md
+!releases/windowsstore/store_listing_de.md
+!releases/windowsstore/store_listing_en.md
+!releases/windowsstore/store_settings.json

@@ -1,0 +1,14 @@
+{
+  "app_name": "ProSync",
+  "publisher": "CN=52596601-BAB4-4F3F-B182-E8F3F273B202",
+  "publisher_display": "Geiger",
+  "identity_name": "Geiger.ProSync",
+  "version": "3.2.0.0",
+  "description": "Lokales Backup- und Synchronisationstool mit Datenbankschutz, Batch-Sync und redigiertem Profil-Export.",
+  "executable": "ProSync.exe",
+  "capabilities": "internetClient,runFullTrust",
+  "category": "Utilities",
+  "age_rating": "3+",
+  "privacy_url": "https://github.com/file-bricks/ProSync/blob/master/README.md#datenschutz-und-lokale-dateien",
+  "support_url": "https://github.com/file-bricks/ProSync/issues"
+}

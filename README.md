@@ -57,7 +57,7 @@ Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versio
 ## Qualitätssicherung
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 
@@ -68,6 +68,19 @@ GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
 `ProSync_config.json`, Logs, Build-Artefakte und lokale Host-Notizen bleiben außerhalb des Repositories. Die getrackte Datei `ProSync_config.example.json` enthält nur eine leere Beispielstruktur und keine persönlichen Quell- oder Zielpfade.
 
 Für GitHub werden nur Quellcode, Tests, Beispielkonfiguration und Projektdokumentation versioniert. Persönliche Sync-Ziele, Datenbanken, WAL-Dateien, temporäre Locks und lokale Build-Ausgaben sind über `.gitignore` ausgeschlossen.
+
+## Austauschformat `prosync-profile-v1.json`
+
+ProSync kann Verbindungen über **`⇄ Profil austauschen`** als redigiertes JSON
+exportieren und wieder importieren. Das Austauschformat ist für Web/PWA- oder
+Geräte-Companions gedacht und enthält deshalb bewusst **keine** echten lokalen
+Pfadwerte, keine Secrets und keinen `app.profiler_path`.
+
+- Exportiert werden Name, Typ, Modus, Autosync-Takt, Ausschlussmuster, Sicherheitszusammenfassungen und redigierte Pfad-Hinweise wie `Alpha` oder `data.db`.
+- Importierte Profile landen als lokale Entwürfe mit leerer Quelle/Ziel-Pfadzuordnung und deaktiviertem Autosync.
+- Vor dem ersten Sync müssen Quell- und Zielpfade deshalb im Desktop-Client neu gewählt werden.
+
+Details stehen in `EXPORTFORMAT.md`.
 
 Sicherheitslücken bitte nicht als öffentliches Issue melden, sondern über GitHubs private Vulnerability-Reporting-Funktion im Tab **Security**.
 
@@ -338,7 +351,7 @@ Build artifacts in `build/`, `dist/`, and `releases/` are intentionally not vers
 ### Quality Checks
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 

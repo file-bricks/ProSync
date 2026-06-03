@@ -14,6 +14,8 @@ TEST_FILES = [
     "test_config_manager.py",
     "test_database_safety.py",
     "test_import_streams.py",
+    "test_portable_profile.py",
+    "test_store_materials.py",
     "test_sync_worker.py",
     "test_translator.py",
 ]

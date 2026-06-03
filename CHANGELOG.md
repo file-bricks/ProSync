@@ -10,6 +10,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - GitHub Actions Smoke-Test-Workflow für Python 3.10 bis 3.12
 - Gemeinsamer lokaler/CI-Teststarter `run_tests.py`
 - `.gitattributes` für stabile Text- und Binärbehandlung im Repository
+- Redigiertes Austauschformat `prosync-profile-v1.json` mit `EXPORTFORMAT.md`
+- Toolbar-Menü `⇄ Profil austauschen` für Export/Import zwischen Desktop und Companion-Linien
+- Regressionstest `test_portable_profile.py` für Redaction-, Import- und ID-Kollisionspfade
+- Windows-Store-Material: `store_package.json`, `STORE_LISTING.md`, `PRIVACY_POLICY.md`, `SUPPORT.md` und `releases/windowsstore/`
+- Reproduzierbarer Generator `_WARTUNG/generate_store_screenshots.py` für Store-Screenshots und `store_assets/`
+- Smoke-Test `test_store_materials.py` für Demo-Konfiguration, Screenshot-Manifest und Store-Asset-Größen
 
 ### Geändert / Changed
 - `.gitignore` deckt lokale Test-, Coverage- und Datenbank-Nebendateien vollständiger ab
@@ -18,6 +24,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - CI installiert die nötigen Qt-Laufzeitbibliotheken für PySide6 auf Ubuntu-Runnern
 - `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md` und README-Hinweise auf aktuelle Repo-Hygiene und echte deutsche Umlaute nachgezogen
 - `app.profiler_path` akzeptiert jetzt auch relative Pfade und Windows-Umgebungsvariablen wie `%USERPROFILE%`
+- `ConfigManager` exportiert/importiert portable Profile jetzt mit echter UTF-8-Ausgabe und ohne Rekonstruktion privater Pfade
+- Importierte Austauschprofile erscheinen bewusst als lokale Entwürfe mit deaktiviertem Autosync und Pfad-Neuzuordnungs-Hinweis in der UI
+- `run_tests.py` deckt jetzt zusätzlich die Store-Material-Checks ab
+- Windows-Store-Pipeline ist jetzt bis zum lokalen Pretest und MSIX-Build dokumentiert; offen bleibt nur der erhöhte WACK-Lauf
 
 ### Behoben / Fixed
 - ProFiler-Companion fand konfigurierte Pfade aus `ProSync_config.json` bisher nicht, wenn sie relativ gespeichert oder über `%VAR%` referenziert waren

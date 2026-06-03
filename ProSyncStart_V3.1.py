@@ -124,6 +124,9 @@ except ImportError:
 # ---------------- CONSTANTS ----------------
 DB_CONNECTION_TIMEOUT = 5.0  # Seconds for SQLite database connection timeout
 SEARCH_RESULT_LIMIT = 500    # Maximum number of search results
+DEFAULT_AUTOSYNC_INTERVAL = 15
+PORTABLE_PROFILE_SCHEMA = "prosync-profile-v1"
+PORTABLE_PROFILE_APP_VERSION = "3.2"
 
 # FileSyncWorker Progress Percentages
 PROGRESS_CHECKPOINT = 10   # WAL checkpoint phase
@@ -135,6 +138,33 @@ PROGRESS_DONE = 100        # Completion
 # Dialog Dimensions
 DIALOG_WIDTH = 500         # Default width for ConnectionDialog
 DIALOG_HEIGHT = 600        # Default height for ConnectionDialog (increased for safety info)
+
+
+def default_config_data():
+    """Return a fresh default structure for the local configuration file."""
+    return {"app": {}, "connections": []}
+
+
+def portable_path_label(raw_path, fallback):
+    """Derive a non-sensitive display label from a local path."""
+    value = str(raw_path or "").strip().rstrip("\\/")
+    if not value:
+        return fallback
+
+    name = os.path.basename(value)
+    if name:
+        return name
+
+    drive, _tail = os.path.splitdrive(value)
+    if drive:
+        return f"{drive}\\"
+    return fallback
+
+
+def sync_report_log_path():
+    """Return the local report log path used by ProSync."""
+    reports_dir = Path(os.environ.get("APPDATA", Path.home())) / "ProSync" / "reports"
+    return reports_dir / "sync_log.json"
 
 # ---------------- DATABASE SAFETY MANAGER ----------------
 class DatabaseSafetyManager:
@@ -623,7 +653,7 @@ class ConfigManager:
             path: Pfad zur Konfigurationsdatei (ProSync_config.json)
         """
         self.path = path
-        self.data = {"app": {}, "connections": []}
+        self.data = default_config_data()
         self.load()
 
     def load(self):
@@ -641,12 +671,17 @@ class ConfigManager:
                         "Config load error: expected JSON object root, "
                         f"got {type(loaded).__name__}"
                     )
-                    self.data = {"app": {}, "connections": []}
+                    self.data = default_config_data()
                     self.save()
                     return
                 self.data = loaded
+                if not isinstance(self.data.get("app"), dict):
+                    self.data["app"] = {}
+                if not isinstance(self.data.get("connections"), list):
+                    self.data["connections"] = []
             except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
                 log_error(f"Config load error: {e}")
+                self.data = default_config_data()
                 self.save()
         else:
             self.save()
@@ -659,7 +694,7 @@ class ConfigManager:
         """
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
         with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2)
+            json.dump(self.data, f, indent=2, ensure_ascii=False)
 
     def list_connections(self):
         """
@@ -701,6 +736,276 @@ class ConfigManager:
         self.data["connections"] = [c for c in self.data.get("connections", [])
                                     if c.get("id") != conn_id]
         self.save()
+
+    @staticmethod
+    def _portable_path_hints(conn):
+        """Build redacted path hints for a portable profile export."""
+        conn_type = conn.get("type", ConnectionType.FOLDER)
+        if conn_type == ConnectionType.FILE:
+            return {
+                "source_label": portable_path_label(conn.get("source_file", ""), "Quelldatei"),
+                "target_label": portable_path_label(conn.get("target_file", ""), "Zieldatei"),
+            }
+
+        hints = {
+            "source_label": portable_path_label(conn.get("source", ""), "Quellordner"),
+            "target_label": portable_path_label(conn.get("target", ""), "Zielordner"),
+        }
+        if conn.get("indexing"):
+            hints["db_label"] = portable_path_label(conn.get("db_path", ""), "Indexdatenbank")
+        return hints
+
+    @staticmethod
+    def _portable_safety_summary(conn):
+        """Reduce local safety metadata to a redacted summary."""
+        if "_safety_analysis" in conn and isinstance(conn["_safety_analysis"], dict):
+            safety = conn["_safety_analysis"]
+            return {
+                "kind": "folder",
+                "databases_found": int(safety.get("databases_found", 0)),
+                "critical_databases": int(safety.get("critical_databases", 0)),
+                "excluded_databases": int(safety.get("excluded_databases", 0)),
+                "total_db_size_mb": round(float(safety.get("total_db_size_mb", 0)), 2),
+            }
+
+        if "_file_analysis" in conn and isinstance(conn["_file_analysis"], dict):
+            analysis = conn["_file_analysis"]
+            return {
+                "kind": "file",
+                "type": analysis.get("type", "unknown"),
+                "wal_mode": bool(analysis.get("wal_mode", False)),
+                "is_critical": bool(analysis.get("is_critical", False)),
+                "size_mb": round(float(analysis.get("size_mb", 0)), 2),
+            }
+        return None
+
+    @staticmethod
+    def _portable_report_snapshot():
+        """Read the local sync-report log and expose only report-safe metadata."""
+        log_file = sync_report_log_path()
+        if not log_file.exists():
+            return {"count": 0, "latest": None}
+
+        try:
+            with open(log_file, "r", encoding="utf-8") as fh:
+                reports = json.load(fh)
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            return {"count": 0, "latest": None}
+
+        if not isinstance(reports, list):
+            return {"count": 0, "latest": None}
+
+        latest = reports[-1] if reports else None
+        if not isinstance(latest, dict):
+            latest = None
+
+        latest_summary = None
+        if latest:
+            latest_summary = {
+                "connection": latest.get("connection", ""),
+                "connection_id": latest.get("connection_id", ""),
+                "mode": latest.get("mode", ""),
+                "started_at": latest.get("started_at", ""),
+                "duration_seconds": latest.get("duration_seconds", 0),
+                "files_copied": latest.get("files_copied", 0),
+                "files_deleted": latest.get("files_deleted", 0),
+                "files_skipped": latest.get("files_skipped", 0),
+                "bytes_copied": latest.get("bytes_copied", 0),
+                "total_actions": latest.get("total_actions", 0),
+            }
+
+        return {"count": len(reports), "latest": latest_summary}
+
+    @staticmethod
+    def _portable_autosync(conn):
+        """Normalize autosync settings for export without leaking local runtime state."""
+        autosync = conn.get("autosync", {})
+        interval = autosync.get("interval_minutes", DEFAULT_AUTOSYNC_INTERVAL)
+        try:
+            interval = int(interval)
+        except (TypeError, ValueError):
+            interval = DEFAULT_AUTOSYNC_INTERVAL
+        return {
+            "enabled": bool(autosync.get("enabled", False)),
+            "interval_minutes": max(1, interval),
+        }
+
+    @staticmethod
+    def _portable_patterns(conn):
+        """Normalize exclude patterns for export to avoid character-wise string splitting."""
+        raw_patterns = conn.get("exclude_patterns", [])
+        if isinstance(raw_patterns, (str, bytes)):
+            raw_patterns = [raw_patterns]
+        elif not isinstance(raw_patterns, (list, tuple)):
+            raw_patterns = []
+        return [str(pattern) for pattern in raw_patterns if str(pattern).strip()]
+
+    def _build_portable_connection(self, conn):
+        """Create one redacted portable connection entry."""
+        conn_type = conn.get("type", ConnectionType.FOLDER)
+        portable = {
+            "id": conn.get("id", ""),
+            "name": conn.get("name", ""),
+            "type": conn_type,
+            "mode": conn.get("mode", "one_way" if conn_type == ConnectionType.FILE else "mirror"),
+            "exclude_patterns": self._portable_patterns(conn),
+            "autosync": self._portable_autosync(conn),
+            "path_hints": self._portable_path_hints(conn),
+        }
+
+        if conn_type == ConnectionType.FILE:
+            portable["checkpoint_before_sync"] = bool(conn.get("checkpoint_before_sync", False))
+        else:
+            portable["conflict_policy"] = conn.get("conflict_policy", "source")
+            portable["indexing"] = bool(conn.get("indexing", True))
+
+        safety_summary = self._portable_safety_summary(conn)
+        if safety_summary:
+            portable["safety_summary"] = safety_summary
+
+        return portable
+
+    def export_portable_profile(self, export_path):
+        """Write the redacted exchange format `prosync-profile-v1.json`."""
+        payload = {
+            "schema": PORTABLE_PROFILE_SCHEMA,
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "exported_from": {
+                "app": "ProSync",
+                "version": PORTABLE_PROFILE_APP_VERSION,
+            },
+            "app": {
+                "notifications_enabled": bool(
+                    self.data.get("app", {}).get("notifications_enabled", True)
+                )
+            },
+            "connections": [
+                self._build_portable_connection(conn)
+                for conn in self.data.get("connections", [])
+                if isinstance(conn, dict)
+            ],
+            "reports": self._portable_report_snapshot(),
+        }
+
+        os.makedirs(os.path.dirname(export_path) or ".", exist_ok=True)
+        with open(export_path, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+        return payload
+
+    def _portable_to_local_connection(self, portable_conn, existing_ids):
+        """Convert one portable profile entry back to a local editable connection."""
+        if not isinstance(portable_conn, dict):
+            raise ValueError("Ungültiger Verbindungs-Eintrag im Austauschformat")
+
+        conn_type = portable_conn.get("type", ConnectionType.FOLDER)
+        if conn_type not in (ConnectionType.FOLDER, ConnectionType.FILE):
+            conn_type = ConnectionType.FOLDER
+
+        original_id = str(portable_conn.get("id") or uuid.uuid4())
+        conn_id = original_id
+        renamed = False
+        if conn_id in existing_ids:
+            conn_id = f"import-{uuid.uuid4().hex[:8]}"
+            renamed = True
+        existing_ids.add(conn_id)
+
+        autosync = portable_conn.get("autosync", {})
+        interval = autosync.get("interval_minutes", DEFAULT_AUTOSYNC_INTERVAL)
+        try:
+            interval = int(interval)
+        except (TypeError, ValueError):
+            interval = DEFAULT_AUTOSYNC_INTERVAL
+
+        raw_patterns = portable_conn.get("exclude_patterns", [])
+        if isinstance(raw_patterns, (str, bytes)):
+            raw_patterns = [raw_patterns]
+        elif not isinstance(raw_patterns, (list, tuple)):
+            raw_patterns = []
+
+        imported_conn = {
+            "id": conn_id,
+            "name": str(portable_conn.get("name") or "Importierte Aufgabe").strip() or "Importierte Aufgabe",
+            "type": conn_type,
+            "mode": portable_conn.get("mode", "one_way" if conn_type == ConnectionType.FILE else "mirror"),
+            "exclude_patterns": [
+                str(pattern)
+                for pattern in raw_patterns
+                if str(pattern).strip()
+            ],
+            "autosync": {
+                "enabled": False,
+                "interval_minutes": max(1, interval),
+                "_reason": "Pfadzuordnung nach Import erforderlich",
+            },
+            "_portable_import": {
+                "schema": PORTABLE_PROFILE_SCHEMA,
+                "imported_at": datetime.now(timezone.utc).isoformat(),
+                "original_id": original_id,
+                "requires_mapping": True,
+                "path_hints": portable_conn.get("path_hints", {}),
+            },
+        }
+
+        safety_summary = portable_conn.get("safety_summary")
+        if isinstance(safety_summary, dict):
+            imported_conn["_portable_import"]["safety_summary"] = safety_summary
+
+        if conn_type == ConnectionType.FILE:
+            imported_conn["source_file"] = ""
+            imported_conn["target_file"] = ""
+            imported_conn["checkpoint_before_sync"] = bool(
+                portable_conn.get("checkpoint_before_sync", False)
+            )
+        else:
+            imported_conn["source"] = ""
+            imported_conn["target"] = ""
+            imported_conn["db_path"] = ""
+            imported_conn["indexing"] = bool(portable_conn.get("indexing", True))
+            imported_conn["conflict_policy"] = portable_conn.get("conflict_policy", "source")
+
+        return imported_conn, renamed
+
+    def import_portable_profile(self, import_path):
+        """Import a redacted portable profile without restoring private local paths."""
+        with open(import_path, "r", encoding="utf-8") as fh:
+            payload = json.load(fh)
+
+        if not isinstance(payload, dict):
+            raise ValueError("Austauschdatei muss ein JSON-Objekt enthalten")
+        if payload.get("schema") != PORTABLE_PROFILE_SCHEMA:
+            raise ValueError("Unbekanntes Austauschformat")
+
+        connections = payload.get("connections", [])
+        if not isinstance(connections, list):
+            raise ValueError("Austauschdatei enthält keine gültige Verbindungsliste")
+
+        app_settings = payload.get("app", {})
+        if not isinstance(self.data.get("app"), dict):
+            self.data["app"] = {}
+        if isinstance(app_settings, dict) and isinstance(
+            app_settings.get("notifications_enabled"), bool
+        ):
+            self.data["app"]["notifications_enabled"] = app_settings["notifications_enabled"]
+
+        existing_ids = {
+            conn.get("id")
+            for conn in self.data.get("connections", [])
+            if isinstance(conn, dict) and conn.get("id")
+        }
+        imported = []
+        renamed = 0
+        for portable_conn in connections:
+            local_conn, did_rename = self._portable_to_local_connection(
+                portable_conn,
+                existing_ids,
+            )
+            if did_rename:
+                renamed += 1
+            imported.append(local_conn)
+
+        self.data["connections"] = self.data.get("connections", []) + imported
+        self.save()
+        return {"imported": len(imported), "renamed": renamed}
 
 
 class BatchSyncQueue:
@@ -1856,6 +2161,14 @@ class MainWindow(QMainWindow):
         self.btn_profiler.setToolTip("Startet ProFiler als Companion-App")
         self.btn_profiler.clicked.connect(self.launch_profiler)
 
+        btn_portable = QPushButton("⇄ Profil austauschen")
+        portable_menu = QMenu(self)
+        act_export_profile = portable_menu.addAction("📤 Profil exportieren")
+        act_export_profile.triggered.connect(self.export_portable_profile_dialog)
+        act_import_profile = portable_menu.addAction("📥 Profil importieren")
+        act_import_profile.triggered.connect(self.import_portable_profile_dialog)
+        btn_portable.setMenu(portable_menu)
+
         empty = QWidget()
         empty.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
@@ -1865,6 +2178,7 @@ class MainWindow(QMainWindow):
         toolbar_lay.addWidget(btn_add)
         toolbar_lay.addWidget(btn_audit)  # V3 NEW
         toolbar_lay.addWidget(self.btn_profiler)
+        toolbar_lay.addWidget(btn_portable)
         toolbar_lay.addWidget(empty)
         toolbar_lay.addWidget(self.btn_search)
         main_lay.addLayout(toolbar_lay)
@@ -1996,12 +2310,12 @@ class MainWindow(QMainWindow):
 
             # V3.1: Different tooltip for file vs folder
             if conn_type == ConnectionType.FILE:
-                src = c.get("source_file", "?")
-                tgt = c.get("target_file", "?")
+                src = self._format_connection_endpoint(c, "source")
+                tgt = self._format_connection_endpoint(c, "target")
                 item.setToolTip(f"[FILE] {src} -> {tgt} ({c.get('mode', 'one_way')})")
             else:
-                src = c.get("source", "?")
-                tgt = c.get("target", "?")
+                src = self._format_connection_endpoint(c, "source")
+                tgt = self._format_connection_endpoint(c, "target")
                 item.setToolTip(f"[FOLDER] {src} -> {tgt} ({c.get('mode', 'two_way')})")
 
             item.setData(Qt.ItemDataRole.UserRole, c)
@@ -2025,6 +2339,53 @@ class MainWindow(QMainWindow):
             selected.append(conn)
         return selected
 
+    @staticmethod
+    def _portable_hint_label(data, key):
+        """Read a redacted path hint from an imported portable profile."""
+        portable_meta = data.get("_portable_import", {})
+        if not isinstance(portable_meta, dict):
+            return ""
+        hints = portable_meta.get("path_hints", {})
+        if not isinstance(hints, dict):
+            return ""
+        return str(hints.get(key, "")).strip()
+
+    def _format_connection_endpoint(self, data, role):
+        """Prefer real local paths, otherwise show redacted remapping hints."""
+        conn_type = data.get("type", ConnectionType.FOLDER)
+        if conn_type == ConnectionType.FILE:
+            field_map = {
+                "source": ("source_file", "source_label"),
+                "target": ("target_file", "target_label"),
+            }
+        else:
+            field_map = {
+                "source": ("source", "source_label"),
+                "target": ("target", "target_label"),
+                "db": ("db_path", "db_label"),
+            }
+
+        actual_key, hint_key = field_map[role]
+        actual_value = str(data.get(actual_key, "") or "").strip()
+        if actual_value:
+            return actual_value
+
+        hint = self._portable_hint_label(data, hint_key)
+        if hint:
+            return f"[neu zuordnen] {hint}"
+        return "?"
+
+    def _connection_requires_path_mapping(self, data):
+        """Imported portable profiles must be mapped before their first sync."""
+        portable_meta = data.get("_portable_import", {})
+        if not isinstance(portable_meta, dict) or not portable_meta.get("requires_mapping"):
+            return False
+
+        conn_type = data.get("type", ConnectionType.FOLDER)
+        if conn_type == ConnectionType.FILE:
+            return not (str(data.get("source_file", "")).strip() and str(data.get("target_file", "")).strip())
+        return not (str(data.get("source", "")).strip() and str(data.get("target", "")).strip())
+
     def refresh_selection_state(self):
         """Aktualisiert Detailanzeige und Button-Status anhand der Auswahl."""
         selected = self.get_selected_connections()
@@ -2040,7 +2401,10 @@ class MainWindow(QMainWindow):
                 f"{preview_names}"
             )
             self.btn_run.setText("▶ Batch starten")
-            self.btn_run.setEnabled(not is_running)
+            self.btn_run.setEnabled(
+                not is_running
+                and not any(self._connection_requires_path_mapping(conn) for conn in selected)
+            )
             self.btn_pause.setEnabled(False)
             self.btn_stop.setEnabled(is_running)
             return
@@ -2064,6 +2428,7 @@ class MainWindow(QMainWindow):
             # File connection info
             checkpoint_txt = " [Checkpoint: AN]" if data.get("checkpoint_before_sync") else ""
             safety_info = ""
+            mapping_note = ""
 
             if "_file_analysis" in data:
                 fa = data["_file_analysis"]
@@ -2073,10 +2438,13 @@ class MainWindow(QMainWindow):
                 wal_txt = " (WAL)" if wal_mode else ""
                 safety_info = f"\n🛡️ Typ: {db_type}{wal_txt}, {size_mb:.1f} MB"
 
+            if self._connection_requires_path_mapping(data):
+                mapping_note = "\n⚠ Importiertes Profil: Quelldatei und Zieldatei vor dem ersten Sync neu wählen."
+
             self.lbl_info.setText(
-                f"📄 {data['name']} [{data.get('mode', 'one_way').upper()}]{checkpoint_txt}{safety_info}\n"
-                f"Src: {data.get('source_file', '?')}\n"
-                f"Tgt: {data.get('target_file', '?')}"
+                f"📄 {data['name']} [{data.get('mode', 'one_way').upper()}]{checkpoint_txt}{safety_info}{mapping_note}\n"
+                f"Src: {self._format_connection_endpoint(data, 'source')}\n"
+                f"Tgt: {self._format_connection_endpoint(data, 'target')}"
             )
         else:
             # Folder connection info
@@ -2084,6 +2452,7 @@ class MainWindow(QMainWindow):
 
             # V3 NEW: Show safety info
             safety_info = ""
+            mapping_note = ""
             if "_safety_analysis" in data:
                 sa = data["_safety_analysis"]
                 excluded = sa.get("excluded_databases", 0)
@@ -2092,15 +2461,18 @@ class MainWindow(QMainWindow):
                 else:
                     safety_info = f"\n🛡️ {sa.get('databases_found', 0)} DB(s) gefunden"
 
+            if self._connection_requires_path_mapping(data):
+                mapping_note = "\n⚠ Importiertes Profil: Quell- und Zielordner vor dem ersten Sync neu wählen."
+
             self.lbl_info.setText(
-                f"📁 {data['name']} [{data.get('mode', 'two_way').upper()}]{idx_txt}{safety_info}\n"
-                f"Src: {data.get('source', '?')}\n"
-                f"Tgt: {data.get('target', '?')}"
+                f"📁 {data['name']} [{data.get('mode', 'two_way').upper()}]{idx_txt}{safety_info}{mapping_note}\n"
+                f"Src: {self._format_connection_endpoint(data, 'source')}\n"
+                f"Tgt: {self._format_connection_endpoint(data, 'target')}"
             )
 
         is_running = bool(self.worker and self.worker.isRunning())
         is_this_task_running = is_running and (self.worker.conn_id == data['id'])
-        self.btn_run.setEnabled(not is_running)
+        self.btn_run.setEnabled(not is_running and not self._connection_requires_path_mapping(data))
         self.btn_pause.setEnabled(is_this_task_running)
         self.btn_stop.setEnabled(is_this_task_running)
         if is_this_task_running and self.worker.is_paused:
@@ -2131,10 +2503,80 @@ class MainWindow(QMainWindow):
         selected = self.get_selected_connections()
         if not selected:
             return
+        unmapped = [conn["name"] for conn in selected if self._connection_requires_path_mapping(conn)]
+        if unmapped:
+            QMessageBox.warning(
+                self,
+                "Pfadzuordnung erforderlich",
+                "Diese importierten Profile müssen vor dem ersten Sync lokal neu zugeordnet werden:\n\n"
+                + "\n".join(unmapped),
+            )
+            return
         if len(selected) > 1:
             self.start_batch_sync(selected)
             return
         self.run_sync_logic(selected[0])
+
+    def export_portable_profile_dialog(self):
+        """Exportiere Verbindungen als redigiertes Austauschprofil."""
+        default_path = str(Path.home() / f"{PORTABLE_PROFILE_SCHEMA}.json")
+        export_path, _selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "Profil exportieren",
+            default_path,
+            "JSON-Dateien (*.json)",
+        )
+        if not export_path:
+            return
+
+        try:
+            payload = self.cfg.export_portable_profile(export_path)
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                "Export fehlgeschlagen",
+                f"Das Austauschprofil konnte nicht gespeichert werden:\n{exc}",
+            )
+            return
+
+        QMessageBox.information(
+            self,
+            "Profil exportiert",
+            f"{len(payload.get('connections', []))} Aufgabe(n) wurden exportiert.\n\n"
+            "Lokale Pfade, `app.profiler_path` und andere persönliche Systempfade "
+            "sind im Austauschformat bewusst redigiert.",
+        )
+
+    def import_portable_profile_dialog(self):
+        """Importiere ein redigiertes Austauschprofil als lokale Entwürfe."""
+        import_path, _selected_filter = QFileDialog.getOpenFileName(
+            self,
+            "Profil importieren",
+            str(Path.home()),
+            "JSON-Dateien (*.json)",
+        )
+        if not import_path:
+            return
+
+        try:
+            result = self.cfg.import_portable_profile(import_path)
+        except Exception as exc:
+            QMessageBox.critical(
+                self,
+                "Import fehlgeschlagen",
+                f"Das Austauschprofil konnte nicht importiert werden:\n{exc}",
+            )
+            return
+
+        self.scheduler.update_all()
+        self.populate_list()
+        QMessageBox.information(
+            self,
+            "Profil importiert",
+            f"{result['imported']} Aufgabe(n) wurden als lokale Entwürfe angelegt.\n"
+            f"Neu vergebene IDs wegen Kollisionen: {result['renamed']}.\n\n"
+            "Bitte Quell- und Zielpfade vor dem ersten Sync neu zuordnen.",
+        )
 
     def start_batch_sync(self, connections):
         """Startet einen sequenziellen Batch-Lauf über mehrere Verbindungen."""
@@ -2258,11 +2700,11 @@ class MainWindow(QMainWindow):
     def _save_sync_report(self, report: dict) -> None:
         """Persist a sync-run report as JSON and keep the last 100 entries."""
         try:
-            reports_dir = Path(os.environ.get("APPDATA", Path.home())) / "ProSync" / "reports"
+            reports_dir = sync_report_log_path().parent
             reports_dir.mkdir(parents=True, exist_ok=True)
 
             # Load existing log
-            log_file = reports_dir / "sync_log.json"
+            log_file = sync_report_log_path()
             if log_file.exists():
                 with open(log_file, "r", encoding="utf-8") as fh:
                     all_reports = json.load(fh)
