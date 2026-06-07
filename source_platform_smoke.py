@@ -1,4 +1,4 @@
-"""Linux platform smoke test for ProSync."""
+"""Source platform smoke test for ProSync (Linux + macOS)."""
 
 from __future__ import annotations
 

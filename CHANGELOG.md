@@ -16,7 +16,8 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - Windows-Store-Material: `store_package.json`, `STORE_LISTING.md`, `PRIVACY_POLICY.md`, `SUPPORT.md` und `releases/windowsstore/`
 - Reproduzierbarer Generator `_WARTUNG/generate_store_screenshots.py` für Store-Screenshots und `store_assets/`
 - Smoke-Test `test_store_materials.py` für Demo-Konfiguration, Screenshot-Manifest und Store-Asset-Größen
-- Linux-Plattform-Smoke `test_linux_platform_smoke.py` für `xdg-open`, redigierten UTF-8-Export, Tray-Initialisierung und Launch ohne Windows-Flags
+- Source-Plattform-Smoke `source_platform_smoke.py` (umbenannt von `test_linux_platform_smoke.py`) für `xdg-open`, redigierten UTF-8-Export, Tray-Initialisierung und plattformspezifische Launch-Logik
+- CI-Workflow `.github/workflows/source-platform-smoke.yml` führt den Smoke auf ubuntu-latest und macos-latest aus
 
 ### Geändert / Changed
 - `.gitignore` deckt lokale Test-, Coverage- und Datenbank-Nebendateien vollständiger ab
