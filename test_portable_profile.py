@@ -280,12 +280,29 @@ def test_portable_profile_export_accepts_single_string_exclude_pattern():
         assert payload["connections"][0]["exclude_patterns"] == ["*.tmp"]
 
 
+def test_sync_report_log_path_falls_back_when_appdata_empty():
+    """An empty APPDATA value must not produce a relative report path."""
+    prosync = load_prosync_module()
+
+    old_appdata = os.environ.get("APPDATA")
+    os.environ["APPDATA"] = ""
+    try:
+        expected = Path.home() / "ProSync" / "reports" / "sync_log.json"
+        assert prosync.sync_report_log_path() == expected
+    finally:
+        if old_appdata is None:
+            os.environ.pop("APPDATA", None)
+        else:
+            os.environ["APPDATA"] = old_appdata
+
+
 if __name__ == "__main__":
     try:
         test_portable_profile_export_import()
         test_portable_profile_import_renames_colliding_ids()
         test_portable_profile_import_accepts_single_string_exclude_pattern()
         test_portable_profile_export_accepts_single_string_exclude_pattern()
+        test_sync_report_log_path_falls_back_when_appdata_empty()
         print("portable profile tests passed")
         sys.exit(0)
     except Exception as exc:

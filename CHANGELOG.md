@@ -34,6 +34,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ### Behoben / Fixed
 - ProFiler-Companion fand konfigurierte Pfade aus `ProSync_config.json` bisher nicht, wenn sie relativ gespeichert oder über `%VAR%` referenziert waren
 - Smoke-Test `test_companion_launch.py` deckt diese beiden Pfadvarianten jetzt explizit ab
+- Leeres `APPDATA` erzeugt für Sync-Reports und den portablen Profil-Export keinen relativen Pfad im Arbeitsordner mehr, sondern fällt sauber auf das Nutzerverzeichnis zurück
 
 ## [3.2.0] - 2026-05-01
 

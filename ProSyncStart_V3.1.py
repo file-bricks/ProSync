@@ -164,7 +164,11 @@ def portable_path_label(raw_path, fallback):
 
 def sync_report_log_path():
     """Return the local report log path used by ProSync."""
-    reports_dir = Path(os.environ.get("APPDATA", Path.home())) / "ProSync" / "reports"
+    appdata = str(os.environ.get("APPDATA", "") or "").strip()
+    base_dir = Path(appdata) if appdata else Path.home()
+    if not base_dir.is_absolute():
+        base_dir = Path.home()
+    reports_dir = base_dir / "ProSync" / "reports"
     return reports_dir / "sync_log.json"
 
 # ---------------- DATABASE SAFETY MANAGER ----------------
