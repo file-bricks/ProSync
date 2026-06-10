@@ -108,6 +108,8 @@ DECISIONS.md
 PORTIERUNGSPLAN.md
 TODO.md
 DONE.md
+ENTWICKLUNGSPLAN*.md
+Feature_Analyse*.md
 
 # ---- Windows Store: track metadata, keep generated packages out ----
 !releases/

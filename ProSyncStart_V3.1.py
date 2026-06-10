@@ -1390,6 +1390,9 @@ class FileSyncWorker(QThread):
                     self.error.emit(f"Größen stimmen nicht überein! ({src_size} vs {tgt_size})")
                     return
 
+            if self.is_killed:
+                return
+
             # Done!
             self.progress.emit(PROGRESS_DONE, "done")
             self.status.emit(f"✓ Sync abgeschlossen: {filename}")
@@ -1500,6 +1503,7 @@ class FolderSyncWorker(QThread):
             # 3. Execute
             total = len(actions)
             _start_time = time.monotonic()
+            _started_at = datetime.now(timezone.utc).isoformat()
             _stats = {"copied": 0, "deleted": 0, "skipped": 0, "bytes_copied": 0}
             for i, (act, rel_path) in enumerate(actions):
                 if self.is_killed:
@@ -1564,7 +1568,7 @@ class FolderSyncWorker(QThread):
                 "connection": self.cfg.get("name", ""),
                 "connection_id": self.conn_id,
                 "mode": mode,
-                "started_at": datetime.now(timezone.utc).isoformat(),
+                "started_at": _started_at,
                 "duration_seconds": round(_duration, 2),
                 "files_copied": _stats["copied"],
                 "files_deleted": _stats["deleted"],
@@ -1572,6 +1576,8 @@ class FolderSyncWorker(QThread):
                 "bytes_copied": _stats["bytes_copied"],
                 "total_actions": total,
             }
+            if self.is_killed:
+                return
             self.sync_report.emit(report)
             self.progress.emit(100, "done")
             self.finished.emit()
@@ -1633,8 +1639,14 @@ class ConnectionScheduler(QObject):
         """
         Aktualisiert die Timer für alle Verbindungen.
 
-        Ruft update_connection() für jede gespeicherte Verbindung auf.
+        Stoppt Timer für gelöschte Verbindungen und ruft update_connection()
+        für jede aktuell gespeicherte Verbindung auf.
         """
+        current_ids = {conn["id"] for conn in self.cfg.list_connections()}
+        for stale_id in list(self.timers.keys()):
+            if stale_id not in current_ids:
+                self.timers[stale_id].stop()
+                del self.timers[stale_id]
         for conn in self.cfg.list_connections():
             self.update_connection(conn)
 
@@ -2592,6 +2604,7 @@ class MainWindow(QMainWindow):
 
         planned = self.batch_queue.start(connections)
         if len(planned) < 2:
+            self.batch_queue.reset()
             if planned:
                 self.run_sync_logic(planned[0])
             return
@@ -2667,6 +2680,7 @@ class MainWindow(QMainWindow):
             )
         self.btn_stop.setEnabled(False)
         self.btn_pause.setEnabled(False)
+        QTimer.singleShot(0, self.worker_finished)
 
     def toggle_pause(self):
         if self.worker and self.worker.isRunning():
@@ -2711,9 +2725,12 @@ class MainWindow(QMainWindow):
             # Load existing log
             log_file = sync_report_log_path()
             if log_file.exists():
-                with open(log_file, "r", encoding="utf-8") as fh:
-                    all_reports = json.load(fh)
-                if not isinstance(all_reports, list):
+                try:
+                    with open(log_file, "r", encoding="utf-8") as fh:
+                        all_reports = json.load(fh)
+                    if not isinstance(all_reports, list):
+                        all_reports = []
+                except (json.JSONDecodeError, UnicodeDecodeError, OSError):
                     all_reports = []
             else:
                 all_reports = []

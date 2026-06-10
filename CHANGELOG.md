@@ -6,6 +6,24 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ## [Unreleased]
 
 ### Hinzugefügt / Added
+- `llms.txt` für LLM-Crawler-Indexierung mit Audience, Search Phrases und Last-checked
+- Regressionstest `test_batch_sync_queue_bugs.py` für Bugs #5 (BatchQueue.reset fehlt) und #6 (worker_finished fehlt im Fehlerpfad)
+- Regressionstest `test_folder_sync_worker_bugs.py` für Bugs #1–#4 (started_at, is_killed-Guards, sync_log-Korruption) und #8 (stale Timer in ConnectionScheduler)
+
+### Geändert / Changed
+- README von Deutsch-first auf English-first umgebaut; Deutsch als sekundäre Sektion
+- `.gitignore` schließt interne Planungsdokumente (`ENTWICKLUNGSPLAN*.md`, `Feature_Analyse*.md`) aus
+
+### Behoben / Fixed (2026-06-07)
+- **Bug #1:** `started_at` enthielt End-Zeit statt Start-Zeit — `_started_at` wird nun vor dem Sync-Loop erfasst
+- **Bug #2:** Abgebrochener `FolderSyncWorker` emittierte fälschlich `progress(100)` und `finished` — `is_killed`-Guard vor Emit-Sequenz
+- **Bug #3:** Korrupte `sync_log.json` blockierte alle zukünftigen Report-Speicherungen — `except (json.JSONDecodeError, UnicodeDecodeError, OSError)` hinzugefügt
+- **Bug #4:** Abgebrochener `FileSyncWorker` emittierte fälschlich `finished` — `is_killed`-Guard vor Done-Block
+- **Bug #5:** `batch_queue.pending` blieb nach Einzelverbindungs-Sync belegt — `batch_queue.reset()` bei `len(planned) < 2`
+- **Bug #6:** `_handle_worker_error` rief `worker_finished()` nicht auf — `QTimer.singleShot(0, self.worker_finished)` ergänzt
+- **Bug #8:** `ConnectionScheduler.update_all()` stoppte keine Timer für gelöschte Verbindungen — stale-Timer-Cleanup hinzugefügt
+
+
 - ProFiler-Companion: Toolbar-Button startet die optionale Companion-App über `app.profiler_path` oder den gemeinsamen Software-Baum
 - GitHub Actions Smoke-Test-Workflow für Python 3.10 bis 3.12
 - Gemeinsamer lokaler/CI-Teststarter `run_tests.py`

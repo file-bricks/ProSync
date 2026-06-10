@@ -1,0 +1,49 @@
+# ProSync
+
+Canonical repository: https://github.com/file-bricks/ProSync
+Organization: file-bricks
+Primary language: Python
+UI stack: PySide6 desktop system-tray application
+License: MIT
+
+ProSync is an intelligent backup synchronization tool with built-in SQLite database protection. It runs as a Windows system-tray app and supports folder sync, file sync, scheduled backups, and batch operations.
+
+Core behavior:
+
+- Synchronizes folders and individual files in five configurable modes: mirror, update, two_way, one_way, index_only.
+- Detects and protects SQLite databases automatically (WAL checkpoint before copy, WAL file exclusion).
+- Supports scheduled backups with configurable intervals and a batch-sync queue for multiple connections.
+- Exports redacted `prosync-profile-v1.json` for device companions and web PWA integration.
+- Optionally launches ProFiler companion for indexing and search across synchronized files.
+
+Privacy boundary:
+
+- ProSync does not transmit any data. All sync operations run locally.
+- `ProSync_config.json` with personal source/target paths is excluded from the repository.
+- The tracked `ProSync_config.example.json` contains only an empty template structure.
+
+Local verification:
+
+```bash
+python -m pytest -q
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
+```
+
+## Audience
+
+- Windows users who need reliable, scheduled backup sync between local or network folders
+- Developers and power users managing SQLite databases who need safe, consistent backups
+- Privacy-conscious users who want a local-only sync tool with no cloud dependency
+- Users of the file-bricks suite looking for ProFiler companion integration
+
+## Search Phrases
+
+- ProSync Windows backup synchronization PySide6
+- local SQLite database backup sync tool
+- Windows system tray folder sync scheduled backup
+- WAL checkpoint SQLite safe copy Python
+- file-bricks ProSync batch sync desktop app
+- two-way folder synchronization Windows offline
+- ProFiler companion file indexing sync
+
+## Last-checked: 2026-06-10
