@@ -46,4 +46,4 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - two-way folder synchronization Windows offline
 - ProFiler companion file indexing sync
 
-## Last-checked: 2026-06-10
+## Last-checked: 2026-06-11

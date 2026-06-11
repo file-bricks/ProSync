@@ -13,8 +13,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ### Geändert / Changed
 - README von Deutsch-first auf English-first umgebaut; Deutsch als sekundäre Sektion
 - `.gitignore` schließt interne Planungsdokumente (`ENTWICKLUNGSPLAN*.md`, `Feature_Analyse*.md`) aus
+- GitHub-Actions-Workflows auf aktuelle Major-Versionen aktualisiert (`actions/checkout@v6`, `actions/setup-python@v6`, `actions/stale@v10`, `actions/first-interaction@v3`)
 
 ### Behoben / Fixed (2026-06-07)
+- `run_tests.py` und README-Testbefehle verwenden wieder den vorhandenen Source-Smoke `source_platform_smoke.py` statt des alten Namens `test_linux_platform_smoke.py`
 - **Bug #1:** `started_at` enthielt End-Zeit statt Start-Zeit — `_started_at` wird nun vor dem Sync-Loop erfasst
 - **Bug #2:** Abgebrochener `FolderSyncWorker` emittierte fälschlich `progress(100)` und `finished` — `is_killed`-Guard vor Emit-Sequenz
 - **Bug #3:** Korrupte `sync_log.json` blockierte alle zukünftigen Report-Speicherungen — `except (json.JSONDecodeError, UnicodeDecodeError, OSError)` hinzugefügt

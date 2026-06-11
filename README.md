@@ -58,7 +58,7 @@ Build artifacts in `build/`, `dist/`, and `releases/` are intentionally not vers
 ## Quality Checks
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py test_linux_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 
