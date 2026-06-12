@@ -65,6 +65,34 @@ python run_tests.py
 
 GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
 
+### Web/PWA-Companion
+
+`web_companion/` liefert jetzt einen statischen read-only Companion für
+`prosync-profile-v1.json`.
+
+- Import per Datei oder JSON-Paste
+- Übersichts-Karten für Verbindungen, Autosync und letzte Report-Metadaten
+- Filter für Verbindungstyp, Sync-Modus und Autosync-Status
+- Offline-Wiederherstellung des letzten geladenen Profils über lokalen Speicher
+  plus Service Worker
+
+Schnellstart:
+
+```bash
+cd web_companion
+python -m http.server 4179
+```
+
+Qualitätsprüfungen:
+
+```bash
+cd web_companion
+npm test
+node --check app.js
+node --check library.js
+node --check sw.js
+```
+
 ### Linux-Quell-Smoke
 
 Der zusätzliche Smoke `source_platform_smoke.py` prüft den Linux- und macOS-Pfad der
@@ -298,6 +326,14 @@ Pfadwerte, keine Secrets und keinen `app.profiler_path`.
 - Vor dem ersten Sync müssen Quell- und Zielpfade deshalb im Desktop-Client neu gewählt werden.
 
 Details stehen in `EXPORTFORMAT.md`.
+
+Der Web/PWA-Companion konsumiert genau dieses redigierte Format und bleibt
+bewusst read-only:
+
+- keine echten Quell-, Ziel- oder Datenbankpfade
+- keine Secrets, Tokens oder `app.profiler_path`
+- keine Browser-Sync-Engine
+- noch keine automatische Desktop-Trigger-Verdrahtung
 
 ## Lizenz
 

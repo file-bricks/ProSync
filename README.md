@@ -64,6 +64,34 @@ python run_tests.py
 
 GitHub Actions runs the same smoke tests on Python 3.10, 3.11, and 3.12.
 
+### Web/PWA Companion
+
+`web_companion/` provides a static read-only companion for
+`prosync-profile-v1.json`.
+
+- Import via file picker or JSON paste
+- Summary cards for connections, autosync, and latest report metadata
+- Filters for connection type, sync mode, and autosync state
+- Offline restore of the last loaded profile through local storage and a
+  service worker
+
+Quick start:
+
+```bash
+cd web_companion
+python -m http.server 4179
+```
+
+Quality checks:
+
+```bash
+cd web_companion
+npm test
+node --check app.js
+node --check library.js
+node --check sw.js
+```
+
 ## Privacy and Local Files
 
 `ProSync_config.json`, logs, build artifacts, and local host notes stay outside the repository. The tracked `ProSync_config.example.json` contains only an empty example structure and no personal source or target paths.
@@ -232,6 +260,17 @@ ProSync can launch ProFiler directly from the main window. The search checks
 and finally the shared `REL-PUB_ProFiler` software tree. Configured paths may
 be absolute, relative to the ProSync folder, or use environment variables such
 as `%USERPROFILE%\\...`.
+
+## Portable Web Companion Export
+
+The desktop client can export `prosync-profile-v1.json` through
+**`⇄ Profil austauschen`**. The Web/PWA companion consumes exactly this
+redacted format and intentionally keeps it read-only:
+
+- no real source, target, or database paths
+- no secrets, tokens, or `app.profiler_path`
+- no browser-based sync engine
+- no automatic desktop triggering yet
 
 ## Tips & Best Practices
 

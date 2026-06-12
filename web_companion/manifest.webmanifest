@@ -1,0 +1,19 @@
+{
+  "name": "ProSync Companion",
+  "short_name": "ProSync",
+  "description": "Lokaler Companion für ProSync-Profile und redigierte Sync-Report-Metadaten.",
+  "lang": "de-DE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#edf3f7",
+  "theme_color": "#16324f",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
