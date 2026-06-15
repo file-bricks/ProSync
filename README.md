@@ -1,8 +1,16 @@
+<img src="assets/banner.svg" width="100%" alt="ProSync Banner">
+
 # ProSync
 
-Intelligent backup synchronization with database safety.
+**🇬🇧 English** · **[🇩🇪 Deutsche Dokumentation](README_de.md)**
 
-> [Deutsche Dokumentation](README_de.md)
+> Intelligent backup synchronization with database safety.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue?logo=windows)](#installation)
+
+**Quick links:** [Features](#features) · [Installation](#installation) · [User Guide](USER_GUIDE.md) · [Changelog](CHANGELOG.md)
 
 ## Features
 
