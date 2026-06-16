@@ -1,4 +1,4 @@
-const CACHE_NAME = "prosync-web-companion-v1";
+const CACHE_NAME = "prosync-web-companion-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const APP_SHELL = [
   "./library.js",
   "./manifest.webmanifest",
   "./icon.svg",
+  "./apple-touch-icon-180.png",
 ];
 
 self.addEventListener("install", (event) => {
