@@ -411,7 +411,11 @@ function handlePasteImport() {
 }
 
 function clearStoredProfile() {
-  localStorage.removeItem(STORAGE_KEY);
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (_removeError) {
+    // Ignore removal errors (e.g. Safari Private Mode, policy-blocked storage)
+  }
   state.profile = null;
   state.sourceLabel = "Kein Profil geladen";
   elements.jsonInput.value = "";

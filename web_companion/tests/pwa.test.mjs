@@ -95,6 +95,7 @@ test("app.js schützt localStorage.getItem in loadStoredProfile mit try/catch", 
 
 describe("Bug-Regression Lauf 13", () => {
   const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
 
   test("Bug #1: sw.js fetch-Handler hat .catch() gegen unhandled rejection bei Offline+Uncached", () => {
@@ -111,15 +112,28 @@ describe("Bug-Regression Lauf 13", () => {
     assert.equal(svgIcon.type, "image/svg+xml", "icon.svg muss type image/svg+xml haben");
   });
 
-  test("Bug #3: manifest Icon-192.png hat explizites purpose='any'", () => {
+  test("Bug #3: manifest Icon-192.png hat explizites purpose='any' (Konsistenz-Cleanup)", () => {
     const png192 = manifest.icons.find((ic) => ic.src.includes("Icon-192") && !ic.src.includes("maskable"));
     assert.ok(png192, "Icon-192.png nicht im Manifest");
     assert.equal(png192.purpose, "any", "Icon-192.png fehlt purpose='any'");
   });
 
-  test("Bug #3: manifest Icon-512.png hat explizites purpose='any'", () => {
+  test("Bug #3: manifest Icon-512.png hat explizites purpose='any' (Konsistenz-Cleanup)", () => {
     const png512 = manifest.icons.find((ic) => ic.src.includes("Icon-512") && !ic.src.includes("maskable"));
     assert.ok(png512, "Icon-512.png nicht im Manifest");
     assert.equal(png512.purpose, "any", "Icon-512.png fehlt purpose='any'");
+  });
+
+  test("Bug #4: clearStoredProfile() umgibt localStorage.removeItem mit try/catch (Konsistenz mit loadStoredProfile)", () => {
+    const clearFnMatch = app.match(/function clearStoredProfile\(\)\s*\{([\s\S]*?)^}/m);
+    assert.ok(clearFnMatch, "clearStoredProfile nicht gefunden");
+    const fnBody = clearFnMatch[1];
+    const removeItemPos = fnBody.indexOf("localStorage.removeItem");
+    assert.ok(removeItemPos !== -1, "localStorage.removeItem nicht in clearStoredProfile gefunden");
+    const tryBeforeRemove = fnBody.lastIndexOf("try {", removeItemPos);
+    assert.ok(
+      tryBeforeRemove !== -1 && tryBeforeRemove < removeItemPos,
+      "clearStoredProfile: localStorage.removeItem nicht in try/catch — wirft SecurityError in policy-gesperrter Umgebung (Safari Private Mode)",
+    );
   });
 });
