@@ -90,3 +90,36 @@ test("app.js schützt localStorage.getItem in loadStoredProfile mit try/catch", 
   const tryBeforeGetItem = fnBody.lastIndexOf("try {", getItemPos);
   assert.ok(tryBeforeGetItem !== -1 && tryBeforeGetItem < getItemPos, "localStorage.getItem in loadStoredProfile ist nicht in try/catch eingebettet");
 });
+
+// --- Bug-Regressionstests (Bugsweep Lauf 13, 2026-06-21) ---
+
+describe("Bug-Regression Lauf 13", () => {
+  const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
+
+  test("Bug #1: sw.js fetch-Handler hat .catch() gegen unhandled rejection bei Offline+Uncached", () => {
+    assert.match(
+      sw,
+      /\.catch\(\s*\(\s*\)\s*=>/,
+      "sw.js: fetch-Handler ohne .catch() → unhandled rejection wenn Ressource nicht gecacht und Netz offline",
+    );
+  });
+
+  test("Bug #2: manifest enthält icon.svg in icons-Array (SVG-Icon für PWA-Install)", () => {
+    const svgIcon = manifest.icons.find((icon) => icon.src === "./icon.svg");
+    assert.ok(svgIcon, "icon.svg fehlt im manifest icons-Array — Browser kann SVG nicht für PWA-Install nutzen");
+    assert.equal(svgIcon.type, "image/svg+xml", "icon.svg muss type image/svg+xml haben");
+  });
+
+  test("Bug #3: manifest Icon-192.png hat explizites purpose='any'", () => {
+    const png192 = manifest.icons.find((ic) => ic.src.includes("Icon-192") && !ic.src.includes("maskable"));
+    assert.ok(png192, "Icon-192.png nicht im Manifest");
+    assert.equal(png192.purpose, "any", "Icon-192.png fehlt purpose='any'");
+  });
+
+  test("Bug #3: manifest Icon-512.png hat explizites purpose='any'", () => {
+    const png512 = manifest.icons.find((ic) => ic.src.includes("Icon-512") && !ic.src.includes("maskable"));
+    assert.ok(png512, "Icon-512.png nicht im Manifest");
+    assert.equal(png512.purpose, "any", "Icon-512.png fehlt purpose='any'");
+  });
+});

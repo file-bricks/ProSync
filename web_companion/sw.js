@@ -50,6 +50,6 @@ self.addEventListener("fetch", (event) => {
         });
         return response;
       });
-    }),
+    }).catch(() => new Response("Offline", { status: 503, statusText: "Service Unavailable" })),
   );
 });

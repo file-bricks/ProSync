@@ -113,7 +113,12 @@ function saveProfile(profile) {
 }
 
 function loadStoredProfile() {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  let raw;
+  try {
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (_error) {
+    return null;
+  }
   if (!raw) {
     return null;
   }
@@ -124,7 +129,11 @@ function loadStoredProfile() {
       profile: coerceStoredProfile(parsed.profile),
     };
   } catch (_error) {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_removeError) {
+      // Ignore removal errors (e.g. Safari Private Mode)
+    }
     return null;
   }
 }
