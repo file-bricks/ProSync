@@ -909,8 +909,11 @@ class ConfigManager:
         }
 
         os.makedirs(os.path.dirname(export_path) or ".", exist_ok=True)
-        with open(export_path, "w", encoding="utf-8") as fh:
+        # BUG-U4: atomar (tmp + os.replace) — kein korruptes Export-Profil bei Absturz mid-write
+        tmp_path = export_path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, export_path)
         return payload
 
     def _portable_to_local_connection(self, portable_conn, existing_ids):

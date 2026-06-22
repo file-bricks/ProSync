@@ -62,9 +62,12 @@ class DBManager:
         Speichert die aktuelle Datenbank-Liste in search_config.json.
 
         Schreibt JSON mit indent=2 für bessere Lesbarkeit.
+        Atomar via tmp + os.replace (BUG-U4: keine korrupte config bei Crash mid-write).
         """
-        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        tmp = f"{CONFIG_PATH}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump({"databases": self.dbs}, f, indent=2)
+        os.replace(tmp, CONFIG_PATH)
 
     def add_db(self, path):
         """
