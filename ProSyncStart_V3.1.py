@@ -1527,6 +1527,11 @@ class FolderSyncWorker(QThread):
                     s_meta = src_tree[f]
                     t_meta = tgt_tree[f]
 
+                    # BUGSWEEP-26 REVIEW-NOTIZ (NICHT auto-gefixt — User-Entscheidung): mode=="one_way"
+                    # faellt hier durch ALLE Branches -> fuer geaenderte Dateien wird keine Action
+                    # erzeugt (stiller No-Op im FolderSyncWorker; one_way existiert aber im Dialog/
+                    # FileSyncWorker). Ob das Absicht ist (one_way nur fuer Einzeldatei) oder fehlende
+                    # Implementierung, muss fachlich geklaert werden -> bewusst unveraendert.
                     if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
                         if mode == "mirror" or mode == "update":
                             actions.append(("COPY_L2R", f))
