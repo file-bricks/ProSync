@@ -115,6 +115,14 @@ def resolve_profiler_launch_path(base_dir, configured_path=""):
 
     return None
 
+
+def configure_compact_button_accessibility(button, *, name: str, tooltip: str, description: str | None = None) -> None:
+    """Keep compact symbol buttons screenreader-friendly without adding permanent labels."""
+    button.setToolTip(tooltip)
+    button.setStatusTip(tooltip)
+    button.setAccessibleName(name)
+    button.setAccessibleDescription(description or tooltip)
+
 # Windows Registry Support (Optional)
 try:
     import winreg
@@ -973,7 +981,10 @@ class ConfigManager:
     def import_portable_profile(self, import_path):
         """Import a redacted portable profile without restoring private local paths."""
         with open(import_path, "r", encoding="utf-8") as fh:
-            payload = json.load(fh)
+            try:
+                payload = json.load(fh)
+            except (json.JSONDecodeError, OSError):
+                raise ValueError("Austauschdatei enthält kein gültiges JSON")
 
         if not isinstance(payload, dict):
             raise ValueError("Austauschdatei muss ein JSON-Objekt enthalten")
@@ -1666,8 +1677,14 @@ class ConnectionScheduler(QObject):
             del self.timers[cid]
 
         autosync = conn.get("autosync", {})
+        if not isinstance(autosync, dict):
+            autosync = {}
         if autosync.get("enabled", False):
-            interval_min = autosync.get("interval_minutes", 15)
+            raw_interval = autosync.get("interval_minutes", 15)
+            try:
+                interval_min = int(raw_interval)
+            except (TypeError, ValueError):
+                interval_min = 15
             timer = QTimer()
             timer.setSingleShot(False)
             timer.timeout.connect(lambda c=conn: self.trigger_sync.emit(c))
@@ -1712,8 +1729,20 @@ class ConnectionDialog(QDialog):
             self.conflict.setCurrentText(existing.get("conflict_policy", "source"))
 
         btn_src = QPushButton("📂")
+        configure_compact_button_accessibility(
+            btn_src,
+            name="Quellordner auswählen",
+            tooltip="Quellordner auswählen",
+            description="Öffnet den Ordnerdialog für den Quellordner.",
+        )
         btn_src.clicked.connect(lambda: self.pick(self.source))
         btn_tgt = QPushButton("📂")
+        configure_compact_button_accessibility(
+            btn_tgt,
+            name="Zielordner auswählen",
+            tooltip="Zielordner auswählen",
+            description="Öffnet den Ordnerdialog für den Zielordner.",
+        )
         btn_tgt.clicked.connect(lambda: self.pick(self.target))
 
         h_src = QHBoxLayout()
@@ -1752,6 +1781,12 @@ class ConnectionDialog(QDialog):
         db_lay.setContentsMargins(0,0,0,0)
         self.db_path = QLineEdit(existing["db_path"] if existing else "")
         btn_db = QPushButton("💾")
+        configure_compact_button_accessibility(
+            btn_db,
+            name="Datenbank-Datei auswählen",
+            tooltip="Datenbank-Datei auswählen",
+            description="Wählt die Datenbank-Datei für Suche und Historie aus.",
+        )
         btn_db.clicked.connect(lambda: self.pick_file(self.db_path))
         db_lay.addWidget(self.db_path)
         db_lay.addWidget(btn_db)
@@ -1789,6 +1824,12 @@ class ConnectionDialog(QDialog):
         safety_lay.addWidget(lbl_safety_title)
 
         btn_scan = QPushButton("🔍 Quelle auf Datenbanken scannen")
+        configure_compact_button_accessibility(
+            btn_scan,
+            name="Quelle auf Datenbanken scannen",
+            tooltip="Quelle auf Datenbanken scannen",
+            description="Prüft den Quellordner auf Datenbanken und empfiehlt sichere Einstellungen.",
+        )
         btn_scan.clicked.connect(self.scan_for_databases)
         safety_lay.addWidget(btn_scan)
 
@@ -1947,6 +1988,12 @@ class FileConnectionDialog(QDialog):
         # Source File
         self.source_file = QLineEdit(existing.get("source_file", suggested_file or "") if existing else (suggested_file or ""))
         btn_src = QPushButton("📄")
+        configure_compact_button_accessibility(
+            btn_src,
+            name="Quelldatei auswählen",
+            tooltip="Quelldatei auswählen",
+            description="Öffnet den Dateidialog für die Quelldatei.",
+        )
         btn_src.clicked.connect(lambda: self.pick_file(self.source_file, "Quelldatei wählen"))
         h_src = QHBoxLayout()
         h_src.addWidget(self.source_file)
@@ -1956,6 +2003,12 @@ class FileConnectionDialog(QDialog):
         # Target File
         self.target_file = QLineEdit(existing.get("target_file", "") if existing else "")
         btn_tgt = QPushButton("📄")
+        configure_compact_button_accessibility(
+            btn_tgt,
+            name="Zieldatei auswählen",
+            tooltip="Zieldatei auswählen",
+            description="Öffnet den Dateidialog für die Zieldatei.",
+        )
         btn_tgt.clicked.connect(lambda: self.pick_file(self.target_file, "Zieldatei wählen"))
         h_tgt = QHBoxLayout()
         h_tgt.addWidget(self.target_file)
@@ -1993,6 +2046,12 @@ class FileConnectionDialog(QDialog):
 
         # Auto-analyze button
         btn_analyze = QPushButton("🔍 Datei analysieren")
+        configure_compact_button_accessibility(
+            btn_analyze,
+            name="Datei analysieren",
+            tooltip="Datei analysieren",
+            description="Prüft die ausgewählte Datei auf Datenbank-Sicherheitsanforderungen.",
+        )
         btn_analyze.clicked.connect(self.analyze_file)
         safety_lay.addWidget(btn_analyze)
 
@@ -2136,7 +2195,7 @@ class MainWindow(QMainWindow):
         self.tray_icon = QSystemTrayIcon(self)
         self.setup_tray_icon()
 
-        tray_menu = QMenu()
+        tray_menu = QMenu(self)
         act_show = tray_menu.addAction("Öffnen")
         act_show.triggered.connect(self.show_and_raise)
 
@@ -2894,7 +2953,7 @@ class MainWindow(QMainWindow):
         autosync = conn.get("autosync", {"enabled": False, "interval_minutes": 15})
         selected_connections = self.get_selected_connections()
 
-        menu = QMenu()
+        menu = QMenu(self)
         batch_action = None
         if len(selected_connections) > 1:
             batch_action = menu.addAction(

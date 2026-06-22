@@ -385,8 +385,8 @@ class SearchWindow(QMainWindow):
         if not item: return
         
         data = item.data(Qt.ItemDataRole.UserRole)
-        menu = QMenu()
-        
+        menu = QMenu(self.results_list)
+
         act_open = menu.addAction("Öffnen")
         act_folder = menu.addAction("Ordner öffnen")
         

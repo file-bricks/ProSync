@@ -16,6 +16,11 @@ Bug #4: Abgebrochener (killed) FileSyncWorker emittierte trotzdem finished (kein
 Bug #8: ConnectionScheduler.update_all() stoppte keine Timer für gelöschte Verbindungen.
         Folge: Auto-Sync-Timer feuerten weiter mit veralteten Verbindungsdaten.
         Fix: update_all() stoppt Timer für IDs, die nicht mehr in der Config vorhanden sind.
+
+Bug #9: ConnectionScheduler.update_connection() vertraute `interval_minutes` blind als Zahl.
+        Folge: `autosync.enabled=true` plus `interval_minutes=null` aus Alt-/manuellen
+        Konfigurationen ließ `max(1, None)` mit TypeError abstürzen.
+        Fix: Intervall defensiv auf int parsen und bei ungültigen Werten auf 15 Minuten fallen.
 """
 
 import sys
@@ -264,4 +269,37 @@ def test_scheduler_update_all_stops_timer_for_deleted_connection():
     assert "conn-a" in scheduler.timers, "conn-a Timer soll weiter laufen"
     assert "conn-b" not in scheduler.timers, (
         "conn-b Timer muss nach Löschung aus Config gestoppt und entfernt werden"
+    )
+
+
+def test_scheduler_invalid_interval_falls_back_to_default():
+    """
+    Bug #9: Ein ungültiges autosync-Intervall darf den Scheduler nicht crashen.
+
+    Alt-/manuell bearbeitete Konfigurationen konnten `interval_minutes: null`
+    enthalten. Vor dem Fix brach `max(1, None)` in update_connection() mit
+    TypeError ab. Nach dem Fix läuft der Timer mit dem Standardintervall weiter.
+    """
+    _get_app()
+    prosync = _load_prosync()
+    ConnectionScheduler = prosync.ConnectionScheduler
+
+    class _MockCfg:
+        def list_connections(self):
+            return [
+                {
+                    "id": "conn-invalid-interval",
+                    "name": "Ungültiges Intervall",
+                    "autosync": {"enabled": True, "interval_minutes": None},
+                }
+            ]
+
+    scheduler = ConnectionScheduler(_MockCfg())
+    scheduler.update_all()
+
+    assert "conn-invalid-interval" in scheduler.timers, (
+        "Der Autosync-Timer soll trotz ungültigem Intervall erstellt werden"
+    )
+    assert scheduler.timers["conn-invalid-interval"].interval() == 15 * 60 * 1000, (
+        "Ungültige Intervalle müssen auf 15 Minuten zurückfallen"
     )

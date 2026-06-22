@@ -19,6 +19,7 @@ TEST_FILES = [
     "test_store_materials.py",
     "test_sync_worker.py",
     "test_translator.py",
+    "test_ui_accessibility.py",
 ]
 
 
@@ -36,6 +37,7 @@ def main() -> int:
             cwd=project_root,
             env=env,
             check=False,
+            timeout=120,
         )
         if result.returncode != 0:
             failed.append(test_file)

@@ -9,11 +9,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - `llms.txt` für LLM-Crawler-Indexierung mit Audience, Search Phrases und Last-checked
 - Regressionstest `test_batch_sync_queue_bugs.py` für Bugs #5 (BatchQueue.reset fehlt) und #6 (worker_finished fehlt im Fehlerpfad)
 - Regressionstest `test_folder_sync_worker_bugs.py` für Bugs #1–#4 (started_at, is_killed-Guards, sync_log-Korruption) und #8 (stale Timer in ConnectionScheduler)
+- `web_companion/` als statischer Web/PWA-Companion für `prosync-profile-v1.json` mit Datei-/JSON-Import, Demo-Profil, Offline-Restore, Service Worker und Node-Tests
+- Regressionstest `test_ui_accessibility.py` für sprechende Accessible Names und Tooltips an symbolischen Pfad-Auswahlbuttons
 
 ### Geändert / Changed
 - README von Deutsch-first auf English-first umgebaut; Deutsch als sekundäre Sektion
 - `.gitignore` schließt interne Planungsdokumente (`ENTWICKLUNGSPLAN*.md`, `Feature_Analyse*.md`) aus
 - GitHub-Actions-Workflows auf aktuelle Major-Versionen aktualisiert (`actions/checkout@v6`, `actions/setup-python@v6`, `actions/stale@v10`, `actions/first-interaction@v3`)
+- `PORTIERUNGSPLAN.md` und `AUFGABEN.txt` dokumentieren den Companion jetzt als erledigten P2-Web/PWA-Schritt; Android/iOS bleiben nachgelagerte PWA-Smokes
+- Symbolische Ordner-/Datei-Auswahlbuttons in beiden Verbindungsdialogen exponieren jetzt sprechende Accessible Names und Tooltips statt nur `📂`, `📄` und `💾`
 
 ### Behoben / Fixed (2026-06-07)
 - `run_tests.py` und README-Testbefehle verwenden wieder den vorhandenen Source-Smoke `source_platform_smoke.py` statt des alten Namens `test_linux_platform_smoke.py`
@@ -24,6 +28,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 - **Bug #5:** `batch_queue.pending` blieb nach Einzelverbindungs-Sync belegt — `batch_queue.reset()` bei `len(planned) < 2`
 - **Bug #6:** `_handle_worker_error` rief `worker_finished()` nicht auf — `QTimer.singleShot(0, self.worker_finished)` ergänzt
 - **Bug #8:** `ConnectionScheduler.update_all()` stoppte keine Timer für gelöschte Verbindungen — stale-Timer-Cleanup hinzugefügt
+- **Bug #9:** `ConnectionScheduler.update_connection()` crasht nicht mehr bei ungültigem `autosync.interval_minutes` aus Alt-/manuellen Konfigurationen — ungültige Werte fallen jetzt defensiv auf 15 Minuten zurück, Regressionstest ergänzt
 
 
 - ProFiler-Companion: Toolbar-Button startet die optionale Companion-App über `app.profiler_path` oder den gemeinsamen Software-Baum
