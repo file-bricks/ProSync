@@ -5,6 +5,7 @@ import json
 import uuid
 import hashlib
 import shutil
+import threading
 import sqlite3
 import time
 import subprocess
@@ -273,15 +274,20 @@ class DatabaseSafetyManager:
         """
         if not os.path.exists(db_path):
             return False
+        # Bugsweep 26 BUG-A1: conn in finally schliessen — bei Exception (z.B. fetchone()[0] auf None)
+        # blieb die Connection sonst offen (Handle-Leak auf Nutzer-DB, blockiert spaeteres Kopieren).
+        conn = None
         try:
             conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=DB_CONNECTION_TIMEOUT)
             cur = conn.cursor()
             cur.execute("PRAGMA journal_mode;")
-            mode = cur.fetchone()[0].upper()
-            conn.close()
-            return mode == "WAL"
+            row = cur.fetchone()
+            return bool(row) and row[0].upper() == "WAL"
         except (sqlite3.Error, OSError):
             return False
+        finally:
+            if conn is not None:
+                conn.close()
 
     @classmethod
     def scan_directory_for_databases(cls, directory: str) -> list:
@@ -561,24 +567,22 @@ class DatabaseSafetyManager:
         if not os.path.exists(db_path):
             return False
 
+        # Bugsweep 26 BUG-A2: conn in finally schliessen — bei Checkpoint-Fehler (DB gelockt/Rechte)
+        # blieb sie sonst offen und das Handle blockierte das anschliessende Kopieren der DB.
+        conn = None
         try:
             # Verbinde zur DB mit 30s Timeout (falls gerade gelockt)
             conn = sqlite3.connect(db_path, timeout=30.0)
-
-            # PRAGMA wal_checkpoint(FULL) führt folgende Schritte aus:
-            # 1. Blockiert alle Writer
-            # 2. Merged alle WAL-Änderungen in die Haupt-DB
-            # 3. Truncated die -wal Datei
-            # 4. Gibt Locks frei
             conn.execute("PRAGMA wal_checkpoint(FULL);")
             conn.commit()
-            conn.close()
-
             log_info(f"✓ WAL checkpoint successful: {os.path.basename(db_path)}")
             return True
         except Exception as e:
             log_warning(f"⚠ WAL checkpoint failed: {e}")
             return False
+        finally:
+            if conn is not None:
+                conn.close()
 
 # ---------------- CONNECTION TYPES (V3.1 NEW) ----------------
 class ConnectionType:
@@ -706,8 +710,12 @@ class ConfigManager:
         Erstellt das Verzeichnis falls es nicht existiert.
         """
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
-        with open(self.path, "w", encoding="utf-8") as f:
+        # Bugsweep 26 BUG-A3: atomar schreiben (tmp + os.replace), sonst korrupte config.json bei
+        # Absturz/OneDrive-Lock mitten im json.dump.
+        tmp = f"{self.path}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, self.path)
 
     def list_connections(self):
         """
@@ -980,11 +988,12 @@ class ConfigManager:
 
     def import_portable_profile(self, import_path):
         """Import a redacted portable profile without restoring private local paths."""
-        with open(import_path, "r", encoding="utf-8") as fh:
-            try:
+        # Bugsweep 26 BUG-A4: open() im try (fehlendes open -> ValueError statt rohem OSError).
+        try:
+            with open(import_path, "r", encoding="utf-8") as fh:
                 payload = json.load(fh)
-            except (json.JSONDecodeError, OSError):
-                raise ValueError("Austauschdatei enthält kein gültiges JSON")
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+            raise ValueError("Austauschdatei enthält kein gültiges JSON")
 
         if not isinstance(payload, dict):
             raise ValueError("Austauschdatei muss ein JSON-Objekt enthalten")
@@ -1150,18 +1159,23 @@ class ConnectionDB:
         )
         self.conn.execute("PRAGMA busy_timeout=30000;")  # V3: 30 second busy timeout
         self.conn.executescript(DDL)
+        # Bugsweep 26 BUG-db (KRITISCH): check_same_thread=False erlaubt Cross-Thread-Zugriff
+        # (Worker-Thread loggt via _db_log, Main-Thread kann parallel lesen) -> ohne Serialisierung
+        # drohen "recursive use of cursors"/Korruption. RLock (reentrant, da log_version->get_file_id).
+        self._lock = threading.RLock()
 
     def close(self):
         """V3 IMPROVED: WAL checkpoint before close."""
-        if self.conn:
-            try:
-                # V3 FIX: Checkpoint WAL to merge changes
-                self.conn.execute("PRAGMA wal_checkpoint(FULL);")
-                self.conn.commit()
-            except Exception as e:
-                log_warning(f"Warning: WAL checkpoint failed: {e}")
-            finally:
-                self.conn.close()
+        with self._lock:
+            if self.conn:
+                try:
+                    # V3 FIX: Checkpoint WAL to merge changes
+                    self.conn.execute("PRAGMA wal_checkpoint(FULL);")
+                    self.conn.commit()
+                except Exception as e:
+                    log_warning(f"Warning: WAL checkpoint failed: {e}")
+                finally:
+                    self.conn.close()
 
     def get_file_id(self, content_hash, size):
         """
@@ -1174,15 +1188,16 @@ class ConnectionDB:
         Returns:
             File-ID (Integer)
         """
-        cur = self.conn.cursor()
-        cur.execute("SELECT id FROM files WHERE content_hash=?", (content_hash,))
-        row = cur.fetchone()
-        if row: return row[0]
-        ts = datetime.now(timezone.utc).isoformat()
-        cur.execute("INSERT INTO files(content_hash,size,first_seen) VALUES (?,?,?)",
-                   (content_hash, size, ts))
-        self.conn.commit()
-        return cur.lastrowid
+        with self._lock:
+            cur = self.conn.cursor()
+            cur.execute("SELECT id FROM files WHERE content_hash=?", (content_hash,))
+            row = cur.fetchone()
+            if row: return row[0]
+            ts = datetime.now(timezone.utc).isoformat()
+            cur.execute("INSERT INTO files(content_hash,size,first_seen) VALUES (?,?,?)",
+                       (content_hash, size, ts))
+            self.conn.commit()
+            return cur.lastrowid
 
     def log_version(self, name, path, mtime, size, content_hash, side):
         """
@@ -1199,24 +1214,25 @@ class ConnectionDB:
         Returns:
             File-ID (Integer)
         """
-        fid = self.get_file_id(content_hash, size)
-        cur = self.conn.cursor()
-        cur.execute("SELECT id, version_index FROM versions WHERE path=? AND mtime=?",
-                   (path, mtime))
-        if cur.fetchone():
+        with self._lock:
+            fid = self.get_file_id(content_hash, size)
+            cur = self.conn.cursor()
+            cur.execute("SELECT id, version_index FROM versions WHERE path=? AND mtime=?",
+                       (path, mtime))
+            if cur.fetchone():
+                return fid
+
+            cur.execute("SELECT MAX(version_index) FROM versions WHERE file_id=?", (fid,))
+            res = cur.fetchone()
+            idx = (res[0] + 1) if res and res[0] else 1
+
+            ctime = datetime.now(timezone.utc).isoformat()
+            self.conn.execute(
+                "INSERT INTO versions(file_id,name,path,mtime,ctime,version_index,source_side) VALUES (?,?,?,?,?,?,?)",
+                (fid, name, path, mtime, ctime, idx, side)
+            )
+            self.conn.commit()
             return fid
-
-        cur.execute("SELECT MAX(version_index) FROM versions WHERE file_id=?", (fid,))
-        res = cur.fetchone()
-        idx = (res[0] + 1) if res and res[0] else 1
-
-        ctime = datetime.now(timezone.utc).isoformat()
-        self.conn.execute(
-            "INSERT INTO versions(file_id,name,path,mtime,ctime,version_index,source_side) VALUES (?,?,?,?,?,?,?)",
-            (fid, name, path, mtime, ctime, idx, side)
-        )
-        self.conn.commit()
-        return fid
 
     def add_tag(self, fid, tag):
         """
@@ -1226,8 +1242,9 @@ class ConnectionDB:
             fid: File-ID
             tag: Tag-String
         """
-        self.conn.execute("INSERT OR IGNORE INTO tags(file_id,tag) VALUES (?,?)", (fid, tag))
-        self.conn.commit()
+        with self._lock:
+            self.conn.execute("INSERT OR IGNORE INTO tags(file_id,tag) VALUES (?,?)", (fid, tag))
+            self.conn.commit()
 
 # ---------------- SYNC LOGIC ----------------
 def sha256_file(path: str, chunk_size: int = 1024*1024) -> str:
@@ -1318,6 +1335,24 @@ class SyncWalker:
         return False
 
 
+def _atomic_copy2(src, dst):
+    """Bugsweep 26 BUG-copy (KRITISCH): atomar kopieren — tmp + os.replace statt direktem
+    shutil.copy2. Ein Absturz/kill mitten in copy2 hinterliess sonst eine HALBE Zieldatei (fuer
+    SQLite-DBs — dem Haupt-Use-Case — fatal: korrupter Header). os.replace ist atomar auf gleichem
+    Volume; bei Fehler wird die tmp-Datei aufgeraeumt."""
+    tmp = f"{dst}.prosync_tmp"
+    try:
+        shutil.copy2(src, tmp)
+        os.replace(tmp, dst)
+    except BaseException:
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
+        raise
+
+
 class FileSyncWorker(QThread):
     """
     V3.1 NEW: Worker for single-file synchronization.
@@ -1382,7 +1417,7 @@ class FileSyncWorker(QThread):
             self.status.emit(f"Kopiere: {filename}")
 
             try:
-                shutil.copy2(source_file, target_file)
+                _atomic_copy2(source_file, target_file)
                 self.status.emit(f"✓ Datei kopiert: {filename}")
             except (OSError, IOError, PermissionError, shutil.Error) as e:
                 self.error.emit(f"Fehler beim Kopieren: {e}")
@@ -1537,7 +1572,7 @@ class FolderSyncWorker(QThread):
                     if act == "COPY_L2R":
                         self.status.emit(f"Kopiere -> {rel_path}")
                         os.makedirs(os.path.dirname(t_abs), exist_ok=True)
-                        shutil.copy2(s_abs, t_abs)
+                        _atomic_copy2(s_abs, t_abs)
                         _stats["copied"] += 1
                         _stats["bytes_copied"] += os.path.getsize(t_abs) if os.path.exists(t_abs) else 0
                         if self.db:
@@ -1547,7 +1582,7 @@ class FolderSyncWorker(QThread):
                     elif act == "COPY_R2L":
                         self.status.emit(f"Kopiere <- {rel_path}")
                         os.makedirs(os.path.dirname(s_abs), exist_ok=True)
-                        shutil.copy2(t_abs, s_abs)
+                        _atomic_copy2(t_abs, s_abs)
                         _stats["copied"] += 1
                         _stats["bytes_copied"] += os.path.getsize(s_abs) if os.path.exists(s_abs) else 0
                         if self.db:
