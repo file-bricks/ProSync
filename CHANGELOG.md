@@ -5,9 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-06-28, Bugsweep 27)
+- **ConnectionDB.close() Hardening:** `self.conn` wird jetzt nach `self.conn.close()` auf `None` gesetzt — ein zweiter `close()`-Aufruf bricht sauber im Guard ab statt einen spurious `ProgrammingError` zu erzeugen.
+- **FolderSyncWorker WAL-Checkpoint:** `run()` ruft `self.db.close()` jetzt im `finally`-Block auf — `PRAGMA wal_checkpoint(FULL)` wird deterministisch ausgelöst statt auf den Python-GC zu warten.
+- Regressionstest `test_bugsweep_resweep_20260628.py` (4 Tests) ergänzt.
+
 ### Hinzugefügt / Added
 - `llms.txt` für LLM-Crawler-Indexierung mit Audience, Search Phrases und Last-checked
+- Headless-CLI für Automationen: `--list`, `--run <id|name>`, `--all`, `--config` und `--quiet` starten vorhandene ProSync-Verbindungen ohne GUI über dieselben Datei-/Ordner-Worker.
 - Regressionstest `test_batch_sync_queue_bugs.py` für Bugs #5 (BatchQueue.reset fehlt) und #6 (worker_finished fehlt im Fehlerpfad)
+- Regressionstest `test_cli_headless.py` für Verbindungsauflistung, Einzeldatei-Sync und sequenziellen `--all`-Lauf.
 - Regressionstest `test_folder_sync_worker_bugs.py` für Bugs #1–#4 (started_at, is_killed-Guards, sync_log-Korruption) und #8 (stale Timer in ConnectionScheduler)
 - `web_companion/` als statischer Web/PWA-Companion für `prosync-profile-v1.json` mit Datei-/JSON-Import, Demo-Profil, Offline-Restore, Service Worker und Node-Tests
 - Regressionstest `test_ui_accessibility.py` für sprechende Accessible Names und Tooltips an symbolischen Pfad-Auswahlbuttons

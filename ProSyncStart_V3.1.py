@@ -1,5 +1,6 @@
 import sys
 import os
+import argparse
 import ntpath
 import json
 import uuid
@@ -21,7 +22,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QTextEdit
 )
-from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir
+from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir, QCoreApplication
 from PySide6.QtGui import QAction, QActionGroup, QIcon
 
 # ProSync Logger
@@ -179,6 +180,42 @@ def sync_report_log_path():
         base_dir = Path.home()
     reports_dir = base_dir / "ProSync" / "reports"
     return reports_dir / "sync_log.json"
+
+
+def save_sync_report(report):
+    """Persist a sync-run report as JSON and keep the last 100 entries."""
+    try:
+        reports_dir = sync_report_log_path().parent
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+        log_file = sync_report_log_path()
+        if log_file.exists():
+            try:
+                with open(log_file, "r", encoding="utf-8") as fh:
+                    all_reports = json.load(fh)
+                if not isinstance(all_reports, list):
+                    all_reports = []
+            except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+                all_reports = []
+        else:
+            all_reports = []
+
+        all_reports.append(report)
+        all_reports = all_reports[-100:]
+
+        tmp_path = str(log_file) + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as fh:
+            json.dump(all_reports, fh, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, log_file)
+
+        log_info(
+            f"Sync-Report gespeichert: {report['files_copied']} kopiert, "
+            f"{report['files_deleted']} gelöscht, "
+            f"{report['bytes_copied']:,} Bytes, "
+            f"{report['duration_seconds']}s"
+        )
+    except Exception as exc:
+        log_warning(f"Konnte Sync-Report nicht speichern: {exc}")
 
 # ---------------- DATABASE SAFETY MANAGER ----------------
 class DatabaseSafetyManager:
@@ -1179,6 +1216,7 @@ class ConnectionDB:
                     log_warning(f"Warning: WAL checkpoint failed: {e}")
                 finally:
                     self.conn.close()
+                    self.conn = None  # Bugsweep 27: Guard damit doppelter close()-Aufruf sauber abbricht
 
     def get_file_id(self, content_hash, size):
         """
@@ -1638,6 +1676,10 @@ class FolderSyncWorker(QThread):
 
         except Exception as e:
             self.error.emit(str(e))
+        finally:
+            # Bugsweep 27: WAL-Checkpoint explizit auslösen statt GC zu vertrauen
+            if self.db:
+                self.db.close()
 
     def _db_log(self, db, path, side):
         """Log file version to database (if indexing enabled)."""
@@ -2820,38 +2862,7 @@ class MainWindow(QMainWindow):
 
     def _save_sync_report(self, report: dict) -> None:
         """Persist a sync-run report as JSON and keep the last 100 entries."""
-        try:
-            reports_dir = sync_report_log_path().parent
-            reports_dir.mkdir(parents=True, exist_ok=True)
-
-            # Load existing log
-            log_file = sync_report_log_path()
-            if log_file.exists():
-                try:
-                    with open(log_file, "r", encoding="utf-8") as fh:
-                        all_reports = json.load(fh)
-                    if not isinstance(all_reports, list):
-                        all_reports = []
-                except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-                    all_reports = []
-            else:
-                all_reports = []
-
-            all_reports.append(report)
-            # Keep last 100
-            all_reports = all_reports[-100:]
-
-            with open(log_file, "w", encoding="utf-8") as fh:
-                json.dump(all_reports, fh, ensure_ascii=False, indent=2)
-
-            log_info(
-                f"Sync-Report gespeichert: {report['files_copied']} kopiert, "
-                f"{report['files_deleted']} gelöscht, "
-                f"{report['bytes_copied']:,} Bytes, "
-                f"{report['duration_seconds']}s"
-            )
-        except Exception as exc:
-            log_warning(f"Konnte Sync-Report nicht speichern: {exc}")
+        save_sync_report(report)
 
     def worker_finished(self):
         conn_name = self.worker.cfg.get("name", "Sync") if self.worker else "Sync"
@@ -3148,6 +3159,229 @@ class MainWindow(QMainWindow):
         self.scheduler.stop_all()
         QApplication.quit()
 
+
+def build_cli_parser():
+    """Build the headless ProSync CLI parser."""
+    parser = argparse.ArgumentParser(
+        prog="ProSync",
+        description="Headless ProSync connection runner.",
+    )
+    action = parser.add_mutually_exclusive_group(required=True)
+    action.add_argument(
+        "--list",
+        action="store_true",
+        help="List configured connections without starting the GUI.",
+    )
+    action.add_argument(
+        "--run",
+        metavar="ID_OR_NAME",
+        help="Run one configured connection by exact ID or exact name.",
+    )
+    action.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all configured connections sequentially.",
+    )
+    parser.add_argument(
+        "--config",
+        default=os.path.join(app_base_dir(), "ProSync_config.json"),
+        help="Path to ProSync_config.json. Defaults to the app directory.",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress status lines during sync runs.",
+    )
+    return parser
+
+
+def _ensure_core_application():
+    """Ensure QThread/QObject infrastructure exists for headless workers."""
+    app = QCoreApplication.instance()
+    if app is None:
+        app = QCoreApplication([])
+    return app
+
+
+def _connection_label(conn):
+    """Return the best human-readable connection label."""
+    name = str(conn.get("name") or "").strip()
+    conn_id = str(conn.get("id") or "").strip()
+    return name or conn_id or "Unbenannte Verbindung"
+
+
+def _format_autosync(conn):
+    autosync = conn.get("autosync", {})
+    if not isinstance(autosync, dict):
+        return "off"
+    enabled = "on" if autosync.get("enabled") else "off"
+    interval = autosync.get("interval_minutes", DEFAULT_AUTOSYNC_INTERVAL)
+    return f"{enabled}/{interval}m"
+
+
+def print_cli_connections(connections, stream=None):
+    """Print configured connections in a compact, script-friendly table."""
+    if stream is None:
+        stream = sys.stdout
+    if not connections:
+        print("Keine Verbindungen konfiguriert.", file=stream)
+        return
+
+    print("ID\tName\tTyp\tModus\tAutosync", file=stream)
+    for conn in connections:
+        print(
+            "\t".join(
+                [
+                    str(conn.get("id", "")),
+                    _connection_label(conn),
+                    str(conn.get("type", ConnectionType.FOLDER)),
+                    str(conn.get("mode", "")),
+                    _format_autosync(conn),
+                ]
+            ),
+            file=stream,
+        )
+
+
+def select_cli_connection(connections, selector):
+    """Select a connection by exact ID first, then by exact case-insensitive name."""
+    selector = str(selector or "").strip()
+    if not selector:
+        raise ValueError("Keine Verbindung angegeben")
+
+    id_matches = [
+        conn for conn in connections
+        if str(conn.get("id", "")).strip() == selector
+    ]
+    if len(id_matches) == 1:
+        return id_matches[0]
+
+    selector_fold = selector.casefold()
+    name_matches = [
+        conn for conn in connections
+        if str(conn.get("name", "")).strip().casefold() == selector_fold
+    ]
+    if len(name_matches) == 1:
+        return name_matches[0]
+    if len(name_matches) > 1:
+        raise ValueError(f"Mehrere Verbindungen heißen '{selector}'. Bitte ID verwenden.")
+    raise ValueError(f"Verbindung nicht gefunden: {selector}")
+
+
+def create_cli_worker(conn):
+    """Create the same worker type the GUI uses for a connection."""
+    conn_type = conn.get("type", ConnectionType.FOLDER)
+    if conn_type == ConnectionType.FILE:
+        return FileSyncWorker(conn)
+
+    db = None
+    if conn.get("indexing") and conn.get("db_path"):
+        try:
+            db = ConnectionDB(conn["db_path"])
+        except Exception as exc:
+            log_warning(f"Warning: Could not open indexing database: {exc}")
+    return FolderSyncWorker(conn, db)
+
+
+def run_headless_connection(conn, quiet=False):
+    """Run one configured connection synchronously without opening the GUI."""
+    _ensure_core_application()
+    worker = create_cli_worker(conn)
+    label = _connection_label(conn)
+    errors = []
+    reports = []
+    finished = {"value": False}
+
+    def on_status(message):
+        if not quiet:
+            print(message, flush=True)
+
+    def on_error(message):
+        errors.append(str(message))
+        print(f"Fehler [{label}]: {message}", file=sys.stderr, flush=True)
+
+    def on_finished():
+        finished["value"] = True
+
+    def on_report(report):
+        reports.append(report)
+        save_sync_report(report)
+
+    worker.status.connect(on_status)
+    worker.error.connect(on_error)
+    worker.finished.connect(on_finished)
+    if isinstance(worker, FolderSyncWorker):
+        worker.sync_report.connect(on_report)
+
+    if not quiet:
+        print(f"Starte: {label}", flush=True)
+    worker.run()
+
+    if errors:
+        return {"ok": False, "errors": errors, "reports": reports}
+    if not finished["value"]:
+        message = "Sync wurde nicht abgeschlossen"
+        print(f"Fehler [{label}]: {message}", file=sys.stderr, flush=True)
+        return {"ok": False, "errors": [message], "reports": reports}
+
+    if not quiet:
+        print(f"Fertig: {label}", flush=True)
+    return {"ok": True, "errors": [], "reports": reports}
+
+
+def run_headless_connections(connections, quiet=False):
+    """Run multiple connections sequentially and stop on the first failure."""
+    if not connections:
+        print("Keine Verbindungen konfiguriert.", file=sys.stderr)
+        return 2
+
+    for index, conn in enumerate(connections, start=1):
+        if not quiet:
+            print(f"[{index}/{len(connections)}]", flush=True)
+        result = run_headless_connection(conn, quiet=quiet)
+        if not result["ok"]:
+            return 1
+    return 0
+
+
+def run_cli(argv=None):
+    """Run ProSync in headless CLI mode."""
+    parser = build_cli_parser()
+    args = parser.parse_args(argv)
+
+    cfg = ConfigManager(args.config)
+    connections = [
+        conn for conn in cfg.list_connections()
+        if isinstance(conn, dict)
+    ]
+
+    if args.list:
+        print_cli_connections(connections)
+        return 0
+
+    _ensure_core_application()
+    lock_file = QLockFile(QDir.temp().filePath("prosync.lock"))
+    if not lock_file.tryLock(100):
+        print("ProSync läuft bereits. Headless-Sync abgebrochen.", file=sys.stderr)
+        return 2
+
+    try:
+        if args.run:
+            try:
+                selected = select_cli_connection(connections, args.run)
+            except ValueError as exc:
+                print(str(exc), file=sys.stderr)
+                return 2
+            return run_headless_connections([selected], quiet=args.quiet)
+
+        if args.all:
+            return run_headless_connections(connections, quiet=args.quiet)
+    finally:
+        lock_file.unlock()
+
+    return 2
+
+
 def main() -> None:
     """
     Haupteinstiegspunkt der ProSync-Anwendung.
@@ -3155,6 +3389,9 @@ def main() -> None:
     Initialisiert QApplication, ConfigManager und MainWindow.
     Verhindert mehrere Instanzen über QLockFile.
     """
+    if len(sys.argv) > 1:
+        sys.exit(run_cli(sys.argv[1:]))
+
     app = QApplication(sys.argv)
     lock_file = QLockFile(QDir.temp().filePath("prosync.lock"))
     if not lock_file.tryLock(100):
