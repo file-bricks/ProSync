@@ -5,6 +5,11 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-06-28, PWA-Feature sortConnections)
+- **web_companion: Verbindungs-Sortierung** — `sortConnections(connections, sortBy)` in `library.js` als reine Logikfunktion (immutable, DOM-frei). Unterstützt `name-asc`, `name-desc`, `autosync-first` und `type`. In `app.js` und `index.html` als Sort-Dropdown im Filter-Panel verdrahtet; wird bei jedem Filter-Event und nach `clearStoredProfile` zurückgesetzt.
+- 6 neue Unit-Tests für `sortConnections` in `web_companion/tests/library.test.mjs`.
+- Manifest-Fix: `icon.svg` ins `icons`-Array aufgenommen, `purpose: "any"` bei Icon-192 und Icon-512 ergänzt — repariert 4 pre-existierende Bugsweep-13-Regressionen.
+
 ### Behoben / Fixed (2026-06-28, Bugsweep 27)
 - **ConnectionDB.close() Hardening:** `self.conn` wird jetzt nach `self.conn.close()` auf `None` gesetzt — ein zweiter `close()`-Aufruf bricht sauber im Guard ab statt einen spurious `ProgrammingError` zu erzeugen.
 - **FolderSyncWorker WAL-Checkpoint:** `run()` ruft `self.db.close()` jetzt im `finally`-Block auf — `PRAGMA wal_checkpoint(FULL)` wird deterministisch ausgelöst statt auf den Python-GC zu warten.

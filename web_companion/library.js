@@ -270,6 +270,34 @@ export function summarizeProfile(profile) {
   };
 }
 
+// sortBy: 'name-asc' | 'name-desc' | 'autosync-first' | 'type'
+export function sortConnections(connections, sortBy = "name-asc") {
+  const sorted = [...connections];
+  switch (sortBy) {
+    case "name-desc":
+      sorted.sort((a, b) => b.name.localeCompare(a.name, "de"));
+      break;
+    case "autosync-first":
+      sorted.sort((a, b) => {
+        if (a.autosyncEnabled !== b.autosyncEnabled) {
+          return a.autosyncEnabled ? -1 : 1;
+        }
+        return a.name.localeCompare(b.name, "de");
+      });
+      break;
+    case "type":
+      sorted.sort(
+        (a, b) =>
+          a.type.localeCompare(b.type, "de") ||
+          a.name.localeCompare(b.name, "de"),
+      );
+      break;
+    default: // 'name-asc'
+      sorted.sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }
+  return sorted;
+}
+
 export function filterConnections(profile, filters = {}) {
   const search = normalizeString(filters.search).toLowerCase();
   const type = normalizeString(filters.type, "all");

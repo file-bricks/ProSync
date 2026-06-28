@@ -4,6 +4,7 @@ import {
   parseProfilePayload,
   parseProfileText,
   readProfileFile,
+  sortConnections,
   summarizeProfile,
 } from "./library.js";
 
@@ -25,6 +26,7 @@ const elements = {
   typeFilter: document.querySelector("#type-filter"),
   modeFilter: document.querySelector("#mode-filter"),
   autosyncFilter: document.querySelector("#autosync-filter"),
+  sortSelect: document.querySelector("#sort-select"),
   status: document.querySelector("#load-status"),
   installHint: document.querySelector("#install-hint"),
   offlineHint: document.querySelector("#offline-hint"),
@@ -211,12 +213,13 @@ function renderMetaLists(profile) {
 }
 
 function renderConnections(profile) {
-  const visibleConnections = filterConnections(profile, {
+  const filtered = filterConnections(profile, {
     search: elements.searchInput.value,
     type: elements.typeFilter.value,
     mode: elements.modeFilter.value,
     autosync: elements.autosyncFilter.value,
   });
+  const visibleConnections = sortConnections(filtered, elements.sortSelect.value);
 
   elements.connectionCount.textContent = `${visibleConnections.length} sichtbar`;
   elements.connectionList.innerHTML = visibleConnections
@@ -431,6 +434,7 @@ function clearStoredProfile() {
   elements.connectionCount.textContent = "0 sichtbar";
   elements.typeFilter.innerHTML = '<option value="all">Alle Typen</option>';
   elements.modeFilter.innerHTML = '<option value="all">Alle Modi</option>';
+  elements.sortSelect.value = "name-asc";
   setStatus("Lokaler Profilstand entfernt.", "info");
 }
 
@@ -465,6 +469,11 @@ function bindEvents() {
     }
   });
   elements.autosyncFilter.addEventListener("change", () => {
+    if (state.profile) {
+      renderConnections(state.profile);
+    }
+  });
+  elements.sortSelect.addEventListener("change", () => {
     if (state.profile) {
       renderConnections(state.profile);
     }
