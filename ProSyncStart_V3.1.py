@@ -1809,6 +1809,20 @@ class FolderSyncWorker(QThread):
         self.is_paused = False
 
 
+def sftp_known_hosts_path():
+    """Return the local known_hosts store used to pin SFTP/SSH host keys."""
+    appdata = str(os.environ.get("APPDATA", "") or "").strip()
+    base_dir = Path(appdata) if appdata else Path.home()
+    if not base_dir.is_absolute():
+        base_dir = Path.home()
+    return base_dir / "ProSync" / "known_hosts"
+
+
+def _ssh_host_key_name(hostname, port):
+    """Mirror paramiko's own host-key lookup key (bracket/port suffix for non-default ports)."""
+    return hostname if port == 22 else f"[{hostname}]:{port}"
+
+
 def create_sftp_transport(cfg):
     """Create an SSH/SFTP transport from a ProSync SFTP configuration."""
     try:
@@ -1820,16 +1834,44 @@ def create_sftp_transport(cfg):
         ) from exc
 
     validate_sftp_connection(cfg)
+    hostname = str(cfg.get("remote_host", "")).strip()
+    port = int(cfg.get("remote_port") or 22)
+    timeout = float(cfg.get("remote_timeout") or 20)
+
+    known_hosts_path = sftp_known_hosts_path()
+    known_hosts_path.parent.mkdir(parents=True, exist_ok=True)
+
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    if cfg.get("allow_unknown_host_key"):
-        client.set_missing_host_key_policy(paramiko.WarningPolicy())
+    if known_hosts_path.exists():
+        client.load_host_keys(str(known_hosts_path))
+
+    # Sicherer Default: unbekannte oder abweichende Host-Keys werden abgelehnt
+    # (paramiko.RejectPolicy). Bewusst KEIN WarningPolicy/AutoAddPolicy mehr als
+    # Bypass -- beide wuerden einen Host-Key-Wechsel (z.B. Man-in-the-Middle)
+    # stillschweigend durchlassen statt die Verbindung abzubrechen.
+    client.set_missing_host_key_policy(paramiko.RejectPolicy())
+
+    host_key_name = _ssh_host_key_name(hostname, port)
+    if cfg.get("allow_unknown_host_key") and client.get_host_keys().lookup(host_key_name) is None:
+        # Trust-on-First-Use: Key nur beim allerersten Kontakt mit diesem Host
+        # abholen und dauerhaft pinnen. Ist der Host danach bekannt, greift
+        # wieder RejectPolicy -- ein spaeter abweichender Key wird weiterhin
+        # abgelehnt statt nur protokolliert.
+        probe = paramiko.Transport((hostname, port))
+        try:
+            probe.start_client(timeout=timeout)
+            server_key = probe.get_remote_server_key()
+        finally:
+            probe.close()
+        client.get_host_keys().add(host_key_name, server_key.get_name(), server_key)
+        client.save_host_keys(str(known_hosts_path))
 
     connect_kwargs = {
-        "hostname": str(cfg.get("remote_host", "")).strip(),
-        "port": int(cfg.get("remote_port") or 22),
+        "hostname": hostname,
+        "port": port,
         "username": str(cfg.get("remote_username", "") or "").strip() or None,
-        "timeout": float(cfg.get("remote_timeout") or 20),
+        "timeout": timeout,
         "look_for_keys": True,
         "allow_agent": True,
     }
@@ -2635,7 +2677,7 @@ class SftpTargetDialog(QDialog):
         self.mode.addItems(["update", "mirror", "one_way"])
         self.mode.setCurrentText(self.existing.get("mode", "update"))
 
-        self.allow_unknown_host_key = QCheckBox("Unbekannte Host-Keys nur mit Warnung zulassen")
+        self.allow_unknown_host_key = QCheckBox("Unbekannten Host-Key beim ersten Verbinden automatisch vertrauen (wird dauerhaft gepinnt)")
         self.allow_unknown_host_key.setChecked(bool(self.existing.get("allow_unknown_host_key", False)))
 
         raw_patterns = self.existing.get("exclude_patterns", [])

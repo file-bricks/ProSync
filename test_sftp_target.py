@@ -178,7 +178,7 @@ def test_sftp_worker_uploads_and_deletes_mirror_stale_files(tmp_path: Path) -> N
 def test_sftp_config_rejects_database_checkpoint_mode(tmp_path: Path) -> None:
     prosync = load_prosync_module()
     src = tmp_path / "src"
-    src.mkdir()
+    src.mkdir(parents=True)
     cfg = _base_config(tmp_path)
     cfg["checkpoint_before_sync"] = True
 
@@ -218,6 +218,164 @@ def test_sftp_portable_profile_redacts_remote_endpoint(tmp_path: Path) -> None:
     assert imported_conn["_portable_import"]["requires_mapping"] is True
 
 
+class _FakeHostKeys:
+    def __init__(self):
+        self.entries: dict[str, tuple] = {}
+
+    def lookup(self, name):
+        return self.entries.get(name)
+
+    def add(self, hostname, keytype, key):
+        self.entries[hostname] = (keytype, key)
+
+
+class _FakeServerKey:
+    @staticmethod
+    def get_name():
+        return "ssh-ed25519"
+
+
+def _install_fake_paramiko_client(monkeypatch, preseed_host_keys=None):
+    """Replace paramiko.SSHClient/Transport with recording fakes; real Policy classes stay."""
+    import paramiko
+
+    clients: list = []
+    transports: list = []
+    preseed = dict(preseed_host_keys or {})
+
+    class FakeSSHClient:
+        def __init__(self):
+            self.policy = None
+            self.loaded_host_key_files: list[str] = []
+            self.saved_host_key_files: list[str] = []
+            self.connect_kwargs: dict | None = None
+            self._host_keys = _FakeHostKeys()
+            self._host_keys.entries.update(preseed)
+            clients.append(self)
+
+        def load_system_host_keys(self):
+            pass
+
+        def load_host_keys(self, filename):
+            self.loaded_host_key_files.append(filename)
+
+        def save_host_keys(self, filename):
+            self.saved_host_key_files.append(filename)
+
+        def get_host_keys(self):
+            return self._host_keys
+
+        def set_missing_host_key_policy(self, policy):
+            self.policy = policy
+
+        def connect(self, **kwargs):
+            self.connect_kwargs = kwargs
+
+        def open_sftp(self):
+            return "FAKE_SFTP_HANDLE"
+
+    class FakeTransport:
+        def __init__(self, sock):
+            self.sock = sock
+            self.start_timeout = None
+            self.closed = False
+            transports.append(self)
+
+        def start_client(self, timeout=None):
+            self.start_timeout = timeout
+
+        def get_remote_server_key(self):
+            return _FakeServerKey()
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr(paramiko, "SSHClient", FakeSSHClient)
+    monkeypatch.setattr(paramiko, "Transport", FakeTransport)
+    return clients, transports
+
+
+def test_create_sftp_transport_pins_unknown_host_key_via_tofu(tmp_path: Path, monkeypatch) -> None:
+    """First-ever connect with allow_unknown_host_key must fetch+pin the key, never bypass validation."""
+    import paramiko
+
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    (tmp_path / "src").mkdir(parents=True)
+    prosync = load_prosync_module()
+    clients, transports = _install_fake_paramiko_client(monkeypatch)
+
+    cfg = _base_config(tmp_path)
+    cfg["allow_unknown_host_key"] = True
+
+    client, sftp = prosync.create_sftp_transport(cfg)
+
+    assert sftp == "FAKE_SFTP_HANDLE"
+    assert isinstance(client.policy, paramiko.RejectPolicy)
+    assert len(transports) == 1, "unknown host must trigger exactly one TOFU probe"
+    assert transports[0].closed is True
+    assert client._host_keys.entries, "server key must be pinned after first contact"
+    assert client.saved_host_key_files, "pinned key must be persisted to known_hosts"
+    assert client.connect_kwargs["hostname"] == cfg["remote_host"]
+    assert (tmp_path / "ProSync" / "known_hosts").parent.exists()
+
+
+def test_create_sftp_transport_never_bypasses_validation_when_disabled(tmp_path: Path, monkeypatch) -> None:
+    """With the opt-in off, no TOFU probe may run and RejectPolicy stays in force (fail closed)."""
+    import paramiko
+
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    (tmp_path / "src").mkdir(parents=True)
+    prosync = load_prosync_module()
+    clients, transports = _install_fake_paramiko_client(monkeypatch)
+
+    cfg = _base_config(tmp_path)
+    cfg["allow_unknown_host_key"] = False
+
+    client, _sftp = prosync.create_sftp_transport(cfg)
+
+    assert isinstance(client.policy, paramiko.RejectPolicy)
+    assert transports == [], "no TOFU probe without explicit opt-in"
+    assert not client._host_keys.entries
+
+
+def test_create_sftp_transport_skips_probe_for_already_pinned_host(tmp_path: Path, monkeypatch) -> None:
+    """A host that is already known must not trigger a new TOFU probe (no silent re-trust on key change)."""
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    (tmp_path / "src").mkdir(parents=True)
+    prosync = load_prosync_module()
+
+    cfg = _base_config(tmp_path)
+    cfg["allow_unknown_host_key"] = True
+    host_key_name = prosync._ssh_host_key_name(cfg["remote_host"], cfg["remote_port"])
+    assert host_key_name == cfg["remote_host"]  # default port 22 -> no bracket/port suffix
+
+    pinned_key = ("ssh-ed25519", "already-known-key")
+    clients, transports = _install_fake_paramiko_client(
+        monkeypatch, preseed_host_keys={host_key_name: pinned_key}
+    )
+
+    client, _sftp = prosync.create_sftp_transport(cfg)
+
+    assert transports == [], "already-known host must not trigger a new TOFU probe"
+    assert client._host_keys.entries[host_key_name] == pinned_key
+
+
+class _SimpleMonkeyPatch:
+    """Minimal stand-in for pytest's `monkeypatch` fixture, for the standalone `main()` runner.
+
+    No undo on teardown -- fine here since `main()` runs each test in a fresh subprocess-like
+    one-shot invocation and exits right after.
+    """
+
+    @staticmethod
+    def setattr(obj, name, value):
+        setattr(obj, name, value)
+
+    @staticmethod
+    def setenv(name, value):
+        os.environ[name] = value
+
+
 def main() -> int:
     import tempfile
 
@@ -226,6 +384,9 @@ def main() -> int:
         test_sftp_worker_uploads_and_deletes_mirror_stale_files(base / "worker")
         test_sftp_config_rejects_database_checkpoint_mode(base / "validate")
         test_sftp_portable_profile_redacts_remote_endpoint(base / "portable")
+        test_create_sftp_transport_pins_unknown_host_key_via_tofu(base / "tofu1", _SimpleMonkeyPatch())
+        test_create_sftp_transport_never_bypasses_validation_when_disabled(base / "tofu2", _SimpleMonkeyPatch())
+        test_create_sftp_transport_skips_probe_for_already_pinned_host(base / "tofu3", _SimpleMonkeyPatch())
     print("SFTP target tests passed")
     return 0
 
