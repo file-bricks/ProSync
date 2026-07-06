@@ -11,6 +11,8 @@ import sqlite3
 import time
 import subprocess
 import re
+import posixpath
+import stat
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
@@ -626,6 +628,71 @@ class ConnectionType:
     """V3.1 NEW: Connection type constants."""
     FOLDER = "folder"  # Sync entire folder
     FILE = "file"      # Sync single file only
+    SFTP = "sftp"      # Sync local folder to SSH/SFTP target
+
+
+REMOTE_UNSAFE_DATABASE_WARNING = (
+    "SFTP-Ziele sind nicht datenbanksicher: WAL-/Lock-Dateien und Remote-"
+    "Atomizität können nicht wie bei lokalen Datei-Verbindungen garantiert "
+    "werden. Nutze für SQLite/Access lieber eine lokale Datei-Verbindung."
+)
+
+
+def normalize_remote_path(path):
+    """Normalize a configured SFTP path without applying local filesystem rules."""
+    raw = str(path or "").strip().replace("\\", "/")
+    if not raw:
+        return ""
+    normalized = posixpath.normpath(raw)
+    if raw.startswith("/") and not normalized.startswith("/"):
+        normalized = "/" + normalized
+    return normalized.rstrip("/") or "/"
+
+
+def join_remote_path(root, rel_path=""):
+    """Join remote POSIX path fragments for SFTP operations."""
+    root = normalize_remote_path(root)
+    rel = str(rel_path or "").replace("\\", "/").strip("/")
+    if not rel:
+        return root
+    return posixpath.join(root, rel)
+
+
+def sftp_connection_display(conn):
+    """Return a secret-free SFTP endpoint label."""
+    user = str(conn.get("remote_username", "") or "").strip()
+    host = str(conn.get("remote_host", "") or "").strip()
+    try:
+        port = int(conn.get("remote_port") or 22)
+    except (TypeError, ValueError):
+        port = 22
+    remote = normalize_remote_path(conn.get("target", ""))
+    user_prefix = f"{user}@" if user else ""
+    port_suffix = f":{port}" if port != 22 else ""
+    if not host:
+        return remote or "?"
+    return f"{user_prefix}{host}{port_suffix}:{remote}"
+
+
+def validate_sftp_connection(conn):
+    """Validate SFTP target configuration and reject unsafe sync modes."""
+    source = str(conn.get("source", "") or "").strip()
+    target = normalize_remote_path(conn.get("target", ""))
+    host = str(conn.get("remote_host", "") or "").strip()
+    if not source:
+        raise ValueError("SFTP-Quelle fehlt")
+    if not os.path.isdir(source):
+        raise ValueError(f"SFTP-Quelle ist kein Ordner: {source}")
+    if not host:
+        raise ValueError("SFTP-Host fehlt")
+    if not target:
+        raise ValueError("SFTP-Zielpfad fehlt")
+    mode = conn.get("mode", "update")
+    if mode not in ("mirror", "update", "one_way"):
+        raise ValueError("SFTP unterstützt nur mirror, update oder one_way")
+    if conn.get("checkpoint_before_sync"):
+        raise ValueError(REMOTE_UNSAFE_DATABASE_WARNING)
+    return True
 
 # ---------------- AUTOSTART MANAGER ----------------
 class AutostartManager:
@@ -804,6 +871,11 @@ class ConfigManager:
                 "source_label": portable_path_label(conn.get("source_file", ""), "Quelldatei"),
                 "target_label": portable_path_label(conn.get("target_file", ""), "Zieldatei"),
             }
+        if conn_type == ConnectionType.SFTP:
+            return {
+                "source_label": portable_path_label(conn.get("source", ""), "Quellordner"),
+                "target_label": portable_path_label(conn.get("target", ""), "SFTP-Ziel"),
+            }
 
         hints = {
             "source_label": portable_path_label(conn.get("source", ""), "Quellordner"),
@@ -901,11 +973,14 @@ class ConfigManager:
     def _build_portable_connection(self, conn):
         """Create one redacted portable connection entry."""
         conn_type = conn.get("type", ConnectionType.FOLDER)
+        default_mode = "one_way" if conn_type == ConnectionType.FILE else "mirror"
+        if conn_type == ConnectionType.SFTP:
+            default_mode = "update"
         portable = {
             "id": conn.get("id", ""),
             "name": conn.get("name", ""),
             "type": conn_type,
-            "mode": conn.get("mode", "one_way" if conn_type == ConnectionType.FILE else "mirror"),
+            "mode": conn.get("mode", default_mode),
             "exclude_patterns": self._portable_patterns(conn),
             "autosync": self._portable_autosync(conn),
             "path_hints": self._portable_path_hints(conn),
@@ -913,6 +988,10 @@ class ConfigManager:
 
         if conn_type == ConnectionType.FILE:
             portable["checkpoint_before_sync"] = bool(conn.get("checkpoint_before_sync", False))
+        elif conn_type == ConnectionType.SFTP:
+            portable["conflict_policy"] = "source"
+            portable["indexing"] = False
+            portable["remote_warning"] = REMOTE_UNSAFE_DATABASE_WARNING
         else:
             portable["conflict_policy"] = conn.get("conflict_policy", "source")
             portable["indexing"] = bool(conn.get("indexing", True))
@@ -959,7 +1038,7 @@ class ConfigManager:
             raise ValueError("Ungültiger Verbindungs-Eintrag im Austauschformat")
 
         conn_type = portable_conn.get("type", ConnectionType.FOLDER)
-        if conn_type not in (ConnectionType.FOLDER, ConnectionType.FILE):
+        if conn_type not in (ConnectionType.FOLDER, ConnectionType.FILE, ConnectionType.SFTP):
             conn_type = ConnectionType.FOLDER
 
         original_id = str(portable_conn.get("id") or uuid.uuid4())
@@ -983,11 +1062,15 @@ class ConfigManager:
         elif not isinstance(raw_patterns, (list, tuple)):
             raw_patterns = []
 
+        default_mode = "one_way" if conn_type == ConnectionType.FILE else "mirror"
+        if conn_type == ConnectionType.SFTP:
+            default_mode = "update"
+
         imported_conn = {
             "id": conn_id,
             "name": str(portable_conn.get("name") or "Importierte Aufgabe").strip() or "Importierte Aufgabe",
             "type": conn_type,
-            "mode": portable_conn.get("mode", "one_way" if conn_type == ConnectionType.FILE else "mirror"),
+            "mode": portable_conn.get("mode", default_mode),
             "exclude_patterns": [
                 str(pattern)
                 for pattern in raw_patterns
@@ -1017,6 +1100,16 @@ class ConfigManager:
             imported_conn["checkpoint_before_sync"] = bool(
                 portable_conn.get("checkpoint_before_sync", False)
             )
+        elif conn_type == ConnectionType.SFTP:
+            imported_conn["source"] = ""
+            imported_conn["target"] = ""
+            imported_conn["remote_host"] = ""
+            imported_conn["remote_port"] = 22
+            imported_conn["remote_username"] = ""
+            imported_conn["remote_key_file"] = ""
+            imported_conn["indexing"] = False
+            imported_conn["conflict_policy"] = "source"
+            imported_conn["remote_warning"] = REMOTE_UNSAFE_DATABASE_WARNING
         else:
             imported_conn["source"] = ""
             imported_conn["target"] = ""
@@ -1714,6 +1807,244 @@ class FolderSyncWorker(QThread):
     def resume(self):
         """Setzt den Worker fort."""
         self.is_paused = False
+
+
+def create_sftp_transport(cfg):
+    """Create an SSH/SFTP transport from a ProSync SFTP configuration."""
+    try:
+        import paramiko
+    except ImportError as exc:
+        raise RuntimeError(
+            "SFTP/SSH benötigt das optionale Paket 'paramiko'. "
+            "Installiere es außerhalb von OneDrive z.B. mit: python -m pip install paramiko"
+        ) from exc
+
+    validate_sftp_connection(cfg)
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    if cfg.get("allow_unknown_host_key"):
+        client.set_missing_host_key_policy(paramiko.WarningPolicy())
+
+    connect_kwargs = {
+        "hostname": str(cfg.get("remote_host", "")).strip(),
+        "port": int(cfg.get("remote_port") or 22),
+        "username": str(cfg.get("remote_username", "") or "").strip() or None,
+        "timeout": float(cfg.get("remote_timeout") or 20),
+        "look_for_keys": True,
+        "allow_agent": True,
+    }
+    key_file = str(cfg.get("remote_key_file", "") or "").strip()
+    if key_file:
+        connect_kwargs["key_filename"] = key_file
+
+    client.connect(**connect_kwargs)
+    return client, client.open_sftp()
+
+
+class SftpTargetSyncWorker(QThread):
+    """Synchronize a local folder to an SSH/SFTP target."""
+
+    progress = Signal(int, str)
+    status = Signal(str)
+    finished = Signal()
+    error = Signal(str)
+    sync_report = Signal(dict)
+
+    def __init__(self, cfg, transport_factory=None):
+        super().__init__()
+        self.cfg = cfg
+        self.transport_factory = transport_factory or create_sftp_transport
+        self.conn_id = cfg.get("id")
+        self.is_killed = False
+        self.is_paused = False
+        self._last_pct = -1
+
+    @staticmethod
+    def _is_dir_attr(attr):
+        return stat.S_ISDIR(getattr(attr, "st_mode", 0))
+
+    def _ensure_remote_dir(self, sftp, remote_dir):
+        remote_dir = normalize_remote_path(remote_dir)
+        if remote_dir in ("", "/"):
+            return
+        parts = [part for part in remote_dir.strip("/").split("/") if part]
+        current = "/" if remote_dir.startswith("/") else ""
+        for part in parts:
+            current = posixpath.join(current, part) if current else part
+            try:
+                sftp.stat(current)
+            except (FileNotFoundError, OSError):
+                try:
+                    sftp.mkdir(current)
+                except OSError:
+                    sftp.stat(current)
+
+    def _scan_remote_tree(self, sftp, remote_root):
+        remote_root = normalize_remote_path(remote_root)
+        tree = {}
+
+        def walk(current_remote, rel_prefix=""):
+            try:
+                entries = sftp.listdir_attr(current_remote)
+            except (FileNotFoundError, OSError):
+                return
+            for entry in entries:
+                name = entry.filename
+                if name in (".", ".."):
+                    continue
+                rel = f"{rel_prefix}/{name}" if rel_prefix else name
+                full = join_remote_path(current_remote, name)
+                if self._is_dir_attr(entry):
+                    walk(full, rel)
+                else:
+                    tree[rel] = {
+                        "mtime": float(getattr(entry, "st_mtime", 0)),
+                        "size": int(getattr(entry, "st_size", 0)),
+                        "remote_path": full,
+                    }
+
+        walk(remote_root)
+        return tree
+
+    def _upload_file(self, sftp, local_path, remote_path):
+        remote_dir = posixpath.dirname(remote_path)
+        self._ensure_remote_dir(sftp, remote_dir)
+        tmp_remote = f"{remote_path}.prosync_tmp"
+        try:
+            sftp.put(local_path, tmp_remote)
+            sftp.rename(tmp_remote, remote_path)
+            mtime = os.path.getmtime(local_path)
+            try:
+                sftp.utime(remote_path, (mtime, mtime))
+            except (AttributeError, OSError):
+                pass
+        except BaseException:
+            try:
+                sftp.remove(tmp_remote)
+            except Exception:
+                pass
+            raise
+
+    def _build_actions(self, src_tree, remote_tree, mode):
+        all_files = set(src_tree.keys()) | set(remote_tree.keys())
+        actions = []
+        for rel_path in sorted(all_files):
+            in_src = rel_path in src_tree
+            in_remote = rel_path in remote_tree
+            if in_src and not in_remote:
+                actions.append(("UPLOAD", rel_path))
+            elif in_src and in_remote:
+                src_meta = src_tree[rel_path]
+                remote_meta = remote_tree[rel_path]
+                if (
+                    src_meta["size"] != remote_meta["size"]
+                    or abs(src_meta["mtime"] - remote_meta["mtime"]) > 1
+                ):
+                    actions.append(("UPLOAD", rel_path))
+            elif in_remote and not in_src and mode == "mirror":
+                actions.append(("DELETE_REMOTE", rel_path))
+        return actions
+
+    def run(self):
+        ssh_client = None
+        sftp = None
+        try:
+            validate_sftp_connection(self.cfg)
+            mode = self.cfg.get("mode", "update")
+            source_root = self.cfg["source"]
+            remote_root = normalize_remote_path(self.cfg["target"])
+            exclude_patterns = self.cfg.get("exclude_patterns", [])
+            if isinstance(exclude_patterns, (str, bytes)):
+                exclude_patterns = [exclude_patterns]
+
+            self.status.emit(f"[{self.cfg.get('name')}] Verbinde mit SFTP-Ziel...")
+            ssh_client, sftp = self.transport_factory(self.cfg)
+
+            self.status.emit(f"[{self.cfg.get('name')}] Scanne Quelle...")
+            src_tree = SyncWalker().scan(source_root, exclude_patterns)
+
+            self.status.emit(f"[{self.cfg.get('name')}] Scanne SFTP-Ziel...")
+            self._ensure_remote_dir(sftp, remote_root)
+            remote_tree = self._scan_remote_tree(sftp, remote_root)
+
+            actions = self._build_actions(src_tree, remote_tree, mode)
+            total = len(actions)
+            started_at = datetime.now(timezone.utc).isoformat()
+            start_time = time.monotonic()
+            stats = {"copied": 0, "deleted": 0, "skipped": 0, "bytes_copied": 0}
+
+            if total == 0:
+                self.status.emit("✓ SFTP-Ziel ist bereits aktuell")
+
+            for index, (action, rel_path) in enumerate(actions):
+                if self.is_killed:
+                    return
+                while self.is_paused:
+                    if self.is_killed:
+                        return
+                    time.sleep(0.5)
+
+                pct = int((index / max(1, total)) * 100)
+                if pct != self._last_pct:
+                    self.progress.emit(pct, "sftp")
+                    self._last_pct = pct
+
+                if action == "UPLOAD":
+                    local_path = src_tree[rel_path]["abs_path"]
+                    remote_path = join_remote_path(remote_root, rel_path)
+                    self.status.emit(f"SFTP Upload -> {rel_path}")
+                    self._upload_file(sftp, local_path, remote_path)
+                    stats["copied"] += 1
+                    stats["bytes_copied"] += os.path.getsize(local_path)
+                elif action == "DELETE_REMOTE":
+                    remote_path = remote_tree[rel_path]["remote_path"]
+                    self.status.emit(f"SFTP löscht Ziel: {rel_path}")
+                    sftp.remove(remote_path)
+                    stats["deleted"] += 1
+
+            duration = time.monotonic() - start_time
+            report = {
+                "connection": self.cfg.get("name", ""),
+                "connection_id": self.conn_id,
+                "mode": mode,
+                "target_type": ConnectionType.SFTP,
+                "started_at": started_at,
+                "duration_seconds": round(duration, 2),
+                "files_copied": stats["copied"],
+                "files_deleted": stats["deleted"],
+                "files_skipped": stats["skipped"],
+                "bytes_copied": stats["bytes_copied"],
+                "total_actions": total,
+            }
+            self.sync_report.emit(report)
+            self.progress.emit(100, "done")
+            self.status.emit(f"✓ SFTP-Sync abgeschlossen: {total} Aktion(en)")
+            self.finished.emit()
+        except Exception as exc:
+            self.error.emit(str(exc))
+        finally:
+            if sftp is not None:
+                try:
+                    sftp.close()
+                except Exception:
+                    pass
+            if ssh_client is not None:
+                try:
+                    ssh_client.close()
+                except Exception:
+                    pass
+
+    def kill(self):
+        """Stop the worker at the next safe point."""
+        self.is_killed = True
+
+    def pause(self):
+        """Pause the worker."""
+        self.is_paused = True
+
+    def resume(self):
+        """Resume the worker."""
+        self.is_paused = False
 # ---------------- SCHEDULER ----------------
 class ConnectionScheduler(QObject):
     """
@@ -2256,6 +2587,142 @@ class FileConnectionDialog(QDialog):
 
         return conn_config
 
+
+class SftpTargetDialog(QDialog):
+    """Dialog for local-folder to SSH/SFTP target synchronization."""
+
+    def __init__(self, parent=None, existing=None):
+        super().__init__(parent)
+        self.setWindowTitle("SFTP/SSH-Ziel synchronisieren")
+        self.existing = existing or {}
+        self.resize(560, 520)
+        lay = QVBoxLayout(self)
+        form = QFormLayout()
+
+        self.name = QLineEdit(self.existing.get("name", ""))
+        self.source = QLineEdit(self.existing.get("source", ""))
+        self.remote_host = QLineEdit(self.existing.get("remote_host", ""))
+        self.remote_port = QLineEdit(str(self.existing.get("remote_port", 22)))
+        self.remote_username = QLineEdit(self.existing.get("remote_username", ""))
+        self.remote_key_file = QLineEdit(self.existing.get("remote_key_file", ""))
+        self.target = QLineEdit(self.existing.get("target", ""))
+
+        btn_src = QPushButton("📂")
+        configure_compact_button_accessibility(
+            btn_src,
+            name="Quellordner auswählen",
+            tooltip="Quellordner auswählen",
+            description="Öffnet den Ordnerdialog für den lokalen Quellordner.",
+        )
+        btn_src.clicked.connect(lambda: self.pick_folder(self.source))
+        h_src = QHBoxLayout()
+        h_src.addWidget(self.source)
+        h_src.addWidget(btn_src)
+
+        btn_key = QPushButton("🔑")
+        configure_compact_button_accessibility(
+            btn_key,
+            name="SSH-Schlüssel auswählen",
+            tooltip="SSH-Schlüssel auswählen",
+            description="Wählt optional eine private Schlüsseldatei für SFTP aus.",
+        )
+        btn_key.clicked.connect(lambda: self.pick_file(self.remote_key_file))
+        h_key = QHBoxLayout()
+        h_key.addWidget(self.remote_key_file)
+        h_key.addWidget(btn_key)
+
+        self.mode = QComboBox()
+        self.mode.addItems(["update", "mirror", "one_way"])
+        self.mode.setCurrentText(self.existing.get("mode", "update"))
+
+        self.allow_unknown_host_key = QCheckBox("Unbekannte Host-Keys nur mit Warnung zulassen")
+        self.allow_unknown_host_key.setChecked(bool(self.existing.get("allow_unknown_host_key", False)))
+
+        raw_patterns = self.existing.get("exclude_patterns", [])
+        if isinstance(raw_patterns, (str, bytes)):
+            patterns_text = str(raw_patterns)
+        else:
+            patterns_text = "; ".join(str(p) for p in raw_patterns if str(p).strip())
+        self.exclude_patterns = QLineEdit(patterns_text)
+        self.exclude_patterns.setPlaceholderText("z.B. *.tmp; __pycache__; *.db-wal")
+
+        form.addRow("Name der Aufgabe", self.name)
+        form.addRow("Lokale Quelle", h_src)
+        form.addRow("SFTP-Host", self.remote_host)
+        form.addRow("Port", self.remote_port)
+        form.addRow("Benutzername", self.remote_username)
+        form.addRow("SSH-Key (optional)", h_key)
+        form.addRow("Remote-Zielpfad", self.target)
+        form.addRow("Sync-Modus", self.mode)
+        form.addRow("Ausschlüsse", self.exclude_patterns)
+        form.addRow("", self.allow_unknown_host_key)
+        lay.addLayout(form)
+
+        warning = QTextEdit()
+        warning.setReadOnly(True)
+        warning.setMaximumHeight(110)
+        warning.setText(
+            f"⚠ {REMOTE_UNSAFE_DATABASE_WARNING}\n\n"
+            "Passwörter werden in ProSync nicht gespeichert. Nutze SSH-Agent "
+            "oder eine Schlüsseldatei."
+        )
+        lay.addWidget(warning)
+
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok |
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        lay.addWidget(buttons)
+
+    def pick_folder(self, line):
+        path = QFileDialog.getExistingDirectory(self, "Lokalen Quellordner wählen")
+        if path:
+            line.setText(path)
+
+    def pick_file(self, line):
+        path, _ = QFileDialog.getOpenFileName(self, "SSH-Schlüssel wählen")
+        if path:
+            line.setText(path)
+
+    @staticmethod
+    def _parse_patterns(text):
+        return [
+            part.strip()
+            for part in str(text or "").replace("\n", ";").split(";")
+            if part.strip()
+        ]
+
+    def get_result(self):
+        try:
+            port = int(str(self.remote_port.text()).strip() or "22")
+        except ValueError:
+            port = 22
+
+        conn_config = {
+            "id": self.existing["id"] if self.existing.get("id") else f"conn-{uuid.uuid4().hex[:6]}",
+            "type": ConnectionType.SFTP,
+            "name": self.name.text().strip(),
+            "source": self.source.text().strip(),
+            "target": normalize_remote_path(self.target.text()),
+            "remote_host": self.remote_host.text().strip(),
+            "remote_port": port,
+            "remote_username": self.remote_username.text().strip(),
+            "remote_key_file": self.remote_key_file.text().strip(),
+            "allow_unknown_host_key": self.allow_unknown_host_key.isChecked(),
+            "mode": self.mode.currentText(),
+            "conflict_policy": "source",
+            "indexing": False,
+            "autosync": self.existing.get(
+                "autosync",
+                {"enabled": False, "interval_minutes": DEFAULT_AUTOSYNC_INTERVAL},
+            ),
+            "exclude_patterns": self._parse_patterns(self.exclude_patterns.text()),
+            "remote_warning": REMOTE_UNSAFE_DATABASE_WARNING,
+        }
+        return conn_config
+
 class MainWindow(QMainWindow):
     # V3.2 NEW: Notification-Typen für Toast-System
     class NotificationType:
@@ -2311,6 +2778,8 @@ class MainWindow(QMainWindow):
         act_folder.triggered.connect(self.add_folder_connection)
         act_file = add_menu.addAction("📄 Datei synchronisieren")
         act_file.triggered.connect(self.add_file_connection)
+        act_sftp = add_menu.addAction("🌐 SFTP/SSH-Ziel synchronisieren")
+        act_sftp.triggered.connect(self.add_sftp_connection)
         btn_add.setMenu(add_menu)
 
         # V3 NEW: Database audit button
@@ -2465,7 +2934,12 @@ class MainWindow(QMainWindow):
 
             # V3.1 NEW: Show connection type icon
             conn_type = c.get("type", ConnectionType.FOLDER)
-            type_icon = "📄" if conn_type == ConnectionType.FILE else "📁"
+            if conn_type == ConnectionType.FILE:
+                type_icon = "📄"
+            elif conn_type == ConnectionType.SFTP:
+                type_icon = "🌐"
+            else:
+                type_icon = "📁"
 
             item = QListWidgetItem(f"{type_icon} {c['name']}{auto_txt}{safety_txt}")
 
@@ -2474,6 +2948,10 @@ class MainWindow(QMainWindow):
                 src = self._format_connection_endpoint(c, "source")
                 tgt = self._format_connection_endpoint(c, "target")
                 item.setToolTip(f"[FILE] {src} -> {tgt} ({c.get('mode', 'one_way')})")
+            elif conn_type == ConnectionType.SFTP:
+                src = self._format_connection_endpoint(c, "source")
+                tgt = self._format_connection_endpoint(c, "target")
+                item.setToolTip(f"[SFTP] {src} -> {tgt} ({c.get('mode', 'update')})")
             else:
                 src = self._format_connection_endpoint(c, "source")
                 tgt = self._format_connection_endpoint(c, "target")
@@ -2519,6 +2997,11 @@ class MainWindow(QMainWindow):
                 "source": ("source_file", "source_label"),
                 "target": ("target_file", "target_label"),
             }
+        elif conn_type == ConnectionType.SFTP:
+            field_map = {
+                "source": ("source", "source_label"),
+                "target": ("target", "target_label"),
+            }
         else:
             field_map = {
                 "source": ("source", "source_label"),
@@ -2545,6 +3028,12 @@ class MainWindow(QMainWindow):
         conn_type = data.get("type", ConnectionType.FOLDER)
         if conn_type == ConnectionType.FILE:
             return not (str(data.get("source_file", "")).strip() and str(data.get("target_file", "")).strip())
+        if conn_type == ConnectionType.SFTP:
+            return not (
+                str(data.get("source", "")).strip()
+                and str(data.get("target", "")).strip()
+                and str(data.get("remote_host", "")).strip()
+            )
         return not (str(data.get("source", "")).strip() and str(data.get("target", "")).strip())
 
     def refresh_selection_state(self):
@@ -2607,6 +3096,17 @@ class MainWindow(QMainWindow):
                 f"Src: {self._format_connection_endpoint(data, 'source')}\n"
                 f"Tgt: {self._format_connection_endpoint(data, 'target')}"
             )
+        elif conn_type == ConnectionType.SFTP:
+            mapping_note = ""
+            if self._connection_requires_path_mapping(data):
+                mapping_note = "\n⚠ Importiertes Profil: Quellordner, SFTP-Host und Remote-Ziel vor dem ersten Sync neu wählen."
+            self.lbl_info.setText(
+                f"🌐 {data['name']} [{data.get('mode', 'update').upper()}]"
+                f"\n⚠ Nicht datenbanksicher über SFTP"
+                f"{mapping_note}\n"
+                f"Src: {self._format_connection_endpoint(data, 'source')}\n"
+                f"Tgt: {sftp_connection_display(data)}"
+            )
         else:
             # Folder connection info
             idx_txt = " [Index: AN]" if data.get("indexing", True) else " [Index: AUS]"
@@ -2654,6 +3154,20 @@ class MainWindow(QMainWindow):
         dlg = FileConnectionDialog(self)
         if dlg.exec():
             self.cfg.add_or_update_connection(dlg.get_result())
+            self.scheduler.update_all()
+            self.populate_list()
+
+    def add_sftp_connection(self):
+        """Add an SFTP target connection."""
+        dlg = SftpTargetDialog(self)
+        if dlg.exec():
+            conn = dlg.get_result()
+            try:
+                validate_sftp_connection(conn)
+            except ValueError as exc:
+                QMessageBox.warning(self, "SFTP-Konfiguration prüfen", str(exc))
+                return
+            self.cfg.add_or_update_connection(conn)
             self.scheduler.update_all()
             self.populate_list()
 
@@ -2792,6 +3306,8 @@ class MainWindow(QMainWindow):
         if conn_type == ConnectionType.FILE:
             # File sync worker (no database indexing)
             self.worker = FileSyncWorker(conn_data)
+        elif conn_type == ConnectionType.SFTP:
+            self.worker = SftpTargetSyncWorker(conn_data)
         else:
             # Folder sync worker (with optional database)
             db = None
@@ -2809,7 +3325,7 @@ class MainWindow(QMainWindow):
         # V3.2 CHANGED: Error-Handler mit Notification
         self.worker.error.connect(self._handle_worker_error)
         # Sync-Report speichern
-        if isinstance(self.worker, FolderSyncWorker):
+        if isinstance(self.worker, (FolderSyncWorker, SftpTargetSyncWorker)):
             self.worker.sync_report.connect(self._save_sync_report)
         self.worker.start()
 
@@ -2960,6 +3476,12 @@ class MainWindow(QMainWindow):
                 else:
                     results.append(f"✓ {conn['name']} [FILE]: Bereits sicher konfiguriert")
 
+            elif conn_type == ConnectionType.SFTP:
+                try:
+                    validate_sftp_connection(conn)
+                    results.append(f"⚠ {conn['name']} [SFTP]: {REMOTE_UNSAFE_DATABASE_WARNING}")
+                except ValueError as exc:
+                    results.append(f"⚠ {conn['name']} [SFTP]: {exc}")
             else:
                 # Folder connections - check for databases
                 source = conn.get("source", "")
@@ -3052,10 +3574,19 @@ class MainWindow(QMainWindow):
             conn_type = conn.get("type", ConnectionType.FOLDER)
             if conn_type == ConnectionType.FILE:
                 dlg = FileConnectionDialog(self, existing=conn)
+            elif conn_type == ConnectionType.SFTP:
+                dlg = SftpTargetDialog(self, existing=conn)
             else:
                 dlg = ConnectionDialog(self, existing=conn)
             if dlg.exec():
-                self.cfg.add_or_update_connection(dlg.get_result())
+                updated = dlg.get_result()
+                if updated.get("type") == ConnectionType.SFTP:
+                    try:
+                        validate_sftp_connection(updated)
+                    except ValueError as exc:
+                        QMessageBox.warning(self, "SFTP-Konfiguration prüfen", str(exc))
+                        return
+                self.cfg.add_or_update_connection(updated)
                 self.scheduler.update_all()
                 self.populate_list()
 
@@ -3273,6 +3804,8 @@ def create_cli_worker(conn):
     conn_type = conn.get("type", ConnectionType.FOLDER)
     if conn_type == ConnectionType.FILE:
         return FileSyncWorker(conn)
+    if conn_type == ConnectionType.SFTP:
+        return SftpTargetSyncWorker(conn)
 
     db = None
     if conn.get("indexing") and conn.get("db_path"):
@@ -3310,7 +3843,7 @@ def run_headless_connection(conn, quiet=False):
     worker.status.connect(on_status)
     worker.error.connect(on_error)
     worker.finished.connect(on_finished)
-    if isinstance(worker, FolderSyncWorker):
+    if isinstance(worker, (FolderSyncWorker, SftpTargetSyncWorker)):
         worker.sync_report.connect(on_report)
 
     if not quiet:
