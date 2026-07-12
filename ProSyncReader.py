@@ -283,6 +283,12 @@ class SearchWindow(QMainWindow):
         
         btn_settings = QPushButton("⚙")
         btn_settings.setFixedSize(30, 30)
+        btn_settings.setToolTip("Suchdatenbanken verwalten")
+        btn_settings.setStatusTip("Öffnet die Liste der eingebundenen Suchdatenbanken.")
+        btn_settings.setAccessibleName("Suchdatenbanken verwalten")
+        btn_settings.setAccessibleDescription(
+            "Öffnet den Dialog zum Hinzufügen oder Entfernen eingebundener Suchdatenbanken."
+        )
         btn_settings.clicked.connect(self.open_settings)
         
         top_lay.addWidget(self.search_field)
