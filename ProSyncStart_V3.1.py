@@ -138,6 +138,8 @@ except ImportError:
 DB_CONNECTION_TIMEOUT = 5.0  # Seconds for SQLite database connection timeout
 SEARCH_RESULT_LIMIT = 500    # Maximum number of search results
 DEFAULT_AUTOSYNC_INTERVAL = 15
+MAX_QT_TIMER_INTERVAL_MS = 2_147_483_647
+MAX_AUTOSYNC_INTERVAL_MINUTES = MAX_QT_TIMER_INTERVAL_MS // (60 * 1000)
 PORTABLE_PROFILE_SCHEMA = "prosync-profile-v1"
 PORTABLE_PROFILE_APP_VERSION = "3.2"
 
@@ -612,7 +614,13 @@ class DatabaseSafetyManager:
         try:
             # Verbinde zur DB mit 30s Timeout (falls gerade gelockt)
             conn = sqlite3.connect(db_path, timeout=30.0)
-            conn.execute("PRAGMA wal_checkpoint(FULL);")
+            checkpoint_result = conn.execute("PRAGMA wal_checkpoint(FULL);").fetchone()
+            if checkpoint_result and checkpoint_result[0]:
+                log_warning(
+                    "⚠ WAL checkpoint incomplete: "
+                    f"{checkpoint_result[0]} busy frame(s)"
+                )
+                return False
             conn.commit()
             log_info(f"✓ WAL checkpoint successful: {os.path.basename(db_path)}")
             return True
@@ -758,6 +766,10 @@ class AutostartManager:
             return False
 
 # ---------------- CONFIG ----------------
+class ConfigLoadError(RuntimeError):
+    """Raised when an existing configuration cannot be loaded safely."""
+
+
 class ConfigManager:
     """
     Verwaltet die ProSync-Konfigurationsdatei (JSON).
@@ -781,31 +793,60 @@ class ConfigManager:
         """
         Lädt die Konfiguration aus der JSON-Datei.
 
-        Bei Fehler oder fehlender Datei wird eine neue Config erstellt.
+        Fehlende Dateien werden neu erstellt. Beschädigte oder schemawidrige
+        Dateien bleiben unverändert, erhalten eine Sicherheitskopie und
+        blockieren den Start, damit sie nicht still überschrieben werden.
         """
         if os.path.exists(self.path):
             try:
                 with open(self.path, "r", encoding="utf-8") as f:
                     loaded = json.load(f)
-                if not isinstance(loaded, dict):
-                    log_error(
-                        "Config load error: expected JSON object root, "
-                        f"got {type(loaded).__name__}"
-                    )
-                    self.data = default_config_data()
-                    self.save()
-                    return
-                self.data = loaded
-                if not isinstance(self.data.get("app"), dict):
-                    self.data["app"] = {}
-                if not isinstance(self.data.get("connections"), list):
-                    self.data["connections"] = []
             except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
-                log_error(f"Config load error: {e}")
-                self.data = default_config_data()
-                self.save()
+                self._raise_invalid_config(str(e), cause=e)
+
+            if not isinstance(loaded, dict):
+                self._raise_invalid_config(
+                    "JSON root must be an object, "
+                    f"not {type(loaded).__name__}"
+                )
+            if "app" in loaded and not isinstance(loaded["app"], dict):
+                self._raise_invalid_config("'app' must be a JSON object")
+            if "connections" in loaded and not isinstance(loaded["connections"], list):
+                self._raise_invalid_config("'connections' must be a JSON array")
+            if any(not isinstance(conn, dict) for conn in loaded.get("connections", [])):
+                self._raise_invalid_config("every connection must be a JSON object")
+
+            self.data = loaded
+            self.data.setdefault("app", {})
+            self.data.setdefault("connections", [])
         else:
             self.save()
+
+    def _raise_invalid_config(self, reason, cause=None):
+        """Preserve an invalid config and raise instead of overwriting it."""
+        original = Path(self.path)
+        backup = Path(f"{self.path}.invalid.bak")
+        counter = 2
+        while backup.exists():
+            backup = Path(f"{self.path}.invalid-{counter}.bak")
+            counter += 1
+
+        try:
+            shutil.copy2(original, backup)
+        except OSError as backup_error:
+            message = (
+                f"Konfiguration ist ungültig und blieb unverändert: {original}. "
+                f"Sicherheitskopie fehlgeschlagen: {backup_error}"
+            )
+            log_error(message)
+            raise ConfigLoadError(message) from (cause or backup_error)
+
+        message = (
+            f"Konfiguration ist ungültig und wurde nicht überschrieben: {original}. "
+            f"Sicherheitskopie: {backup}. Ursache: {reason}"
+        )
+        log_error(message)
+        raise ConfigLoadError(message) from cause
 
     def save(self):
         """
@@ -1404,7 +1445,7 @@ def sha256_file(path: str, chunk_size: int = 1024*1024) -> str:
 
 class SyncWalker:
     """V3 IMPROVED: Better pattern matching for excludes."""
-    def scan(self, root_path, exclude_patterns=None):
+    def scan(self, root_path, exclude_patterns=None, *, strict=False):
         """
         Scannt ein Verzeichnis und erstellt einen File-Tree.
 
@@ -1423,9 +1464,20 @@ class SyncWalker:
 
         tree = {}
         if not os.path.exists(root_path):
+            if strict:
+                raise FileNotFoundError(f"Quellordner nicht gefunden: {root_path}")
+            return tree
+        if not os.path.isdir(root_path):
+            if strict:
+                raise NotADirectoryError(f"Quelle ist kein lesbarer Ordner: {root_path}")
             return tree
 
-        for root, dirs, files in os.walk(root_path):
+        def handle_walk_error(error):
+            if strict:
+                raise OSError(f"Ordner kann nicht gelesen werden: {root_path}: {error}") from error
+            log_warning(f"Scan warning for {root_path}: {error}")
+
+        for root, dirs, files in os.walk(root_path, onerror=handle_walk_error):
             # V3 FIX: Filter directories
             dirs[:] = [d for d in dirs if not self._should_exclude(d, exclude_patterns)]
 
@@ -1444,7 +1496,9 @@ class SyncWalker:
                         "size": stat.st_size,
                         "abs_path": abs_p
                     }
-                except OSError:
+                except OSError as error:
+                    if strict:
+                        raise OSError(f"Quelldatei kann nicht gelesen werden: {abs_p}: {error}") from error
                     # File may have been deleted during scan
                     pass
 
@@ -1535,7 +1589,10 @@ class FileSyncWorker(QThread):
                 if DatabaseSafetyManager.checkpoint_sqlite_database(source_file):
                     self.status.emit(f"✓ Checkpoint erfolgreich: {filename}")
                 else:
-                    self.status.emit(f"⚠ Checkpoint fehlgeschlagen (Sync wird fortgesetzt)")
+                    self.error.emit(
+                        f"WAL-Checkpoint fehlgeschlagen; Datenbankkopie abgebrochen: {filename}"
+                    )
+                    return
 
             if self.is_killed:
                 return
@@ -1629,7 +1686,7 @@ class FolderSyncWorker(QThread):
 
             # 1. Scan
             self.status.emit(f"[{self.cfg['name']}] Scanne Quelle...")
-            src_tree = SyncWalker().scan(src_root, exclude_patterns)
+            src_tree = SyncWalker().scan(src_root, exclude_patterns, strict=True)
 
             tgt_tree = {}
             if mode != "index_only":
@@ -1646,7 +1703,7 @@ class FolderSyncWorker(QThread):
                 in_tgt = f in tgt_tree
 
                 if in_src and not in_tgt:
-                    if mode in ["mirror", "update", "two_way"]:
+                    if mode in ["mirror", "update", "one_way", "two_way"]:
                         actions.append(("COPY_L2R", f))
                     elif mode == "index_only":
                         actions.append(("INDEX_SRC", f))
@@ -1661,13 +1718,8 @@ class FolderSyncWorker(QThread):
                     s_meta = src_tree[f]
                     t_meta = tgt_tree[f]
 
-                    # BUGSWEEP-26 REVIEW-NOTIZ (NICHT auto-gefixt — User-Entscheidung): mode=="one_way"
-                    # faellt hier durch ALLE Branches -> fuer geaenderte Dateien wird keine Action
-                    # erzeugt (stiller No-Op im FolderSyncWorker; one_way existiert aber im Dialog/
-                    # FileSyncWorker). Ob das Absicht ist (one_way nur fuer Einzeldatei) oder fehlende
-                    # Implementierung, muss fachlich geklaert werden -> bewusst unveraendert.
                     if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
-                        if mode == "mirror" or mode == "update":
+                        if mode in ("mirror", "update", "one_way"):
                             actions.append(("COPY_L2R", f))
                         elif mode == "two_way":
                             if conflict_policy == "source":
@@ -1746,7 +1798,9 @@ class FolderSyncWorker(QThread):
                                     self._db_log(self.db, t_abs, "target")
 
                 except Exception as e:
-                    log_error(f"Error {act} on {rel_path}: {e}")
+                    message = f"Aktion {act} fehlgeschlagen für {rel_path}: {e}"
+                    log_error(message)
+                    raise RuntimeError(message) from e
 
             _duration = time.monotonic() - _start_time
             report = {
@@ -1954,7 +2008,11 @@ class SftpTargetSyncWorker(QThread):
         tmp_remote = f"{remote_path}.prosync_tmp"
         try:
             sftp.put(local_path, tmp_remote)
-            sftp.rename(tmp_remote, remote_path)
+            posix_rename = getattr(sftp, "posix_rename", None)
+            if callable(posix_rename):
+                posix_rename(tmp_remote, remote_path)
+            else:
+                self._fallback_remote_replace(sftp, tmp_remote, remote_path)
             mtime = os.path.getmtime(local_path)
             try:
                 sftp.utime(remote_path, (mtime, mtime))
@@ -1966,6 +2024,42 @@ class SftpTargetSyncWorker(QThread):
             except Exception:
                 pass
             raise
+
+    @staticmethod
+    def _fallback_remote_replace(sftp, tmp_remote, remote_path):
+        """Replace a remote file without relying on rename-over-existing semantics."""
+        destination_exists = False
+        try:
+            sftp.stat(remote_path)
+            destination_exists = True
+        except FileNotFoundError:
+            pass
+        except OSError as error:
+            if getattr(error, "errno", None) != 2:
+                raise
+
+        backup_remote = None
+        if destination_exists:
+            backup_remote = f"{remote_path}.prosync_backup_{uuid.uuid4().hex}"
+            sftp.rename(remote_path, backup_remote)
+
+        try:
+            sftp.rename(tmp_remote, remote_path)
+        except BaseException as promote_error:
+            if backup_remote is not None:
+                try:
+                    sftp.rename(backup_remote, remote_path)
+                except Exception as restore_error:
+                    raise RuntimeError(
+                        f"SFTP-Ersetzung und Wiederherstellung fehlgeschlagen: {restore_error}"
+                    ) from promote_error
+            raise
+
+        if backup_remote is not None:
+            try:
+                sftp.remove(backup_remote)
+            except OSError as cleanup_error:
+                log_warning(f"SFTP backup cleanup failed: {cleanup_error}")
 
     def _build_actions(self, src_tree, remote_tree, mode):
         all_files = set(src_tree.keys()) | set(remote_tree.keys())
@@ -2003,7 +2097,7 @@ class SftpTargetSyncWorker(QThread):
             ssh_client, sftp = self.transport_factory(self.cfg)
 
             self.status.emit(f"[{self.cfg.get('name')}] Scanne Quelle...")
-            src_tree = SyncWalker().scan(source_root, exclude_patterns)
+            src_tree = SyncWalker().scan(source_root, exclude_patterns, strict=True)
 
             self.status.emit(f"[{self.cfg.get('name')}] Scanne SFTP-Ziel...")
             self._ensure_remote_dir(sftp, remote_root)
@@ -2146,7 +2240,11 @@ class ConnectionScheduler(QObject):
             timer = QTimer()
             timer.setSingleShot(False)
             timer.timeout.connect(lambda c=conn: self.trigger_sync.emit(c))
-            timer.start(max(1, interval_min) * 60 * 1000)
+            interval_min = min(
+                max(1, interval_min),
+                MAX_AUTOSYNC_INTERVAL_MINUTES,
+            )
+            timer.start(interval_min * 60 * 1000)
             self.timers[cid] = timer
 
     def stop_all(self):

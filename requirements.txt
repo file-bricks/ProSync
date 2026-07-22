@@ -1,6 +1,6 @@
 # ProSync Requirements
 # Version: 3.2.0
-# Python: >= 3.8
+# Supported Python: 3.10-3.12 (requires Python >= 3.10)
 
 # Core Dependencies
 PySide6>=6.5.0

@@ -13,6 +13,7 @@ TEST_FILES = [
     "test_cli_headless.py",
     "test_companion_launch.py",
     "test_config_manager.py",
+    "test_core_safety_regressions.py",
     "test_database_safety.py",
     "test_import_streams.py",
     "source_platform_smoke.py",

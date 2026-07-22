@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-07-22)
+- Ordner-`mirror` bricht bei fehlenden oder nicht lesbaren Quellen fail-closed ab; Kopier-/Löschfehler erzeugen keinen Erfolgsreport mehr.
+- Ordner-`one_way` überträgt neue und geänderte Quelldateien wie `update`, löscht aber keine reinen Zieldateien.
+- Datei-Syncs mit aktiviertem SQLite-WAL-Checkpoint kopieren nur nach erfolgreichem Checkpoint.
+- SFTP-Uploads ersetzen Dateien atomar via `posix_rename` oder über einen rückrollbaren Fallback und räumen fehlgeschlagene Temporärdateien auf.
+- Beschädigte oder schemawidrige Konfigurationen bleiben unverändert, werden gesichert und blockieren das Laden statt still überschrieben zu werden.
+- Extrem große Autosync-Intervalle werden auf den sicheren `QTimer`-Maximalwert begrenzt.
+- Python-Support und CI sind auf 3.10 bis 3.12 vereinheitlicht; CI führt zusätzlich die vollständige Pytest-Suite aus.
+
 ### Behoben / Fixed (2026-07-11)
 - `paramiko` ist jetzt als SFTP-/SSH-Abhängigkeit in `requirements.txt` deklariert, damit `test_sftp_target.py` im CI-Smoke nicht mehr an einem fehlenden optionalen Paket scheitert.
 

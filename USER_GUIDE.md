@@ -19,7 +19,7 @@ Version 3.1 | Stand: 2026-03-14
 
 ### Voraussetzungen
 
-- Python 3.9+ **oder** die mitgelieferte `.exe`
+- Python 3.10 bis 3.12 **oder** die mitgelieferte `.exe`
 - Windows 10/11
 
 ### Installation (Python-Version)

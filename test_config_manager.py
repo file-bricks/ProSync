@@ -163,27 +163,40 @@ def test_config_manager():
     assert cfg2.get("test-456") is not None, "test-456 sollte nach Reload existieren"
     print("✓ PASS: Config wurde korrekt persistiert\n")
 
-    # Test 7: Korrupte Config-Datei (Error-Handling)
+    prosync = load_prosync_module()
+
+    # Test 7: Korrupte Config-Datei bleibt unverändert und blockiert Laden
     print("Test 7: Korrupte Config-Datei")
     with open(test_config_path, "w", encoding="utf-8") as f:
         f.write("INVALID JSON{{{")
-    cfg3 = SimpleConfigManager(test_config_path)
-    assert len(cfg3.get_all()) == 0, "Korrupte Config sollte auf leer zurückfallen"
-    print("✓ PASS: Korrupte Config wird korrekt behandelt\n")
+    try:
+        prosync.ConfigManager(test_config_path)
+    except prosync.ConfigLoadError:
+        pass
+    else:
+        raise AssertionError("Korrupte Config muss das Laden blockieren")
+    assert Path(test_config_path).read_text(encoding="utf-8") == "INVALID JSON{{{"
+    assert Path(f"{test_config_path}.invalid.bak").read_text(encoding="utf-8") == "INVALID JSON{{{"
+    print("✓ PASS: Korrupte Config wird unverändert gesichert\n")
 
-    # Test 8: Echte ConfigManager-Klasse sanitiert gültige Nicht-Objekt-JSONs
+    # Test 8: Gültige Nicht-Objekt-JSONs blockieren ebenfalls fail-closed
     print("Test 8: Gültige Nicht-Objekt-Config")
     with open(test_config_path, "w", encoding="utf-8") as f:
         json.dump([], f)
-    prosync = load_prosync_module()
-    cfg4 = prosync.ConfigManager(test_config_path)
-    assert cfg4.data == {"app": {}, "connections": []}, "Nicht-Objekt-JSON sollte auf Standardstruktur zurückfallen"
-    assert cfg4.list_connections() == [], "Leere Standardstruktur sollte ohne Crash lesbar sein"
-    print("✓ PASS: Gültige Nicht-Objekt-Config wird korrekt behandelt\n")
+    try:
+        prosync.ConfigManager(test_config_path)
+    except prosync.ConfigLoadError:
+        pass
+    else:
+        raise AssertionError("Nicht-Objekt-JSON muss das Laden blockieren")
+    assert json.loads(Path(test_config_path).read_text(encoding="utf-8")) == []
+    print("✓ PASS: Gültige Nicht-Objekt-Config wird unverändert gesichert\n")
 
     # Cleanup
     if os.path.exists(test_config_path):
         os.remove(test_config_path)
+    for backup in Path(temp_dir).glob("test_prosync_config.json.invalid*.bak"):
+        backup.unlink()
 
     print("=== ALLE TESTS BESTANDEN ✓ ===")
 

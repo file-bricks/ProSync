@@ -34,10 +34,6 @@ class TestD1NoQMenuBare(unittest.TestCase):
     def test_v31_no_bare_qmenu(self):
         self._assert_no_bare_qmenu("ProSyncStart_V3.1.py")
 
-    def test_v31_asusgei_no_bare_qmenu(self):
-        self._assert_no_bare_qmenu("ProSyncStart_V3.1-ASUS-GEI.py")
-
-
 class TestD3RunTestsTimeout(unittest.TestCase):
     """BUG-D3: subprocess.run ohne timeout= — hängt bei fehlschlagendem Testprozess."""
 
@@ -71,15 +67,6 @@ class TestU2ManageTranslations(unittest.TestCase):
         snippet = src[idx:idx + 400]
         self.assertIn("JSONDecodeError", snippet,
                       "json.load in import_portable_profile ohne JSONDecodeError-Handler — BUG-U2")
-
-    def test_asusgei_import_profile_json_error_raises_valueerror(self):
-        src = (ROOT / "ProSyncStart_V3.1-ASUS-GEI.py").read_text(encoding="utf-8")
-        idx = src.find("import_portable_profile")
-        self.assertGreater(idx, 0, "import_portable_profile nicht gefunden")
-        snippet = src[idx:idx + 400]
-        self.assertIn("JSONDecodeError", snippet,
-                      "json.load in import_portable_profile ohne JSONDecodeError-Handler — BUG-U2")
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -30,6 +30,8 @@
 
 ## Installation
 
+Unterstützt werden Python 3.10 bis 3.12 (`>=3.10`).
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -83,6 +85,7 @@ Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versio
 ```bash
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_cli_headless.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
+python -m pytest -q
 ```
 
 GitHub Actions führt dieselben Smoke-Tests für Python 3.10, 3.11 und 3.12 aus.
@@ -223,7 +226,7 @@ WAL (Write-Ahead Logging) speichert SQLite-Änderungen in einer separaten `-wal`
 Ein Checkpoint führt diese Änderungen in die Haupt-DB-Datei zurück.
 
 **Ohne Checkpoint:** Inkonsistente Backups möglich.
-**Mit Checkpoint:** Konsistente DB-Kopie intendiert (abhängig von SQLite-Checkpoint-Implementierung, keine Gewähr).
+**Mit Checkpoint:** ProSync kopiert die Datenbank nur nach einem erfolgreichen Checkpoint; ein fehlgeschlagener oder blockierter Checkpoint bricht den Sync ab.
 
 ## Konfigurationsdatei
 
@@ -313,7 +316,7 @@ wie `%USERPROFILE%\\...` angegeben werden.
 - **two_way** für kritische Datenbanken
 - **Laufende** Anwendungen synchronisieren
 - **.db-wal**-Dateien manuell kopieren
-- **mirror** verwenden, wenn keine Löschungen gewünscht sind
+- **mirror** verwenden, wenn reine Zieldateien erhalten bleiben müssen; stattdessen **one_way** oder **update** wählen
 
 ## Fehlerbehebung
 
