@@ -13,6 +13,7 @@ Core behavior:
 - Synchronizes folders and individual files in five configurable modes: mirror, update, two_way, one_way, index_only.
 - Detects and protects SQLite databases automatically (WAL checkpoint before copy, WAL file exclusion).
 - Supports scheduled backups with configurable intervals and a batch-sync queue for multiple connections.
+- Provides a headless CLI for automation: `--list`, `--run <id|name>`, `--all`, `--config`, and `--quiet`.
 - Exports redacted `prosync-profile-v1.json` for device companions and web PWA integration.
 - Optionally launches ProFiler companion for indexing and search across synchronized files.
 
@@ -46,4 +47,4 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - two-way folder synchronization Windows offline
 - ProFiler companion file indexing sync
 
-## Last-checked: 2026-06-11
+## Last-checked: 2026-06-22

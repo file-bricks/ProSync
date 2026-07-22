@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Dokumentiert / Documented (2026-07-02, Mobile smoke)
+- `web_companion/MOBILE_SMOKE.md` dokumentiert den lokal ausgeführten Mobile-Viewport-Smoke gegen `http://127.0.0.1:4179/` mit Demo-Import, Offline-Restore nach Reload, Filter `Autosync -> Aktiv`, Suche `ledger` und konsolenfreiem Lauf bei `390x844`.
+- `AUFGABEN.txt` und `PORTIERUNGSPLAN.md` unterscheiden jetzt sauber zwischen lokal verifiziertem Mobile-Viewport-Smoke und weiter offenem echten Android-/iOS-Geräte- oder Emulator-Smoke.
+
+### Behoben / Fixed (2026-07-02, PWA smoke follow-up)
+- `web_companion/manifest.webmanifest` führt `./icon.svg` wieder im `icons`-Array. Damit stimmen Manifest und bestehende PWA-Regressions-Tests wieder überein; SVG bleibt als installierbares Vektor-Icon neben den PNG- und maskable-Icons erhalten.
+
 ### Hinzugefügt / Added (2026-06-28, PWA-Feature sortConnections)
 - **web_companion: Verbindungs-Sortierung** — `sortConnections(connections, sortBy)` in `library.js` als reine Logikfunktion (immutable, DOM-frei). Unterstützt `name-asc`, `name-desc`, `autosync-first` und `type`. In `app.js` und `index.html` als Sort-Dropdown im Filter-Panel verdrahtet; wird bei jedem Filter-Event und nach `clearStoredProfile` zurückgesetzt.
 - 6 neue Unit-Tests für `sortConnections` in `web_companion/tests/library.test.mjs`.

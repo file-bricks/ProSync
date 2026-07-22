@@ -48,6 +48,19 @@ pip install -r requirements.txt
 python ProSyncStart_V3.1.py
 ```
 
+### Headless CLI
+
+```bash
+python ProSyncStart_V3.1.py --list
+python ProSyncStart_V3.1.py --run "Connection ID or exact name"
+python ProSyncStart_V3.1.py --all
+```
+
+Use `--config <path-to-ProSync_config.json>` for automation profiles and
+`--quiet` to suppress status lines during scheduled runs. CLI sync uses the
+same file and folder workers as the GUI and refuses to run while another
+ProSync instance holds the runtime lock.
+
 ### Via Batch File
 
 ```bash
@@ -66,7 +79,7 @@ Build artifacts in `build/`, `dist/`, and `releases/` are intentionally not vers
 ## Quality Checks
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_cli_headless.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 

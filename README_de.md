@@ -48,6 +48,20 @@ pip install -r requirements.txt
 python ProSyncStart_V3.1.py
 ```
 
+### Headless-CLI
+
+```bash
+python ProSyncStart_V3.1.py --list
+python ProSyncStart_V3.1.py --run "Verbindungs-ID oder exakter Name"
+python ProSyncStart_V3.1.py --all
+```
+
+Für Automationen kann mit `--config <pfad-zu-ProSync_config.json>` eine eigene
+Konfigurationsdatei gewählt werden. `--quiet` unterdrückt Statuszeilen für
+geplante Läufe. Der CLI-Sync verwendet dieselben Datei- und Ordner-Worker wie
+die GUI und bricht ab, wenn bereits eine andere ProSync-Instanz den
+Laufzeit-Lock hält.
+
 ### Via Batch-Datei
 
 ```bash
@@ -67,7 +81,7 @@ Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versio
 ## Qualitätssicherung
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_cli_headless.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 ```
 
