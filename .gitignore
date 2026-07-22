@@ -113,6 +113,18 @@ DONE.md
 ENTWICKLUNGSPLAN*.md
 Feature_Analyse*.md
 
+# ---- Lokale, nicht referenzierte Generator-Artefakte ----
+# Die kanonisch referenzierte PWA-Datei ist web_companion/apple-touch-icon-180.png.
+web_companion/_backups/
+web_companion/apple-touch-icon.png
+web_companion/favicon.png
+web_companion/icons/apple-touch-icon*.png
+web_companion/icons/favicon.png
+assets/android-icon-*.png
+assets/favicon.png
+assets/icon.png
+assets/splash-icon.png
+
 # ---- Windows Store: track metadata, keep generated packages out ----
 !releases/
 releases/*
