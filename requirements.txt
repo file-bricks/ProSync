@@ -5,6 +5,9 @@
 # Core Dependencies
 PySide6>=6.5.0
 
+# SFTP/SSH target support
+paramiko>=3.4.0
+
 # Optional: ProSyncReader Dependencies
 # Uncomment if you need PDF/DOCX preview functionality
 # PyPDF2>=3.0.0

@@ -3,7 +3,7 @@
 ProSync unterstützt SFTP als Remote-Zieltyp für lokale Ordner. Der Zieltyp ist
 für Mirror-/Backup-Flüsse zu einem per SSH erreichbaren Host gedacht, etwa einen
 Mac im Tailscale-Netz. Er ersetzt kein lokales gemountetes Laufwerk, speichert
-keine Passwörter und nutzt `paramiko` nur optional zur Laufzeit.
+keine Passwörter und nutzt `paramiko` für den SSH-/SFTP-Transport.
 
 ## Konfigurationsfelder
 

@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-07-11)
+- `paramiko` ist jetzt als SFTP-/SSH-Abhängigkeit in `requirements.txt` deklariert, damit `test_sftp_target.py` im CI-Smoke nicht mehr an einem fehlenden optionalen Paket scheitert.
+
 ### Dokumentiert / Documented (2026-07-02, Mobile smoke)
 - `web_companion/MOBILE_SMOKE.md` dokumentiert den lokal ausgeführten Mobile-Viewport-Smoke gegen `http://127.0.0.1:4179/` mit Demo-Import, Offline-Restore nach Reload, Filter `Autosync -> Aktiv`, Suche `ledger` und konsolenfreiem Lauf bei `390x844`.
 - `AUFGABEN.txt` und `PORTIERUNGSPLAN.md` unterscheiden jetzt sauber zwischen lokal verifiziertem Mobile-Viewport-Smoke und weiter offenem echten Android-/iOS-Geräte- oder Emulator-Smoke.
