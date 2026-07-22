@@ -7,6 +7,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ### Behoben / Fixed (2026-07-22)
 - Ordner-`mirror` bricht bei fehlenden oder nicht lesbaren Quellen fail-closed ab; Kopier-/Löschfehler erzeugen keinen Erfolgsreport mehr.
+- Überlappende oder identische Quell-/Zielordner werden vor dem Scan abgelehnt, damit kein Sync rekursiv in seinen eigenen Arbeitsbaum schreibt.
 - Ordner-`one_way` überträgt neue und geänderte Quelldateien wie `update`, löscht aber keine reinen Zieldateien.
 - Datei-Syncs mit aktiviertem SQLite-WAL-Checkpoint kopieren nur nach erfolgreichem Checkpoint.
 - SFTP-Uploads ersetzen Dateien atomar via `posix_rename` oder über einen rückrollbaren Fallback und räumen fehlgeschlagene Temporärdateien auf.

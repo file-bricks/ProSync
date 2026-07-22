@@ -87,6 +87,33 @@ def test_folder_mirror_unreadable_source_preserves_target(tmp_path, monkeypatch)
     assert protected.exists()
 
 
+@pytest.mark.parametrize("nested_side", ["source", "target", "same"])
+def test_folder_sync_rejects_overlapping_roots(tmp_path, nested_side):
+    QCoreApplication.instance() or QCoreApplication([])
+    prosync = load_prosync_module()
+    outer = tmp_path / "outer"
+    inner = outer / "inner"
+    inner.mkdir(parents=True)
+    protected = inner / "keep.txt"
+    protected.write_text("keep", encoding="utf-8")
+
+    if nested_side == "source":
+        source, target = outer, inner
+    elif nested_side == "target":
+        source, target = inner, outer
+    else:
+        source = target = outer
+
+    errors, finished, reports = capture_worker(
+        prosync.FolderSyncWorker(make_folder_config(source, target))
+    )
+
+    assert errors and "dürfen nicht ineinander liegen" in errors[0]
+    assert finished == []
+    assert reports == []
+    assert protected.read_text(encoding="utf-8") == "keep"
+
+
 @pytest.mark.parametrize("failed_action", ["copy", "delete"])
 def test_folder_action_error_never_reports_success(tmp_path, monkeypatch, failed_action):
     QCoreApplication.instance() or QCoreApplication([])

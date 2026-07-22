@@ -1681,6 +1681,19 @@ class FolderSyncWorker(QThread):
             src_root = self.cfg["source"]
             tgt_root = self.cfg["target"]
 
+            if mode != "index_only":
+                src_resolved = os.path.realpath(os.path.abspath(src_root))
+                tgt_resolved = os.path.realpath(os.path.abspath(tgt_root))
+                try:
+                    common_root = os.path.commonpath([src_resolved, tgt_resolved])
+                except ValueError:
+                    common_root = None  # Different Windows drives cannot overlap.
+                if common_root in (src_resolved, tgt_resolved):
+                    raise ValueError(
+                        "Quell- und Zielordner müssen getrennt sein und dürfen "
+                        "nicht ineinander liegen"
+                    )
+
             # V3.1: Get exclude patterns
             exclude_patterns = self.cfg.get("exclude_patterns", [])
 
