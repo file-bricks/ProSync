@@ -9,8 +9,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue?logo=windows)](#installation)
+[![Tests: 97 passed](https://img.shields.io/badge/Tests-97%20passed-brightgreen)](#quality-checks)
 
-**Quick links:** [Features](#features) · [Installation](#installation) · [User Guide](USER_GUIDE.md) · [Changelog](CHANGELOG.md)
+> [!NOTE]
+> **Disambiguation:** `file-bricks/ProSync` is an open-source Windows desktop application built with Python (PySide6) for local file/folder synchronization with SQLite WAL database protection. It is completely independent of enterprise database replication products (e.g., Tibero ProSync) or third-party macOS utilities.
+
+**Quick links:** [Features](#features) · [Architecture](#architecture--data-flow) · [Installation](#installation) · [User Guide](USER_GUIDE.md) · [Changelog](CHANGELOG.md)
 
 ## Features
 
@@ -23,6 +27,40 @@
 - **Batch Sync** for multiple selected connections in one run
 - **Database Indexing** for search and versioning (optional)
 - **ProFiler Companion** -- optional start of ProFiler from the main window
+
+## Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph Desktop["ProSync Desktop App (PySide6 / Windows Tray)"]
+        GUI["Main Window & Tray Launcher"]
+        SyncEngine["Sync Engine (mirror / update / two_way / one_way / index_only)"]
+        WALGuard["SQLite WAL Checkpoint Guard"]
+        Scheduler["Connection Scheduler & Batch Queue"]
+        Reader["ProFiler Search Companion"]
+    end
+
+    subgraph Targets["Sync Destinations"]
+        LocalDir["Local / External Drives"]
+        NetDir["Network Shares / NAS"]
+        SFTP["SFTP Target (paramiko)"]
+    end
+
+    subgraph WebCompanion["Web / PWA Companion (Offline)"]
+        ProfileJSON["prosync-profile-v1.json"]
+        WebPWA["PWA Web Reader (Service Worker / LocalStorage)"]
+    end
+
+    GUI --> SyncEngine
+    Scheduler --> SyncEngine
+    SyncEngine --> WALGuard
+    WALGuard --> LocalDir
+    WALGuard --> NetDir
+    SyncEngine --> SFTP
+    GUI --> Reader
+    GUI -.->|Export Profile| ProfileJSON
+    ProfileJSON --> WebPWA
+```
 
 ## Screenshots
 

@@ -9,8 +9,12 @@
 [![Lizenz: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Plattform: Windows](https://img.shields.io/badge/Platform-Windows-blue?logo=windows)](#installation)
+[![Tests: 97 bestanden](https://img.shields.io/badge/Tests-97%20passed-brightgreen)](#qualitatssicherung)
 
-**Schnelleinstieg:** [Features](#features) · [Installation](#installation) · [Benutzerhandbuch](USER_GUIDE.md) · [Changelog](CHANGELOG.md)
+> [!NOTE]
+> **Abgrenzung / Disambiguation:** `file-bricks/ProSync` ist eine Open-Source-Windows-Desktop-Anwendung auf Python-Basis (PySide6) für die lokale Datei- und Ordnersynchronisation mit automatischem SQLite-WAL-Datenbankschutz. Das Projekt steht in keiner Verbindung zu Enterprise-Datenbank-Replikationssoftware (wie z. B. Tibero ProSync) oder macOS-Synchronisationswerkzeugen Dritter.
+
+**Schnelleinstieg:** [Features](#features) · [Architektur](#architektur--datenfluss) · [Installation](#installation) · [Benutzerhandbuch](USER_GUIDE.md) · [Changelog](CHANGELOG.md)
 
 ## Features
 
@@ -23,6 +27,40 @@
 - **Batch-Sync** für mehrere ausgewählte Verbindungen in einem Lauf
 - **Datenbank-Indexierung** für Suche und Versionierung (optional)
 - **ProFiler-Companion** — optionaler Start von ProFiler aus dem Hauptfenster
+
+## Architektur & Datenfluss
+
+```mermaid
+flowchart TD
+    subgraph Desktop["ProSync Desktop App (PySide6 / Windows Tray)"]
+        GUI["Hauptfenster & System-Tray Launcher"]
+        SyncEngine["Sync-Engine (mirror / update / two_way / one_way / index_only)"]
+        WALGuard["SQLite WAL-Checkpoint Schutz"]
+        Scheduler["Verbindungs-Scheduler & Batch-Queue"]
+        Reader["ProFiler Such-Companion"]
+    end
+
+    subgraph Targets["Sync-Ziele"]
+        LocalDir["Lokale / Externe Laufwerke"]
+        NetDir["Netzwerk-Freigaben / NAS"]
+        SFTP["SFTP-Ziel (paramiko)"]
+    end
+
+    subgraph WebCompanion["Web / PWA Companion (Offline)"]
+        ProfileJSON["prosync-profile-v1.json"]
+        WebPWA["PWA Web Reader (Service Worker / LocalStorage)"]
+    end
+
+    GUI --> SyncEngine
+    Scheduler --> SyncEngine
+    SyncEngine --> WALGuard
+    WALGuard --> LocalDir
+    WALGuard --> NetDir
+    SyncEngine --> SFTP
+    GUI --> Reader
+    GUI -.->|Profil-Export| ProfileJSON
+    ProfileJSON --> WebPWA
+```
 
 ## Screenshots
 

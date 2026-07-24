@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Dokumentiert / Documented (2026-07-24)
+- **Repository Discoverability & Marketing Update:** README.md und README_de.md um Test-Statusbadge (97 Tests grün), Disambiguation-Sektion (Abgrenzung zu Enterprise-CDC/Tibero ProSync) und Mermaid-Systemarchitekturdiagramm erweitert. `llms.txt` auf Datum `2026-07-24` und erweiterte Suchphrasen für offline/local-first PySide6 Backup-Synchronisation und SQLite WAL-Schutz aktualisiert.
+
 ### Behoben / Fixed (2026-07-22)
 - Ordner-`mirror` bricht bei fehlenden oder nicht lesbaren Quellen fail-closed ab; Kopier-/Löschfehler erzeugen keinen Erfolgsreport mehr.
 - Überlappende oder identische Quell-/Zielordner werden vor dem Scan abgelehnt, damit kein Sync rekursiv in seinen eigenen Arbeitsbaum schreibt.
