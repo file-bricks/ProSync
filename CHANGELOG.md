@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-07-26)
+- **Technische Hygiene & Metadata-Update:** Standarisierte PEP 621 `pyproject.toml` mit Projekt-Metadaten, PySide6/paramiko/pypdf Abhängigkeiten und `[tool.pytest.ini_options]` Test-Konfiguration erstellt. `llms.txt` Header auf `Last-checked: 2026-07-26` aktualisiert und 97/97 grüne Tests (68 Pytest + 29 Web-Companion Node.js Tests) verifiziert.
+
 ### Dokumentiert / Documented (2026-07-24)
 - **Repository Discoverability & Marketing Update:** README.md und README_de.md um Test-Statusbadge (97 Tests grün), Disambiguation-Sektion (Abgrenzung zu Enterprise-CDC/Tibero ProSync) und Mermaid-Systemarchitekturdiagramm erweitert. `llms.txt` auf Datum `2026-07-24` und erweiterte Suchphrasen für offline/local-first PySide6 Backup-Synchronisation und SQLite WAL-Schutz aktualisiert.
 
