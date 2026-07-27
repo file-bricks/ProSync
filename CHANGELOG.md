@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-07-27)
+- **Technische Hygiene & Doku-Korrekturen:** HTML-Banner-Syntax in `README.md` und `README_de.md` korrigiert (`<img ...>`). `llms.txt` Header auf `Last-checked: 2026-07-27` aktualisiert. `.gitignore` um lokale Generator-Artefakte ergänzt. 97/97 grüne Tests (68 Pytest + 29 Web-Companion Node.js Tests) vollständig re-verifiziert.
+
 ### Geändert / Changed (2026-07-26)
 - **Technische Hygiene & Metadata-Update:** Standarisierte PEP 621 `pyproject.toml` mit Projekt-Metadaten, PySide6/paramiko/pypdf Abhängigkeiten und `[tool.pytest.ini_options]` Test-Konfiguration erstellt. `llms.txt` Header auf `Last-checked: 2026-07-26` aktualisiert und 97/97 grüne Tests (68 Pytest + 29 Web-Companion Node.js Tests) verifiziert.
 
