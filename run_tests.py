@@ -18,6 +18,7 @@ TEST_FILES = [
     "test_import_streams.py",
     "source_platform_smoke.py",
     "test_portable_profile.py",
+    "test_schedule_time.py",
     "test_sftp_target.py",
     "test_store_materials.py",
     "test_sync_worker.py",

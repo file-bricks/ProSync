@@ -5,6 +5,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-07-27, TW-PS-09 Phase 1)
+- Reine, IANA-zeitzonenbewusste Berechnung des nächsten täglichen
+  Ausführungszeitpunkts mit explizitem Vertrag für Sommerzeit-Sprung und
+  doppelte Herbststunde.
+- Regressionstests für Mitternacht, bereits verstrichene Uhrzeiten,
+  nicht existierende lokale Zeiten und die wiederholte Stunde.
+- `tzdata` als Windows-Laufzeitabhängigkeit für die IANA-Zeitzonendaten
+  deklariert.
+- Testnachweis und öffentliche Zählung auf 77/77 Python- plus 29/29
+  Web-Companion-Tests (106/106 insgesamt) aktualisiert.
+
 ### Geändert / Changed (2026-07-27)
 - **Technische Hygiene & Doku-Korrekturen:** HTML-Banner-Syntax in `README.md` und `README_de.md` korrigiert (`<img ...>`). `llms.txt` Header auf `Last-checked: 2026-07-27` aktualisiert. `.gitignore` um lokale Generator-Artefakte ergänzt. 97/97 grüne Tests (68 Pytest + 29 Web-Companion Node.js Tests) vollständig re-verifiziert.
 

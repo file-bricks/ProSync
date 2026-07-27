@@ -9,7 +9,7 @@
 [![Lizenz: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Plattform: Windows](https://img.shields.io/badge/Platform-Windows-blue?logo=windows)](#installation)
-[![Tests: 97 bestanden](https://img.shields.io/badge/Tests-97%20passed-brightgreen)](#qualitatssicherung)
+[![Tests: 106 bestanden](https://img.shields.io/badge/Tests-106%20passed-brightgreen)](#qualitatssicherung)
 
 > [!NOTE]
 > **Abgrenzung / Disambiguation:** `file-bricks/ProSync` ist eine Open-Source-Windows-Desktop-Anwendung auf Python-Basis (PySide6) für die lokale Datei- und Ordnersynchronisation mit automatischem SQLite-WAL-Datenbankschutz. Das Projekt steht in keiner Verbindung zu Enterprise-Datenbank-Replikationssoftware (wie z. B. Tibero ProSync) oder macOS-Synchronisationswerkzeugen Dritter.
@@ -121,7 +121,7 @@ Build-Artefakte in `build/`, `dist/` und `releases/` werden bewusst nicht versio
 ## Qualitätssicherung
 
 ```bash
-python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_cli_headless.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_store_materials.py test_sync_worker.py
+python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py schedule_time.py logger.py run_tests.py _WARTUNG/generate_store_screenshots.py test_batch_sync_queue.py test_cli_headless.py test_config_manager.py test_database_safety.py test_import_streams.py source_platform_smoke.py test_portable_profile.py test_schedule_time.py test_store_materials.py test_sync_worker.py
 python run_tests.py
 python -m pytest -q
 ```

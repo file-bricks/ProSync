@@ -39,7 +39,8 @@ classifiers = [
 dependencies = [
     "PySide6>=6.5.0",
     "paramiko>=3.0.0",
-    "pypdf>=3.0.0"
+    "pypdf>=3.0.0",
+    "tzdata>=2025.2"
 ]
 
 [project.optional-dependencies]

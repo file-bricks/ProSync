@@ -4,6 +4,7 @@
 
 # Core Dependencies
 PySide6>=6.5.0
+tzdata>=2025.2
 
 # SFTP/SSH target support
 paramiko>=3.4.0

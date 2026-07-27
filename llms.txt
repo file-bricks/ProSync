@@ -1,6 +1,6 @@
 # ProSync
 
-> Last-checked: 2026-07-27 (97/97 tests passing: 68 pytest + 29 node tests)
+> Last-checked: 2026-07-27 (106/106 tests passing: 77 pytest + 29 node tests)
 
 Canonical repository: https://github.com/file-bricks/ProSync
 Organization: file-bricks
@@ -28,8 +28,8 @@ Privacy boundary:
 Local verification:
 
 ```bash
-python -m pytest -q          # 68 Python unit tests
-cd web_companion && npm test  # 29 Node PWA companion tests (97 total tests)
+python -m pytest -q          # 77 Python tests
+cd web_companion && npm test  # 29 Node PWA companion tests (106 total tests)
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 ```
 
