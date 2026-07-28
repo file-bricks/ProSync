@@ -1,7 +1,7 @@
 {
   "name": "ProSync Companion",
   "short_name": "ProSync",
-  "description": "Lokaler Companion für ProSync-Profile und redigierte Sync-Report-Metadaten.",
+  "description": "Lokaler Companion f\u00fcr ProSync-Profile und redigierte Sync-Report-Metadaten.",
   "lang": "de-DE",
   "start_url": "./",
   "scope": "./",
@@ -10,33 +10,44 @@
   "theme_color": "#16324f",
   "icons": [
     {
+      "src": "icons/Icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
       "src": "./icon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "./icons/Icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./icons/Icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/Icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "./icons/Icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "src": "apple-touch-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ]
 }
