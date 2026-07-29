@@ -22,13 +22,14 @@ from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QComboBox, QCheckBox, QDialogButtonBox,
     QFileDialog, QMessageBox, QSystemTrayIcon, QStyle, QSizePolicy, QSplitter,
     QAbstractItemView,
-    QTextEdit
+    QTextEdit, QInputDialog
 )
 from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir, QCoreApplication
 from PySide6.QtGui import QAction, QActionGroup, QIcon
 
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
+from schedule_time import next_daily_run, parse_daily_time, resolve_iana_timezone
 
 
 def _configure_windows_utf8_streams() -> None:
@@ -138,6 +139,8 @@ except ImportError:
 DB_CONNECTION_TIMEOUT = 5.0  # Seconds for SQLite database connection timeout
 SEARCH_RESULT_LIMIT = 500    # Maximum number of search results
 DEFAULT_AUTOSYNC_INTERVAL = 15
+DEFAULT_DAILY_TIME = "09:00"
+DEFAULT_DAILY_TIMEZONE = "Europe/Berlin"
 MAX_QT_TIMER_INTERVAL_MS = 2_147_483_647
 MAX_AUTOSYNC_INTERVAL_MINUTES = MAX_QT_TIMER_INTERVAL_MS // (60 * 1000)
 PORTABLE_PROFILE_SCHEMA = "prosync-profile-v1"
@@ -2206,10 +2209,11 @@ class ConnectionScheduler(QObject):
 
     trigger_sync = Signal(dict)
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, now_provider=None):
         super().__init__()
         self.cfg = cfg
         self.timers = {}
+        self._now_provider = now_provider or (lambda tz: datetime.now(tz))
 
     def update_all(self):
         """
@@ -2245,12 +2249,15 @@ class ConnectionScheduler(QObject):
         if not isinstance(autosync, dict):
             autosync = {}
         if autosync.get("enabled", False):
+            if autosync.get("mode", "interval") == "daily":
+                self._start_daily_timer(conn, autosync)
+                return
             raw_interval = autosync.get("interval_minutes", 15)
             try:
                 interval_min = int(raw_interval)
             except (TypeError, ValueError):
                 interval_min = 15
-            timer = QTimer()
+            timer = QTimer(self)
             timer.setSingleShot(False)
             timer.timeout.connect(lambda c=conn: self.trigger_sync.emit(c))
             interval_min = min(
@@ -2259,6 +2266,73 @@ class ConnectionScheduler(QObject):
             )
             timer.start(interval_min * 60 * 1000)
             self.timers[cid] = timer
+
+    def _start_daily_timer(self, conn, autosync):
+        """Arm one daily timer from an explicit local time and IANA timezone."""
+        try:
+            run_at = parse_daily_time(autosync.get("daily_time", DEFAULT_DAILY_TIME))
+            tz = resolve_iana_timezone(
+                autosync.get("timezone", DEFAULT_DAILY_TIMEZONE)
+            )
+            now = self._now_provider(tz)
+            next_run = next_daily_run(now, run_at, tz)
+        except (TypeError, ValueError) as exc:
+            log_warning(
+                f"Täglicher Zeitplan für {conn.get('name', conn.get('id', '?'))} "
+                f"ist ungültig: {exc}"
+            )
+            return
+
+        delay_ms = max(
+            1,
+            min(
+                int((next_run.astimezone(timezone.utc) - now.astimezone(timezone.utc)).total_seconds() * 1000),
+                MAX_QT_TIMER_INTERVAL_MS,
+            ),
+        )
+        timer = QTimer(self)
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda cid=conn["id"]: self._on_daily_timer(cid))
+        timer.start(delay_ms)
+        self.timers[conn["id"]] = timer
+
+    def _connection_by_id(self, conn_id):
+        """Return the current saved connection to avoid rearming stale data."""
+        for conn in self.cfg.list_connections():
+            if conn.get("id") == conn_id:
+                return conn
+        return None
+
+    def _on_daily_timer(self, conn_id):
+        """Trigger one daily sync and immediately arm the next local occurrence."""
+        conn = self._connection_by_id(conn_id)
+        if conn is None:
+            return
+        autosync = conn.get("autosync", {})
+        if not isinstance(autosync, dict) or not autosync.get("enabled", False):
+            return
+        if autosync.get("mode", "interval") != "daily":
+            return
+        self.trigger_sync.emit(conn)
+        refreshed = self._connection_by_id(conn_id)
+        if refreshed is not None:
+            self.update_connection(refreshed)
+
+    def rearm_daily(self):
+        """Recalculate daily timers after an application resume."""
+        for conn in self.cfg.list_connections():
+            autosync = conn.get("autosync", {})
+            if (
+                isinstance(autosync, dict)
+                and autosync.get("enabled", False)
+                and autosync.get("mode", "interval") == "daily"
+            ):
+                self.update_connection(conn)
+
+    def on_application_state_changed(self, state):
+        """Rearm daily schedules when Qt reports that the app is active again."""
+        if state == Qt.ApplicationState.ApplicationActive:
+            self.rearm_daily()
 
     def stop_all(self):
         """
@@ -2896,6 +2970,9 @@ class MainWindow(QMainWindow):
 
         self.scheduler = ConnectionScheduler(cfg)
         self.scheduler.trigger_sync.connect(self.on_auto_sync_triggered)
+        app = QApplication.instance()
+        if app is not None:
+            app.applicationStateChanged.connect(self.scheduler.on_application_state_changed)
 
         self.tray_icon = QSystemTrayIcon(self)
         self.setup_tray_icon()
@@ -3710,6 +3787,8 @@ class MainWindow(QMainWindow):
             group.addAction(act_int)
             interval_menu.addAction(act_int)
 
+        daily_action = menu.addAction("Tägliche Uhrzeit festlegen…")
+
         res = menu.exec(self.list.viewport().mapToGlobal(pos))
 
         if res == batch_action:
@@ -3752,8 +3831,48 @@ class MainWindow(QMainWindow):
 
         elif res in group.actions():
             conn["autosync"] = conn.get("autosync", {})
+            conn["autosync"]["mode"] = "interval"
             conn["autosync"]["interval_minutes"] = res.data()
             conn["autosync"]["enabled"] = True
+            self.cfg.add_or_update_connection(conn)
+            self.scheduler.update_connection(conn)
+            self.populate_list()
+
+        elif res == daily_action:
+            current = conn.get("autosync", {})
+            if not isinstance(current, dict):
+                current = {}
+            daily_time, accepted = QInputDialog.getText(
+                self,
+                "Tägliche Ausführung",
+                "Uhrzeit (HH:MM):",
+                text=str(current.get("daily_time", DEFAULT_DAILY_TIME)),
+            )
+            if not accepted:
+                return
+            timezone_name, accepted = QInputDialog.getText(
+                self,
+                "Tägliche Ausführung",
+                "IANA-Zeitzone:",
+                text=str(current.get("timezone", DEFAULT_DAILY_TIMEZONE)),
+            )
+            if not accepted:
+                return
+            try:
+                parsed_time = parse_daily_time(daily_time)
+                tz = resolve_iana_timezone(timezone_name)
+            except ValueError as exc:
+                QMessageBox.warning(self, "Zeitplan prüfen", str(exc))
+                return
+            conn["autosync"] = dict(current)
+            conn["autosync"].update(
+                {
+                    "enabled": True,
+                    "mode": "daily",
+                    "daily_time": parsed_time.strftime("%H:%M"),
+                    "timezone": tz.key,
+                }
+            )
             self.cfg.add_or_update_connection(conn)
             self.scheduler.update_connection(conn)
             self.populate_list()
@@ -3899,6 +4018,10 @@ def _format_autosync(conn):
     if not isinstance(autosync, dict):
         return "off"
     enabled = "on" if autosync.get("enabled") else "off"
+    if autosync.get("mode", "interval") == "daily":
+        daily_time = autosync.get("daily_time", DEFAULT_DAILY_TIME)
+        timezone_name = autosync.get("timezone", DEFAULT_DAILY_TIMEZONE)
+        return f"{enabled}/daily {daily_time} {timezone_name}"
     interval = autosync.get("interval_minutes", DEFAULT_AUTOSYNC_INTERVAL)
     return f"{enabled}/{interval}m"
 

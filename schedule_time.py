@@ -8,7 +8,32 @@ wired into configuration, GUI, or ``QTimer`` instances.
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+
+def parse_daily_time(value: str) -> time:
+    """Parse a user-facing daily wall-clock value in ``HH:MM`` format."""
+
+    if not isinstance(value, str):
+        raise ValueError("daily time must use the HH:MM format")
+    try:
+        parsed = datetime.strptime(value, "%H:%M").time()
+    except ValueError as exc:
+        raise ValueError("daily time must use the HH:MM format") from exc
+    if value != parsed.strftime("%H:%M"):
+        raise ValueError("daily time must use the HH:MM format")
+    return parsed
+
+
+def resolve_iana_timezone(value: str) -> ZoneInfo:
+    """Return an IANA timezone or raise a clear configuration error."""
+
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("timezone must be a non-empty IANA timezone name")
+    try:
+        return ZoneInfo(value)
+    except ZoneInfoNotFoundError as exc:
+        raise ValueError(f"unknown IANA timezone: {value}") from exc
 
 
 def next_daily_run(now: datetime, run_at: time, tz: ZoneInfo) -> datetime:
@@ -55,4 +80,4 @@ def next_daily_run(now: datetime, run_at: time, tz: ZoneInfo) -> datetime:
     raise RuntimeError("could not determine the next daily run")
 
 
-__all__ = ["next_daily_run"]
+__all__ = ["next_daily_run", "parse_daily_time", "resolve_iana_timezone"]

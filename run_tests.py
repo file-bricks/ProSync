@@ -15,6 +15,7 @@ TEST_FILES = [
     "test_config_manager.py",
     "test_core_safety_regressions.py",
     "test_database_safety.py",
+    "test_daily_scheduler.py",
     "test_import_streams.py",
     "source_platform_smoke.py",
     "test_portable_profile.py",

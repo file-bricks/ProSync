@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-07-29, TW-PS-09 Phase 2)
+- Täglicher, IANA-zeitzonenbasierter Autosync-Modus mit persistierten
+  `daily_time`- und `timezone`-Feldern pro Verbindung.
+- Kontextmenü für die tägliche Uhrzeit; ungültige `HH:MM`-Werte und unbekannte
+  IANA-Zeitzonen werden vor dem Speichern abgewiesen.
+- Einmalige tägliche `QTimer`-Ausführung mit Neuplanung nach Trigger und nach
+  dem Wiederaktivieren der Anwendung; kein Catch-up-Sync nach Standby.
+- Regressionen für Schema-Persistenz, One-shot-Timer und Neuplanung ergänzt.
+
 ### Hinzugefügt / Added (2026-07-27, TW-PS-09 Phase 1)
 - Reine, IANA-zeitzonenbewusste Berechnung des nächsten täglichen
   Ausführungszeitpunkts mit explizitem Vertrag für Sommerzeit-Sprung und

@@ -1,12 +1,13 @@
 # ProSync schedule contract
 
-Status: Phase 1 for TW-PS-09
+Status: Phase 2 for TW-PS-09
 
 ## Scope
 
-ProSync currently executes automatic synchronization at fixed minute
-intervals. Phase 1 adds only a pure calculation for the next daily local-time
-run. It does not yet change configuration, the GUI, or `QTimer`.
+ProSync supports interval schedules and an optional daily local-time schedule.
+Phase 1 defines the daylight-saving-safe calculation; Phase 2 persists the
+daily schema, exposes it from the connection context menu, and arms a one-shot
+`QTimer` for the next valid occurrence.
 
 ## Daily local-time rules
 
@@ -26,6 +27,20 @@ run. It does not yet change configuration, the GUI, or `QTimer`.
 - The runtime dependency `tzdata` supplies the IANA database on Windows when
   the operating system does not expose it to Python.
 
-The implementation lives in `schedule_time.py`. Configuration persistence,
-user controls, timer re-arming after resume, weekday schedules, and migration
-from interval schedules remain later phases.
+## Daily schedule schema and runtime
+
+- A daily connection stores `autosync.mode = "daily"`, `daily_time` in
+  canonical `HH:MM` form, and an explicit IANA `timezone`.
+- The context-menu action **Tägliche Uhrzeit festlegen…** validates both values
+  before saving them to the local configuration. Existing interval schedules
+  remain unchanged until a user selects this mode.
+- The scheduler uses a single-shot timer. After a trigger it calculates and
+  arms the next occurrence; when the application becomes active again after a
+  resume, it recalculates all enabled daily schedules from the current time.
+- Resume does not invent a missed synchronization. It only schedules the next
+  valid local occurrence, so a suspended device cannot silently run multiple
+  catch-up copies.
+
+The implementation lives in `schedule_time.py` and `ProSyncStart_V3.1.py`.
+Weekday schedules, migration of existing interval profiles, and an end-to-end
+smoke against a controlled sync target remain Phase 3.

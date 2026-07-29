@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from schedule_time import next_daily_run
+from schedule_time import next_daily_run, parse_daily_time, resolve_iana_timezone
 
 
 BERLIN = ZoneInfo("Europe/Berlin")
@@ -86,6 +86,20 @@ def test_next_daily_run_rejects_fixed_offset_timezone():
             time(18, 0),
             timezone.utc,
         )
+
+
+def test_parse_daily_time_requires_canonical_24_hour_format():
+    assert parse_daily_time("06:05") == time(6, 5)
+
+    with pytest.raises(ValueError, match="HH:MM"):
+        parse_daily_time("6:05")
+
+
+def test_resolve_iana_timezone_rejects_unknown_values():
+    assert resolve_iana_timezone("Europe/Berlin").key == "Europe/Berlin"
+
+    with pytest.raises(ValueError, match="unknown IANA timezone"):
+        resolve_iana_timezone("Mars/Olympus")
 
 
 if __name__ == "__main__":
