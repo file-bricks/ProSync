@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue?logo=windows)](#installation)
-[![Tests: 106 passed](https://img.shields.io/badge/Tests-106%20passed-brightgreen)](#quality-checks)
+[![Tests: 110 passed](https://img.shields.io/badge/Tests-110%20passed-brightgreen)](#quality-checks)
 
 > [!NOTE]
 > **Disambiguation:** `file-bricks/ProSync` is an open-source Windows desktop application built with Python (PySide6) for local file/folder synchronization with SQLite WAL database protection. It is completely independent of enterprise database replication products (e.g., Tibero ProSync) or third-party macOS utilities.

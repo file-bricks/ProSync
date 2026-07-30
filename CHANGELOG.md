@@ -5,6 +5,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-07-30)
+- **Technische Hygiene & Maintenance Check:** `llms.txt` Header & Footer auf `Last-checked: 2026-07-30` und 110/110 Tests (81 pytest + 29 node:test) aktualisiert. Test-Status-Badges in `README.md` und `README_de.md` auf 110 passed nachgeführt. Test-Suite (81 Pytest + 29 Node) und compileall 100% grün.
+
 ### Hinzugefügt / Added (2026-07-29, TW-PS-09 Phase 2)
 - Täglicher, IANA-zeitzonenbasierter Autosync-Modus mit persistierten
   `daily_time`- und `timezone`-Feldern pro Verbindung.
