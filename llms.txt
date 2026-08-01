@@ -1,6 +1,6 @@
 # ProSync
 
-> Last-checked: 2026-07-30 (110/110 tests passing: 81 pytest + 29 node tests)
+> Last-checked: 2026-08-01 (110/110 tests passing: 81 pytest + 29 node tests)
 
 Canonical repository: https://github.com/file-bricks/ProSync
 Organization: file-bricks
@@ -52,4 +52,4 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - local-first offline backup privacy-first
 - SQLite WAL safe copy python backup
 
-## Last-checked: 2026-07-30
+## Last-checked: 2026-08-01

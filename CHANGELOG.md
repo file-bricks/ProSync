@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-08-01)
+- **GitHub Privacy & Metadata Check:** konkrete lokale Beispiel- und Store-Pfade
+  durch portable Platzhalter ersetzt; die Testfixture nutzt jetzt
+  `C:\\Users\\Example`. `pyproject.toml` übernimmt den dokumentierten Python-Mindeststand
+  3.10. `README.md`, `README_de.md` und `llms.txt` dokumentieren die aktuelle
+  Verifikation mit 110/110 bestandenen Tests.
+
 ### Geändert / Changed (2026-07-30)
 - **Technische Hygiene & Maintenance Check:** `llms.txt` Header & Footer auf `Last-checked: 2026-07-30` und 110/110 Tests (81 pytest + 29 node:test) aktualisiert. Test-Status-Badges in `README.md` und `README_de.md` auf 110 passed nachgeführt. Test-Suite (81 Pytest + 29 Node) und compileall 100% grün.
 

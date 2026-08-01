@@ -41,12 +41,12 @@ def test_portable_profile_export_import():
                         "id": "folder-1",
                         "name": "Projekt Backup",
                         "type": prosync.ConnectionType.FOLDER,
-                        "source": r"C:\Users\User\Projects\Alpha",
+                        "source": r"C:\Users\Example\Projects\Alpha",
                         "target": r"D:\Backups\Alpha",
                         "mode": "mirror",
                         "conflict_policy": "source",
                         "indexing": True,
-                        "db_path": r"C:\Users\User\Projects\Alpha\index.db",
+                        "db_path": r"C:\Users\Example\Projects\Alpha\index.db",
                         "exclude_patterns": ["*.tmp", "__pycache__"],
                         "autosync": {"enabled": True, "interval_minutes": 60},
                         "_safety_analysis": {
@@ -60,7 +60,7 @@ def test_portable_profile_export_import():
                         "id": "file-1",
                         "name": "SQLite Backup",
                         "type": prosync.ConnectionType.FILE,
-                        "source_file": r"C:\Users\User\App\data.db",
+                        "source_file": r"C:\Users\Example\App\data.db",
                         "target_file": r"E:\Backup\data.db",
                         "mode": "one_way",
                         "checkpoint_before_sync": True,
@@ -107,7 +107,7 @@ def test_portable_profile_export_import():
             assert payload["app"] == {"notifications_enabled": False}
             assert payload["reports"]["count"] == 1
             assert payload["reports"]["latest"]["connection"] == "Projekt Backup"
-            assert r"C:\Users\User\Projects\Alpha" not in exported_text
+            assert r"C:\Users\Example\Projects\Alpha" not in exported_text
             assert r"C:\Private\Tools\ProFiler.exe" not in exported_text
 
             folder_payload = next(conn for conn in payload["connections"] if conn["id"] == "folder-1")

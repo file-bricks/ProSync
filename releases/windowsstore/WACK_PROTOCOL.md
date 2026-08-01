@@ -7,11 +7,15 @@ Nach dem lokalen MSIX-Build soll der Windows App Certification Kit-Lauf dokument
 ## Vorbereiteter Befehl
 
 ```powershell
+$projectRoot = "C:\path\to\ProSync"
+$softwareRoot = "C:\path\to\.SOFTWARE"
+$outputRoot = "C:\build\prosync-store"
+$reportRoot = Join-Path $projectRoot "releases\windowsstore\test_reports"
 Start-Process powershell -Verb RunAs -ArgumentList @(
   "-ExecutionPolicy Bypass",
-  "-File C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\_STORE\msstore_wack.ps1",
-  "-MsixPath C:\_Local_DEV\codex_build\prosync-store\ProSync.msix",
-  "-ReportDir C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\releases\windowsstore\test_reports"
+  "-File $(Join-Path $softwareRoot '_STORE\msstore_wack.ps1')",
+  "-MsixPath $(Join-Path $outputRoot 'ProSync.msix')",
+  "-ReportDir $reportRoot"
 )
 ```
 

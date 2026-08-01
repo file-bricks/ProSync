@@ -5,12 +5,17 @@
 1. Python 3.10+ mit PySide6
 2. PyInstaller für den Desktop-Build
 3. Windows SDK mit `makeappx.exe` und `appcert.exe`
-4. Lokaler Schreibpfad außerhalb von OneDrive für große MSIX-Artefakte, z. B. `C:\_Local_DEV\codex_build\prosync-store`
+4. Lokaler Schreibpfad außerhalb eines synchronisierten Ordners für große MSIX-Artefakte, z. B. `C:\build\prosync-store`
+
+Die Befehle verwenden bewusst Platzhalter statt personenbezogener Arbeitsverzeichnisse.
+Setze `$projectRoot` auf den lokalen ProSync-Checkout und `$softwareRoot` auf den
+lokalen `.SOFTWARE`-Pipelineordner, der die Store-Skripte enthält.
 
 ## Schritt 0: Store-Material aktualisieren
 
 ```powershell
-cd "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync"
+$projectRoot = "C:\path\to\ProSync"
+Set-Location $projectRoot
 $env:PYTHONIOENCODING="utf-8"
 python _WARTUNG\generate_store_screenshots.py
 ```
@@ -29,7 +34,7 @@ Erzeugt:
 ## Schritt 1: Desktop-EXE bauen
 
 ```powershell
-cd "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync"
+Set-Location $projectRoot
 build_exe.bat
 ```
 
@@ -40,10 +45,10 @@ Erwarteter Hauptpfad:
 ## Schritt 2: Store-Pretest
 
 ```powershell
-cd "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE"
-.\_STORE\msstore_pretest.ps1 `
-  -ExePath "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\dist\ProSync\ProSync.exe" `
-  -ProjectRoot "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync" `
+$softwareRoot = "C:\path\to\.SOFTWARE"
+& (Join-Path $softwareRoot "_STORE\msstore_pretest.ps1") `
+  -ExePath (Join-Path $projectRoot "dist\ProSync\ProSync.exe") `
+  -ProjectRoot $projectRoot `
   -StartWait 8
 ```
 
@@ -52,26 +57,27 @@ cd "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE"
 Die PyInstaller-Onefolder-Struktur braucht neben `ProSync.exe` auch `_internal\` und `ProSyncReader.exe`. Deshalb werden diese Pfade explizit als Zusatzdateien übergeben.
 
 ```powershell
-cd "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE"
-.\_STORE\msstore_build_msix.ps1 `
-  -ProjectRoot "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync" `
-  -ExePath "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\dist\ProSync\ProSync.exe" `
-  -OutputMsix "C:\_Local_DEV\codex_build\prosync-store\ProSync.msix" `
+$outputRoot = "C:\build\prosync-store"
+& (Join-Path $softwareRoot "_STORE\msstore_build_msix.ps1") `
+  -ProjectRoot $projectRoot `
+  -ExePath (Join-Path $projectRoot "dist\ProSync\ProSync.exe") `
+  -OutputMsix (Join-Path $outputRoot "ProSync.msix") `
   -ExtraFiles @(
-    "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\dist\ProSync\_internal",
-    "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\dist\ProSync\ProSyncReader.exe",
-    "C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\ProSync_config.example.json"
+    (Join-Path $projectRoot "dist\ProSync\_internal"),
+    (Join-Path $projectRoot "dist\ProSync\ProSyncReader.exe"),
+    (Join-Path $projectRoot "ProSync_config.example.json")
   )
 ```
 
 ## Schritt 4: WACK als Administrator
 
 ```powershell
+$reportRoot = Join-Path $projectRoot "releases\windowsstore\test_reports"
 Start-Process powershell -Verb RunAs -ArgumentList @(
   "-ExecutionPolicy Bypass",
-  "-File C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\_STORE\msstore_wack.ps1",
-  "-MsixPath C:\_Local_DEV\codex_build\prosync-store\ProSync.msix",
-  "-ReportDir C:\Users\User\OneDrive\.TOPICS\.SOFTWARE\DATA\REL-PUB_ProSync\releases\windowsstore\test_reports"
+  "-File $(Join-Path $softwareRoot '_STORE\msstore_wack.ps1')",
+  "-MsixPath $(Join-Path $outputRoot 'ProSync.msix')",
+  "-ReportDir $reportRoot"
 )
 ```
 

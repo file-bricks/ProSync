@@ -7,7 +7,7 @@ name = "prosync"
 version = "3.2.0"
 description = "Intelligent local backup synchronization desktop app with automated SQLite WAL database protection"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "file-bricks Team", email = "lukas@example.com" }
