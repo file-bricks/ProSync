@@ -43,7 +43,58 @@ def load_prosync_module():
     return module
 
 
+def _force_native_platform() -> None:
+    """Entfernt eine geerbte offscreen-Plattform VOR der QApplication-Erzeugung.
+
+    Unter QT_QPA_PLATFORM=offscreen rendert Qt auf Windows keine echten
+    Glyphen -- jede Glyphe wird als .notdef-Kaestchen (Tofu) gerastert; ein
+    Screenshot per grab() sieht dann gueltig aus, ist aber unbrauchbar (Fund
+    aus der Store-Welle 1, behoben u.a. in SoftwareCenter/ProfiPrompt/
+    CleanMarkdown/LitZen). Dieses Skript setzt die Variable selbst nicht,
+    kann sie aber aus der aufrufenden Umgebung/Session geerbt haben.
+    """
+    if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
+        del os.environ["QT_QPA_PLATFORM"]
+
+
+def _render_probe_char(app: QApplication, ch: str) -> bytes:
+    from PySide6.QtGui import QPainter as _QPainter
+    pm = QPixmap(48, 48)
+    pm.fill(Qt.GlobalColor.white)
+    p = _QPainter(pm)
+    p.setFont(app.font())
+    p.drawText(pm.rect(), Qt.AlignCenter, ch)
+    p.end()
+    return bytes(pm.toImage().constBits())
+
+
+def _assert_font_rendering(app: QApplication) -> None:
+    """Bricht ab statt still ein Tofu-Screenshot-Set zu erzeugen.
+
+    Rendert mehrere unterschiedliche Zeichen einzeln; bei echtem Rendering
+    sehen sie verschieden aus, bei Tofu ist jedes das gleiche Kaestchen.
+    """
+    platform = QApplication.platformName()
+    if platform == "offscreen":
+        raise RuntimeError(
+            "Qt laeuft unter 'offscreen' -- Screenshots waeren Tofu (Kaestchen "
+            "statt Text). QT_QPA_PLATFORM=offscreen nicht setzen."
+        )
+    probes = ["A", "B", "g", "8", "M"]
+    renders = [_render_probe_char(app, ch) for ch in probes]
+    blank = _render_probe_char(app, " ")
+    distinct = len(set(renders))
+    non_blank = sum(1 for r in renders if r != blank)
+    if not (distinct >= 3 and non_blank >= len(probes) - 1):
+        raise RuntimeError(
+            f"Font-Rendering-Selbsttest fehlgeschlagen (Plattform '{platform}'): "
+            "gerenderte Glyphen sind nicht unterscheidbar (Tofu-Verdacht). "
+            "Abbruch, um kein defektes Screenshot-Set zu erzeugen."
+        )
+
+
 def ensure_app():
+    _force_native_platform()
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
@@ -204,6 +255,7 @@ def generate_store_assets(output_dir: Path | None = None) -> list[Path]:
 
 def generate_store_screenshots(output_dir: Path | None = None) -> list[Path]:
     app = ensure_app()
+    _assert_font_rendering(app)
     output_dir = output_dir or SCREENSHOT_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
