@@ -8,8 +8,8 @@
 
 [![Lizenz: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
-[![Plattform: Windows](https://img.shields.io/badge/Platform-Windows-blue?logo=windows)](#installation)
-[![Tests: 110 bestanden](https://img.shields.io/badge/Tests-110%20passed-brightgreen)](#qualitatssicherung)
+[![Plattform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#installation)
+[![Tests: 112 bestanden](https://img.shields.io/badge/Tests-112%20passed-brightgreen)](#qualitatssicherung)
 
 > [!NOTE]
 > **Abgrenzung / Disambiguation:** `file-bricks/ProSync` ist eine Open-Source-Windows-Desktop-Anwendung auf Python-Basis (PySide6) für die lokale Datei- und Ordnersynchronisation mit automatischem SQLite-WAL-Datenbankschutz. Das Projekt steht in keiner Verbindung zu Enterprise-Datenbank-Replikationssoftware (wie z. B. Tibero ProSync) oder macOS-Synchronisationswerkzeugen Dritter.

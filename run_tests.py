@@ -18,6 +18,8 @@ TEST_FILES = [
     "test_daily_scheduler.py",
     "test_import_streams.py",
     "source_platform_smoke.py",
+    "tests/linux_platform_smoke.py",
+    "tests/macos_platform_smoke.py",
     "test_portable_profile.py",
     "test_schedule_time.py",
     "test_sftp_target.py",

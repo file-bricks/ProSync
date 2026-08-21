@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
+      - main
   pull_request:
     branches:
       - master
+      - main
   workflow_dispatch:
 
 permissions:
@@ -27,10 +29,10 @@ jobs:
       PYTHONIOENCODING: utf-8
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
@@ -53,8 +55,21 @@ jobs:
             libxcb-xinerama0 \
             libxcb-xfixes0
 
-      - name: Install PySide6
-        run: pip install "PySide6>=6.5.0"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "PySide6>=6.5.0" paramiko tzdata pytest
 
-      - name: Run source-platform smoke
+      - name: Run cross-platform source smoke runner
         run: python source_platform_smoke.py
+
+      - name: Run dedicated Linux platform smoke
+        if: runner.os == 'Linux'
+        run: python tests/linux_platform_smoke.py
+
+      - name: Run dedicated macOS platform smoke
+        if: runner.os == 'macOS'
+        run: python tests/macos_platform_smoke.py
+
+      - name: Run full pytest suite
+        run: python -m pytest -v

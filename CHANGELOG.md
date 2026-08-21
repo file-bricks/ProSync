@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-08-21)
+- **Cross-Platform macOS & Linux Smoke Suites (8-Punkte-Standard):**
+  - Dedizierte Testsuite `tests/macos_platform_smoke.py` mit 8 Prüfpunkten für macOS/Darwin (System-Öffner `open`, Offscreen PySide6 `MainWindow` & Tray-Lifecycle, POSIX `~/.config/ProSync/reports` Pfadauflösung, Sibling-Launcher ohne Windows-`creationflags`, redigierter `prosync-profile-v1.json` Export ohne Pfad-Leaks, APFS/HFS+ Unicode-NFC- und Case-Folding-Regeln, TranslationSystem Sprachumschaltung und SQLite WAL-Checkpointing).
+  - Dedizierte Testsuite `tests/linux_platform_smoke.py` mit 8 Prüfpunkten für Linux (System-Öffner `xdg-open`, Offscreen PySide6 UI, XDG App-Pfade, Sibling Launcher, redigierter Export, ext4/btrfs Case-Regeln, TranslationSystem, SQLite WAL Checkpoint).
+  - Vertragstestsuite `tests/test_platform_smoke_contract.py` integriert beide Suiten nahtlos in die Pytest-Vollsuite (erhöht auf 83 Tests).
+  - Standalone-Runner `source_platform_smoke.py` modularisiert und `run_tests.py` auf 18 Testdateien erweitert.
+  - CI-Workflow `.github/workflows/source-platform-smoke.yml` mit dedizierten Schritten für `ubuntu-latest` und `macos-latest` aktualisiert.
+  - Gesamtzahl verifizierter Tests auf 112/112 (83 Pytest + 29 Node.js) erhöht.
+
 ### Geändert / Changed (2026-08-01)
 - **GitHub Privacy & Metadata Check:** konkrete lokale Beispiel- und Store-Pfade
   durch portable Platzhalter ersetzt; die Testfixture nutzt jetzt
