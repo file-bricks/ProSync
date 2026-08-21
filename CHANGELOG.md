@@ -6,6 +6,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 ## [Unreleased]
 
 ### Hinzugefügt / Added (2026-08-21)
+- **Windows Store Readiness, Packaging & Asset Parity Check (Microsoft Store Policy 10.1.3):**
+  - Kanonisches Desktop-Bridge-AppxManifest `store_package/ProSync/AppxManifest.xml` mit Identity `Geiger.ProSync`, Publisher `CN=52596601-BAB4-4F3F-B182-E8F3F273B202`, Version `3.2.0.0`, `runFullTrust`, `TargetDeviceFamily Windows.Desktop` und Tile-Deklarationen implementiert.
+  - Vollständiges Kachel- und Icon-Asset-Set (`icon_44x44.png`, `icon_50x50.png`, `icon_150x150.png`, `icon_310x150.png`, `icon_310x310.png`, `Square*Logo.png`, `Wide310x150Logo.png`) generiert und über alle 3 Standardstandorte (`store_assets/`, `assets/icons/`, `store_package/ProSync/icons/`) synchronisiert.
+  - Microsoft Store Policy 10.1.3 Compliance für Schlüsselwörter hergestellt: Streng auf maximal 7 hochrelevante Suchbegriffe in Deutsch und Englisch in `STORE_LISTING.md`, `releases/windowsstore/store_listing_*.md` und `releases/windowsstore/store_settings.json` gehärtet.
+  - Vorbereitungs- und Zertifizierungsleitfaden `WINDOWS_STORE_PREP.md` mit Offline-First-Garantien, WACK-Zertifizierungsschritten und Partner-Center-Metadaten erstellt.
+  - Automatisierter 5-Stufen-Auditor `scripts/check_store_readiness.py` zur Verifikation von Store-Paketen, Manifesten, Pflichtdokumenten und Kacheln implementiert.
+  - Vertragstestsuite `tests/test_store_materials.py` (11 Tests) für Store-Metadaten, XML-Manifest, Bilddimensionen, Richtlinienkonformität und Umlaut-Integrität implementiert.
+  - Pytest-Gesamtsuite auf 91/91 Tests (Gesamt 120 verifizierte Tests: 91 Python + 29 Node.js) erweitert.
+
 - **Cross-Platform macOS & Linux Smoke Suites (8-Punkte-Standard):**
   - Dedizierte Testsuite `tests/macos_platform_smoke.py` mit 8 Prüfpunkten für macOS/Darwin (System-Öffner `open`, Offscreen PySide6 `MainWindow` & Tray-Lifecycle, POSIX `~/.config/ProSync/reports` Pfadauflösung, Sibling-Launcher ohne Windows-`creationflags`, redigierter `prosync-profile-v1.json` Export ohne Pfad-Leaks, APFS/HFS+ Unicode-NFC- und Case-Folding-Regeln, TranslationSystem Sprachumschaltung und SQLite WAL-Checkpointing).
   - Dedizierte Testsuite `tests/linux_platform_smoke.py` mit 8 Prüfpunkten für Linux (System-Öffner `xdg-open`, Offscreen PySide6 UI, XDG App-Pfade, Sibling Launcher, redigierter Export, ext4/btrfs Case-Regeln, TranslationSystem, SQLite WAL Checkpoint).

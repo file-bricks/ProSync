@@ -4,7 +4,7 @@
   "publisher_display": "Geiger",
   "identity_name": "Geiger.ProSync",
   "version": "3.2.0.0",
-  "description": "Lokales Backup- und Synchronisationstool mit Datenbankschutz, Batch-Sync und redigiertem Profil-Export.",
+  "description": "Lokales Backup- und Synchronisationswerkzeug für Datei- und Ordner-Sicherung mit automatischem SQLite-WAL-Datenbankschutz.",
   "executable": "ProSync.exe",
   "capabilities": "internetClient,runFullTrust",
   "category": "Utilities",

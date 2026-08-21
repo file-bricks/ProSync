@@ -31,7 +31,7 @@ ProSync ist eine lokale Desktop-Anwendung für Datei- und Ordner-Synchronisation
 Für Entwickler, Selbstständige, Power-User und kleine Teams, die lokale Projektordner, Dokumente oder Datenbanken regelmäßig sichern oder zwischen Geräten abgleichen möchten, ohne daraus gleich eine Cloud-Plattform zu machen.
 
 ### Schlüsselwörter
-Backup, Synchronisation, Datei-Sync, Ordner-Sync, SQLite, Datenbankschutz, Batch-Sync, Netzlaufwerk, Profil-Export, lokale Backups
+Backup, Synchronisation, Datei-Sync, Ordner-Sync, SQLite, Datenbankschutz, Batch-Sync
 
 ### Kategorie
 Utilities
@@ -69,7 +69,7 @@ ProSync is a local desktop application for file and folder synchronization with 
 Developers, freelancers, power users, and small teams who want to back up or synchronize project folders, documents, and database files across devices without turning the workflow into a cloud platform.
 
 ### Keywords
-backup, sync, file sync, folder sync, SQLite, database safety, batch sync, network share, profile export, local backup
+backup, sync, file sync, folder sync, SQLite, database safety, batch sync
 
 ### Category
 Utilities

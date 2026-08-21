@@ -9,7 +9,7 @@
 [![Lizenz: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Plattform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#installation)
-[![Tests: 112 bestanden](https://img.shields.io/badge/Tests-112%20passed-brightgreen)](#qualitatssicherung)
+[![Tests: 120 bestanden](https://img.shields.io/badge/Tests-120%20passed-brightgreen)](#qualitatssicherung)
 
 > [!NOTE]
 > **Abgrenzung / Disambiguation:** `file-bricks/ProSync` ist eine Open-Source-Windows-Desktop-Anwendung auf Python-Basis (PySide6) für die lokale Datei- und Ordnersynchronisation mit automatischem SQLite-WAL-Datenbankschutz. Das Projekt steht in keiner Verbindung zu Enterprise-Datenbank-Replikationssoftware (wie z. B. Tibero ProSync) oder macOS-Synchronisationswerkzeugen Dritter.
@@ -175,7 +175,9 @@ Produktivordner.
 
 `ProSync_config.json`, Logs, Build-Artefakte und lokale Host-Notizen bleiben außerhalb des Repositories. Die getrackte Datei `ProSync_config.example.json` enthält nur eine leere Beispielstruktur und keine persönlichen Quell- oder Zielpfade.
 
-Für GitHub werden nur Quellcode, Tests, Beispielkonfiguration und Projektdokumentation versioniert. Persönliche Sync-Ziele, Datenbanken, WAL-Dateien, temporäre Locks und lokale Build-Ausgaben sind über `.gitignore` ausgeschlossen.
+Für GitHub werden nur Quellcode, Tests, Beispielkonfiguration und Projektdokumentation versioniert. Persönliche Sync-Ziele, Datenbanken, WAL-Dateien, temporäre Locks und lokale Build-Ausgaben sind über `.gitignore` ausgeschlossen. Siehe [PRIVACY_POLICY.md](PRIVACY_POLICY.md) für vollständige Datenschutzerklärungen und [SUPPORT.md](SUPPORT.md) für Supportkanäle.
+
+Details zur Paketierung für den Microsoft Store und Offline-First-Garantien sind in [WINDOWS_STORE_PREP.md](WINDOWS_STORE_PREP.md) dokumentiert.
 
 Sicherheitslücken bitte nicht als öffentliches Issue melden, sondern über GitHubs private Vulnerability-Reporting-Funktion im Tab **Security**.
 

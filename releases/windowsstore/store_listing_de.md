@@ -16,4 +16,4 @@ Zielgruppe:
 Entwickler, Selbstständige, Power-User und kleine Teams, die lokale Projektordner, Dokumente oder Datenbanken regelmäßig sichern oder zwischen Geräten abgleichen möchten.
 
 Schlüsselwörter:
-Backup, Synchronisation, Datei-Sync, Ordner-Sync, SQLite, Datenbankschutz, Batch-Sync, Netzlaufwerk, Profil-Export, lokale Backups
+Backup, Synchronisation, Datei-Sync, Ordner-Sync, SQLite, Datenbankschutz, Batch-Sync

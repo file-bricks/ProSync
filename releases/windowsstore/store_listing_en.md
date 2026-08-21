@@ -16,4 +16,4 @@ Audience:
 Developers, freelancers, power users, and small teams who want to back up or synchronize project folders, documents, or database files across devices.
 
 Keywords:
-backup, sync, file sync, folder sync, SQLite, database safety, batch sync, network share, profile export, local backup
+backup, sync, file sync, folder sync, SQLite, database safety, batch sync

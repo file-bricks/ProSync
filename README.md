@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#installation)
-[![Tests: 112 passed](https://img.shields.io/badge/Tests-112%20passed-brightgreen)](#quality-checks)
+[![Tests: 120 passed](https://img.shields.io/badge/Tests-120%20passed-brightgreen)](#quality-checks)
 
 > [!NOTE]
 > **Disambiguation:** `file-bricks/ProSync` is an open-source Windows desktop application built with Python (PySide6) for local file/folder synchronization with SQLite WAL database protection. It is completely independent of enterprise database replication products (e.g., Tibero ProSync) or third-party macOS utilities.
@@ -160,7 +160,9 @@ node --check sw.js
 
 `ProSync_config.json`, logs, build artifacts, and local host notes stay outside the repository. The tracked `ProSync_config.example.json` contains only an empty example structure and no personal source or target paths.
 
-The GitHub repository only tracks source code, tests, sample configuration, and project documentation. Personal sync targets, databases, WAL files, temporary locks, and local build outputs are excluded through `.gitignore`.
+The GitHub repository only tracks source code, tests, sample configuration, and project documentation. Personal sync targets, databases, WAL files, temporary locks, and local build outputs are excluded through `.gitignore`. See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for full privacy guarantees and [SUPPORT.md](SUPPORT.md) for issue tracking.
+
+For Microsoft Store packaging details and local-first compliance, refer to [WINDOWS_STORE_PREP.md](WINDOWS_STORE_PREP.md).
 
 Please report security vulnerabilities through GitHub's private vulnerability reporting flow in the **Security** tab instead of opening a public issue.
 
