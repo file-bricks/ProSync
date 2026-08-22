@@ -29,6 +29,9 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -58,6 +61,7 @@ Repository = "https://github.com/file-bricks/ProSync.git"
 Issues = "https://github.com/file-bricks/ProSync/issues"
 Privacy = "https://github.com/file-bricks/ProSync/blob/master/PRIVACY_POLICY.md"
 Support = "https://github.com/file-bricks/ProSync/blob/master/SUPPORT.md"
+Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

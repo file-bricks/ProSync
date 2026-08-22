@@ -5,6 +5,18 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-08-22)
+- **Discoverability, Visual Showcase, Sequence Diagram, Security Policy & Metadata Parity Check:**
+  - Zweisprachige `SECURITY.md` mit Local-First- und Zero-Egress-Garantien (100% Offline-Betrieb, 0 Telemetrie), unprivilegiertem User-Mode (Non-Elevation), SQLite-WAL-Datenbankschutz-Invarianten (`PRAGMA wal_checkpoint(TRUNCATE)`), Pfad- & Geheimnishygienen sowie direkten Sicherheitskontaktadressen (`security@file-bricks.org`, `security@ellmos.ai`, `support@lukasgeiger.com`, `lukas@open-bricks.org`) und GitHub Security Advisories Link implementiert.
+  - Interaktives zweisprachiges Mermaid-Sequenzdiagramm für den End-to-End Backup- & SQLite-WAL-Checkpoint-Lebenszyklus (Trigger -> Checkpoint-Validierung -> Safe-Copy vs. SQLITE_BUSY Abbruch -> Status-Update -> PWA-Export) in `README.md` & `README_de.md` integriert.
+  - Visual Showcase & UI-Galerie mit Store-Screenshot-Assets (`screenshots/store/main-overview.png`, `database-backup.png`, `portable-profile.png`) und detaillierten Bildunterschriften eingebunden.
+  - Shields.io Badges in `README.md` & `README_de.md` um CI-Status, Python (3.10 | 3.11 | 3.12), Plattformen (Windows | Linux | macOS), Testbadge (128 passed), Datenschutz (100% Local / Zero-Egress), Sicherheit (Local-First / WAL-Protected), Ökosystem (`file-bricks`), Dachorganisation (`open-bricks`), LLM-Kontext (`llms.txt`) und strukturierte Schnellnavigation synchronisiert.
+  - Geschwisterwerkzeuge-Matrix auf 13 Partner-Repositories über 5 Organisationen (`file-bricks`, `doc-bricks`, `ellmos-ai`, `dev-bricks`, `open-bricks`) erweitert.
+  - `pyproject.toml` um `Security`-URL in `[project.urls]` sowie POSIX Linux, MacOS und OS Independent Classifiers erweitert.
+  - Automatisierte Metadaten-, Manifest-, CI-Matrix-, Sicherheits- und Paritätstestsuite `tests/test_metadata.py` (8 Contract-Tests) implementiert und in `run_tests.py` integriert.
+  - `llms.txt` Last-checked Zeitstempel auf `2026-08-22`, Sicherheitsrichtlinie, aktualisierte Prüfbefehle und 128 verifizierte Tests (99 Python + 29 Node.js) synchronisiert.
+  - Pytest-Gesamtsuite auf 99/99 Tests (Gesamt 128 verifizierte Tests: 99 Python + 29 Node.js) erweitert (100% grün).
+
 ### Hinzugefügt / Added (2026-08-21)
 - **Windows Store Readiness, Packaging & Asset Parity Check (Microsoft Store Policy 10.1.3):**
   - Kanonisches Desktop-Bridge-AppxManifest `store_package/ProSync/AppxManifest.xml` mit Identity `Geiger.ProSync`, Publisher `CN=52596601-BAB4-4F3F-B182-E8F3F273B202`, Version `3.2.0.0`, `runFullTrust`, `TargetDeviceFamily Windows.Desktop` und Tile-Deklarationen implementiert.

@@ -24,6 +24,7 @@ TEST_FILES = [
     "test_schedule_time.py",
     "test_sftp_target.py",
     "tests/test_store_materials.py",
+    "tests/test_metadata.py",
     "test_sync_worker.py",
     "test_translator.py",
     "test_ui_accessibility.py",
