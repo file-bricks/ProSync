@@ -303,3 +303,63 @@ def test_scheduler_invalid_interval_falls_back_to_default():
     assert scheduler.timers["conn-invalid-interval"].interval() == 15 * 60 * 1000, (
         "Ungültige Intervalle müssen auf 15 Minuten zurückfallen"
     )
+
+
+def test_sync_walker_accepts_string_exclude_pattern(tmp_path):
+    """
+    Bug #10: SyncWalker darf bei einem String als exclude_patterns nicht Zeichen-für-Zeichen
+    iterieren, da '*' sonst auf jede Datei matcht und alle Dateien fälschlicherweise ausschließt.
+    """
+    prosync = _load_prosync()
+    SyncWalker = prosync.SyncWalker
+
+    keep = tmp_path / "document.txt"
+    keep.write_text("wichtig")
+    drop = tmp_path / "cache.tmp"
+    drop.write_text("unwichtig")
+
+    walker = SyncWalker()
+    result = walker.scan(str(tmp_path), "*.tmp")
+
+    assert "document.txt" in result, "document.txt darf bei Pattern '*.tmp' nicht ausgeschlossen werden"
+    assert "cache.tmp" not in result, "cache.tmp muss bei Pattern '*.tmp' ausgeschlossen werden"
+    assert not walker._should_exclude("document.txt", "*.tmp")
+    assert walker._should_exclude("cache.tmp", "*.tmp")
+
+
+def test_folder_sync_worker_with_string_exclude_pattern(tmp_path):
+    """
+    FolderSyncWorker muss bei konfigurierter Zeichenkette für exclude_patterns
+    Dateien synchronisieren und nicht alle Dateien verwerfen.
+    """
+    _get_app()
+    prosync = _load_prosync()
+    FolderSyncWorker = prosync.FolderSyncWorker
+
+    src = tmp_path / "src"
+    tgt = tmp_path / "tgt"
+    src.mkdir()
+    tgt.mkdir()
+
+    (src / "valid.txt").write_text("nutzdaten")
+    (src / "temp.tmp").write_text("tempdaten")
+
+    cfg = {
+        "id": "bug10-test",
+        "name": "string_exclude_test",
+        "source": str(src),
+        "target": str(tgt),
+        "mode": "mirror",
+        "exclude_patterns": "*.tmp",
+    }
+
+    worker = FolderSyncWorker(cfg)
+    reports = []
+    worker.sync_report.connect(reports.append)
+    _run_worker_to_completion(worker)
+
+    assert (tgt / "valid.txt").exists(), "valid.txt muss nach Ziel kopiert worden sein"
+    assert not (tgt / "temp.tmp").exists(), "temp.tmp muss ausgeschlossen worden sein"
+    assert len(reports) == 1
+    assert reports[0]["files_copied"] == 1
+

@@ -296,6 +296,55 @@ def test_sync_report_log_path_falls_back_when_appdata_empty():
             os.environ["APPDATA"] = old_appdata
 
 
+def test_portable_profile_export_import_preserves_daily_autosync():
+    """Daily autosync mode, daily_time, and timezone must be preserved across export and import."""
+    prosync = load_prosync_module()
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        config_path = Path(temp_dir) / "ProSync_config.json"
+        export_path = Path(temp_dir) / "portable.json"
+        import_path = Path(temp_dir) / "imported.json"
+
+        cfg = prosync.ConfigManager(str(config_path))
+        cfg.data = {
+            "app": {"notifications_enabled": True},
+            "connections": [
+                {
+                    "id": "daily-conn-1",
+                    "name": "Tägliche Sicherung",
+                    "type": prosync.ConnectionType.FOLDER,
+                    "source": str(Path(temp_dir) / "src"),
+                    "target": str(Path(temp_dir) / "tgt"),
+                    "mode": "mirror",
+                    "autosync": {
+                        "enabled": True,
+                        "mode": "daily",
+                        "daily_time": "14:30",
+                        "timezone": "Europe/Berlin",
+                    },
+                }
+            ],
+        }
+        cfg.save()
+
+        payload = cfg.export_portable_profile(str(export_path))
+        assert payload["connections"][0]["autosync"] == {
+            "enabled": True,
+            "mode": "daily",
+            "daily_time": "14:30",
+            "timezone": "Europe/Berlin",
+        }
+
+        imported_cfg = prosync.ConfigManager(str(import_path))
+        imported_cfg.import_portable_profile(str(export_path))
+
+        imported_conn = imported_cfg.list_connections()[0]
+        assert imported_conn["autosync"]["mode"] == "daily"
+        assert imported_conn["autosync"]["daily_time"] == "14:30"
+        assert imported_conn["autosync"]["timezone"] == "Europe/Berlin"
+        assert imported_conn["autosync"]["enabled"] is False
+
+
 if __name__ == "__main__":
     try:
         test_portable_profile_export_import()
@@ -303,6 +352,7 @@ if __name__ == "__main__":
         test_portable_profile_import_accepts_single_string_exclude_pattern()
         test_portable_profile_export_accepts_single_string_exclude_pattern()
         test_sync_report_log_path_falls_back_when_appdata_empty()
+        test_portable_profile_export_import_preserves_daily_autosync()
         print("portable profile tests passed")
         sys.exit(0)
     except Exception as exc:

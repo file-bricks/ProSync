@@ -994,15 +994,26 @@ class ConfigManager:
     def _portable_autosync(conn):
         """Normalize autosync settings for export without leaking local runtime state."""
         autosync = conn.get("autosync", {})
+        if not isinstance(autosync, dict):
+            autosync = {}
         interval = autosync.get("interval_minutes", DEFAULT_AUTOSYNC_INTERVAL)
         try:
             interval = int(interval)
         except (TypeError, ValueError):
             interval = DEFAULT_AUTOSYNC_INTERVAL
-        return {
+
+        mode = autosync.get("mode", "interval")
+        result = {
             "enabled": bool(autosync.get("enabled", False)),
-            "interval_minutes": max(1, interval),
         }
+        if mode == "daily":
+            result["mode"] = "daily"
+            result["daily_time"] = str(autosync.get("daily_time", DEFAULT_DAILY_TIME))
+            result["timezone"] = str(autosync.get("timezone", DEFAULT_DAILY_TIMEZONE))
+        else:
+            result["mode"] = "interval"
+            result["interval_minutes"] = max(1, interval)
+        return result
 
     @staticmethod
     def _portable_patterns(conn):
@@ -1094,11 +1105,25 @@ class ConfigManager:
         existing_ids.add(conn_id)
 
         autosync = portable_conn.get("autosync", {})
+        if not isinstance(autosync, dict):
+            autosync = {}
         interval = autosync.get("interval_minutes", DEFAULT_AUTOSYNC_INTERVAL)
         try:
             interval = int(interval)
         except (TypeError, ValueError):
             interval = DEFAULT_AUTOSYNC_INTERVAL
+
+        imported_autosync = {
+            "enabled": False,
+            "_reason": "Pfadzuordnung nach Import erforderlich",
+        }
+        if autosync.get("mode") == "daily":
+            imported_autosync["mode"] = "daily"
+            imported_autosync["daily_time"] = str(autosync.get("daily_time", DEFAULT_DAILY_TIME))
+            imported_autosync["timezone"] = str(autosync.get("timezone", DEFAULT_DAILY_TIMEZONE))
+        else:
+            imported_autosync["mode"] = "interval"
+            imported_autosync["interval_minutes"] = max(1, interval)
 
         raw_patterns = portable_conn.get("exclude_patterns", [])
         if isinstance(raw_patterns, (str, bytes)):
@@ -1120,11 +1145,7 @@ class ConfigManager:
                 for pattern in raw_patterns
                 if str(pattern).strip()
             ],
-            "autosync": {
-                "enabled": False,
-                "interval_minutes": max(1, interval),
-                "_reason": "Pfadzuordnung nach Import erforderlich",
-            },
+            "autosync": imported_autosync,
             "_portable_import": {
                 "schema": PORTABLE_PROFILE_SCHEMA,
                 "imported_at": datetime.now(timezone.utc).isoformat(),
@@ -1462,8 +1483,12 @@ class SyncWalker:
             Dict mit relativem Pfad als Key und File-Metadaten als Value
             Format: {rel_path: {"mtime": float, "size": int, "abs_path": str}}
         """
-        if exclude_patterns is None:
+        if isinstance(exclude_patterns, (str, bytes)):
+            exclude_patterns = [exclude_patterns]
+        elif not isinstance(exclude_patterns, (list, tuple, set)):
             exclude_patterns = []
+        else:
+            exclude_patterns = [str(p) for p in exclude_patterns if str(p).strip()]
 
         tree = {}
         if not os.path.exists(root_path):
@@ -1520,8 +1545,13 @@ class SyncWalker:
         Returns:
             True wenn der Name auf ein Pattern matcht, sonst False
         """
+        if isinstance(patterns, (str, bytes)):
+            patterns = [patterns]
+        elif not isinstance(patterns, (list, tuple, set)):
+            patterns = []
+
         for pattern in patterns:
-            if fnmatch(name, pattern):
+            if fnmatch(name, str(pattern)):
                 return True
         return False
 
@@ -1699,6 +1729,10 @@ class FolderSyncWorker(QThread):
 
             # V3.1: Get exclude patterns
             exclude_patterns = self.cfg.get("exclude_patterns", [])
+            if isinstance(exclude_patterns, (str, bytes)):
+                exclude_patterns = [exclude_patterns]
+            elif not isinstance(exclude_patterns, (list, tuple, set)):
+                exclude_patterns = []
 
             # 1. Scan
             self.status.emit(f"[{self.cfg['name']}] Scanne Quelle...")
