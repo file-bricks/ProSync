@@ -1117,10 +1117,26 @@ class ConfigManager:
             "enabled": False,
             "_reason": "Pfadzuordnung nach Import erforderlich",
         }
+        daily_schedule_reset = False
         if autosync.get("mode") == "daily":
+            try:
+                daily_time = parse_daily_time(
+                    autosync.get("daily_time", DEFAULT_DAILY_TIME)
+                ).strftime("%H:%M")
+                timezone_name = resolve_iana_timezone(
+                    autosync.get("timezone", DEFAULT_DAILY_TIMEZONE)
+                ).key
+            except (TypeError, ValueError):
+                daily_time = DEFAULT_DAILY_TIME
+                timezone_name = DEFAULT_DAILY_TIMEZONE
+                daily_schedule_reset = True
+                imported_autosync["_reason"] = (
+                    "Pfadzuordnung nach Import erforderlich; ungültiger täglicher "
+                    "Zeitplan wurde auf 09:00 Europe/Berlin zurückgesetzt"
+                )
             imported_autosync["mode"] = "daily"
-            imported_autosync["daily_time"] = str(autosync.get("daily_time", DEFAULT_DAILY_TIME))
-            imported_autosync["timezone"] = str(autosync.get("timezone", DEFAULT_DAILY_TIMEZONE))
+            imported_autosync["daily_time"] = daily_time
+            imported_autosync["timezone"] = timezone_name
         else:
             imported_autosync["mode"] = "interval"
             imported_autosync["interval_minutes"] = max(1, interval)
@@ -1152,6 +1168,7 @@ class ConfigManager:
                 "original_id": original_id,
                 "requires_mapping": True,
                 "path_hints": portable_conn.get("path_hints", {}),
+                "daily_schedule_reset": daily_schedule_reset,
             },
         }
 
@@ -1217,6 +1234,7 @@ class ConfigManager:
         }
         imported = []
         renamed = 0
+        normalized_daily_schedules = 0
         for portable_conn in connections:
             local_conn, did_rename = self._portable_to_local_connection(
                 portable_conn,
@@ -1224,11 +1242,17 @@ class ConfigManager:
             )
             if did_rename:
                 renamed += 1
+            if local_conn["_portable_import"].get("daily_schedule_reset"):
+                normalized_daily_schedules += 1
             imported.append(local_conn)
 
         self.data["connections"] = self.data.get("connections", []) + imported
         self.save()
-        return {"imported": len(imported), "renamed": renamed}
+        return {
+            "imported": len(imported),
+            "renamed": renamed,
+            "normalized_daily_schedules": normalized_daily_schedules,
+        }
 
 
 class BatchSyncQueue:
@@ -3509,12 +3533,21 @@ class MainWindow(QMainWindow):
 
         self.scheduler.update_all()
         self.populate_list()
+        schedule_note = ""
+        if result["normalized_daily_schedules"]:
+            schedule_note = (
+                "\n\n"
+                f"{result['normalized_daily_schedules']} tägliche Zeitplanung(en) "
+                "waren ungültig und wurden sicher auf 09:00 Europe/Berlin "
+                "zurückgesetzt. Bitte vor dem Aktivieren prüfen."
+            )
         QMessageBox.information(
             self,
             "Profil importiert",
             f"{result['imported']} Aufgabe(n) wurden als lokale Entwürfe angelegt.\n"
             f"Neu vergebene IDs wegen Kollisionen: {result['renamed']}.\n\n"
-            "Bitte Quell- und Zielpfade vor dem ersten Sync neu zuordnen.",
+            "Bitte Quell- und Zielpfade vor dem ersten Sync neu zuordnen."
+            f"{schedule_note}",
         )
 
     def start_batch_sync(self, connections):

@@ -125,7 +125,11 @@ def test_portable_profile_export_import():
             imported_cfg = prosync.ConfigManager(str(Path(temp_dir) / "Imported.json"))
             result = imported_cfg.import_portable_profile(str(export_path))
 
-            assert result == {"imported": 2, "renamed": 0}
+            assert result == {
+                "imported": 2,
+                "renamed": 0,
+                "normalized_daily_schedules": 0,
+            }
             imported_connections = imported_cfg.list_connections()
             assert len(imported_connections) == 2
             assert imported_cfg.data["app"]["notifications_enabled"] is False
@@ -200,7 +204,11 @@ def test_portable_profile_import_renames_colliding_ids():
         result = cfg.import_portable_profile(str(exchange_path))
         ids = [conn["id"] for conn in cfg.list_connections()]
 
-        assert result == {"imported": 1, "renamed": 1}
+        assert result == {
+            "imported": 1,
+            "renamed": 1,
+            "normalized_daily_schedules": 0,
+        }
         assert "shared-id" in ids
         assert len(ids) == 2
         assert len(set(ids)) == 2
@@ -345,6 +353,53 @@ def test_portable_profile_export_import_preserves_daily_autosync():
         assert imported_conn["autosync"]["enabled"] is False
 
 
+def test_portable_profile_import_normalizes_invalid_daily_schedule():
+    """Malformed portable daily schedules must become a safe, visible draft."""
+    prosync = load_prosync_module()
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        exchange_path = Path(temp_dir) / "portable.json"
+        exchange_path.write_text(
+            json.dumps(
+                {
+                    "schema": prosync.PORTABLE_PROFILE_SCHEMA,
+                    "connections": [
+                        {
+                            "id": "daily-invalid",
+                            "name": "Ungültiger Tagesplan",
+                            "type": prosync.ConnectionType.FOLDER,
+                            "autosync": {
+                                "enabled": True,
+                                "mode": "daily",
+                                "daily_time": "morgen",
+                                "timezone": "Mars/Olympus",
+                            },
+                        }
+                    ],
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+        cfg = prosync.ConfigManager(str(Path(temp_dir) / "Imported.json"))
+        result = cfg.import_portable_profile(str(exchange_path))
+        imported = cfg.list_connections()[0]
+
+        assert result["normalized_daily_schedules"] == 1
+        assert imported["autosync"] == {
+            "enabled": False,
+            "_reason": (
+                "Pfadzuordnung nach Import erforderlich; ungültiger täglicher "
+                "Zeitplan wurde auf 09:00 Europe/Berlin zurückgesetzt"
+            ),
+            "mode": "daily",
+            "daily_time": "09:00",
+            "timezone": "Europe/Berlin",
+        }
+        assert imported["_portable_import"]["daily_schedule_reset"] is True
+
+
 if __name__ == "__main__":
     try:
         test_portable_profile_export_import()
@@ -353,6 +408,7 @@ if __name__ == "__main__":
         test_portable_profile_export_accepts_single_string_exclude_pattern()
         test_sync_report_log_path_falls_back_when_appdata_empty()
         test_portable_profile_export_import_preserves_daily_autosync()
+        test_portable_profile_import_normalizes_invalid_daily_schedule()
         print("portable profile tests passed")
         sys.exit(0)
     except Exception as exc:
