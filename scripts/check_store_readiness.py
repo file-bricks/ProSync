@@ -40,6 +40,7 @@ REQUIRED_TILE_ICONS = (
     "icon_150x150.png",
     "icon_310x150.png",
     "icon_310x310.png",
+    "StoreLogo.png",
 )
 
 
@@ -81,9 +82,13 @@ def _check_repository(project_root: Path) -> list[str]:
     if config is None:
         findings.append("[repository] store_package.json is missing or invalid")
     else:
-        for field in ("publisher", "publisher_display", "identity_name", "version", "executable"):
+        for field in ("publisher", "publisher_display", "identity_name", "version", "executable", "license"):
             if not isinstance(config.get(field), str) or not str(config[field]).strip():
                 findings.append(f"[repository] store_package.json field {field!r} is missing")
+
+        languages = config.get("languages")
+        if not isinstance(languages, list) or not languages:
+            findings.append("[repository] store_package.json field 'languages' is missing or empty")
 
         app_name = config.get("name") or config.get("app_name")
         if not isinstance(app_name, str) or not app_name.strip():
@@ -207,6 +212,15 @@ def _check_repository(project_root: Path) -> list[str]:
         findings.append(
             f"[repository] at least 3 valid PNG Store screenshots required; found {len(screenshots)}"
         )
+
+    # Check releases/windowsstore/ staging files
+    win_store_dir = project_root / "releases" / "windowsstore"
+    if not win_store_dir.is_dir():
+        findings.append("[repository] releases/windowsstore directory is missing")
+    else:
+        for req_name in ("BUILD.md", "WACK_PROTOCOL.md", "store_settings.json", "store_listing_de.md", "store_listing_en.md", "StoreLogo.png"):
+            if not (win_store_dir / req_name).is_file():
+                findings.append(f"[repository] releases/windowsstore lacks {req_name}")
 
     return findings
 

@@ -68,6 +68,9 @@ def test_store_package_has_complete_non_placeholder_metadata() -> None:
     assert config["executable"] == "ProSync.exe"
     assert "runFullTrust" in config["capabilities"]
     assert config["category"] == "Utilities"
+    assert config["license"] == "MIT"
+    assert "de-DE" in config["languages"]
+    assert "en-US" in config["languages"]
     assert config["privacy_url"].startswith("https://")
     assert config["support_url"].startswith("https://")
 
@@ -94,6 +97,7 @@ def test_store_manifest_is_valid_xml_and_has_required_elements() -> None:
     manifest_text = manifest_path.read_text(encoding="utf-8")
     assert "runFullTrust" in manifest_text
     assert "ProSync.exe" in manifest_text
+    assert "StoreLogo.png" in manifest_text
 
 
 def test_store_listing_and_support_are_bilingual_and_privacy_aligned() -> None:
@@ -156,6 +160,7 @@ def test_tile_icons_present_in_all_store_locations() -> None:
         "icon_150x150.png",
         "icon_310x150.png",
         "icon_310x310.png",
+        "StoreLogo.png",
     )
     for loc in (
         ROOT / "assets" / "icons",
@@ -167,6 +172,32 @@ def test_tile_icons_present_in_all_store_locations() -> None:
             icon_file = loc / icon_name
             assert icon_file.is_file(), f"Icon {icon_name} missing in {loc}"
             assert icon_file.stat().st_size > 0, f"Icon {icon_name} in {loc} is empty"
+
+    assert (ROOT / "releases" / "windowsstore" / "StoreLogo.png").is_file()
+
+
+def test_windowsstore_release_staging_complete() -> None:
+    store_dir = ROOT / "releases" / "windowsstore"
+    assert store_dir.is_dir(), "releases/windowsstore directory missing"
+
+    for filename in (
+        "BUILD.md",
+        "WACK_PROTOCOL.md",
+        "store_settings.json",
+        "store_listing_de.md",
+        "store_listing_en.md",
+        "StoreLogo.png",
+    ):
+        target = store_dir / filename
+        assert target.is_file(), f"releases/windowsstore/{filename} is missing"
+        assert target.stat().st_size > 0, f"releases/windowsstore/{filename} is empty"
+
+    settings = json.loads((store_dir / "store_settings.json").read_text(encoding="utf-8"))
+    assert settings["app_name"] == "ProSync"
+    assert settings["identity_name"] == "Geiger.ProSync"
+    assert settings["publisher"] == "CN=52596601-BAB4-4F3F-B182-E8F3F273B202"
+    keywords = [k.strip() for k in settings["keywords"].split(",") if k.strip()]
+    assert 1 <= len(keywords) <= 7, f"store_settings.json keywords count invalid: {len(keywords)}"
 
 
 def test_german_umlaut_integrity_in_store_materials() -> None:
@@ -195,6 +226,7 @@ def main() -> int:
     test_store_listing_keywords_adhere_to_policy_10_1_3()
     test_windows_store_prep_matches_metadata_and_policy()
     test_tile_icons_present_in_all_store_locations()
+    test_windowsstore_release_staging_complete()
     test_german_umlaut_integrity_in_store_materials()
     print("Store-Material-Tests bestanden.")
     return 0

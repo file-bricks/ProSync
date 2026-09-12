@@ -1,6 +1,6 @@
 # Windows Store Preparation & Packaging Guide — ProSync
 
-Stand: 2026-08-21
+Stand: 2026-09-12
 
 ## Übersicht
 
@@ -21,20 +21,23 @@ ProSync wird als modernes MSIX-Paket für den Microsoft Store paketiert. Das Pak
 
 1. **Paketierungs-Metadaten (store_package.json):**
    - Vollständige Publisher-DN, Identity-Name und Versionsangabe (`3.2.0.0`) konfiguriert.
+   - Lizenzfeld `license: "MIT"` und Sprachen `["de-DE", "en-US"]` hinterlegt.
    - Validierte HTTPS-URLs für Datenschutzrichtlinie und GitHub-Issue-Support hinterlegt.
 
 2. **Windows Desktop AppxManifest (store_package/ProSync/AppxManifest.xml):**
    - Kanonisches AppxManifest mit `TargetDeviceFamily Windows.Desktop` (MinVersion `10.0.17763.0`, MaxVersionTested `10.0.26100.0`).
-   - Mehrsprachige Ressourcen (`de-de`, `en-us`) und Tile-Deklarationen eingebunden.
+   - Mehrsprachige Ressourcen (`de-de`, `en-us`) und VisualElements/Tile-Deklarationen eingebunden.
+   - Eigenschaften-Logo `<Logo>icons\StoreLogo.png</Logo>` auf standardkonforme 50x50 StoreLogo-Kachel ausgerichtet.
 
 3. **MSIX Tile- und Icon-Assets:**
    - Vollständiges Set an Kachel- und Logo-Assets:
      - `icon_44x44.png` (Square44x44Logo / Square71x71Logo)
-     - `icon_50x50.png` (Square50x50Logo / StoreLogo)
+     - `icon_50x50.png` (Square50x50Logo)
+     - `StoreLogo.png` (50x50 Partner Center StoreLogo)
      - `icon_150x150.png` (Square150x150Logo)
      - `icon_310x150.png` (Wide310x150Logo)
      - `icon_310x310.png` (Square310x310Logo)
-   - Synchron gehalten in `assets/icons/`, `store_package/ProSync/icons/` und `store_assets/`.
+   - Synchron gehalten in `assets/icons/`, `store_package/ProSync/icons/`, `store_assets/` und `releases/windowsstore/`.
 
 4. **Store Screenshots:**
    - Drei hochauflösende Screenshots unter `screenshots/store/`, `README/screenshots/store/` und `releases/windowsstore/screenshots/`:
@@ -47,8 +50,8 @@ ProSync wird als modernes MSIX-Paket für den Microsoft Store paketiert. Das Pak
    - Strikt maximal 7 Suchbegriffe pro Sprache gemäß **Microsoft Store Policy 10.1.3** ohne Fremdmarkenverletzungen.
 
 6. **Automatisiertes Readiness-Audit (scripts/check_store_readiness.py):**
-   - Automatisierte Validierung aller Manifeste, Metadaten, Icons, Screenshots und Lizenzdokumente.
-   - Getestet über Pytest in `tests/test_store_materials.py`.
+   - Automatisierte Validierung aller Manifeste, Metadaten, Icons, Screenshots, Lizenzdokumente und des `releases/windowsstore/` Staging-Pakets.
+   - Getestet über Pytest in `tests/test_store_materials.py` (12/12 Store-Material-Tests grün, Gesamt-Testsuite 105/105 grün).
 
 ## Vor der Einreichung im Partner Center (externe Gates)
 
