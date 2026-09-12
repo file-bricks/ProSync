@@ -1,29 +1,107 @@
-# Third-Party Licenses
+THIRD-PARTY SOFTWARE LICENSES
+=============================
 
-Project: ProSync
-Checked: 2026-07-27
+This document lists the third-party dependencies, libraries, and build tools
+used by ProSync along with their respective license and SPDX identifiers.
 
-Scope: Runtime dependencies declared in `requirements.txt`.
-Optional, commented Reader dependencies are not active runtime dependencies for this release state and must be rechecked if they are enabled.
+PySide6
+License: LGPL-3.0-only
+SPDX: LGPL-3.0-only
+URL: https://pypi.org/project/PySide6/
+Notice: Official Python Qt6 bindings for GUI, system tray, and cross-platform desktop integration (>=6.5.0)
 
-| Package | Requirement / checked version | License | Source |
-|---|---|---|---|
-| PySide6 | `>=6.5.0` / checked `6.11.1` | `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only` | https://pypi.org/project/PySide6/ |
-| PySide6_Addons | checked `6.11.1` | `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only` | https://pypi.org/project/PySide6-Addons/ |
-| PySide6_Essentials | checked `6.11.1` | `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only` | https://pypi.org/project/PySide6-Essentials/ |
-| shiboken6 | checked `6.11.1` | `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only` | https://pypi.org/project/shiboken6/ |
-| paramiko | `>=3.4.0` / checked `5.0.0` | `LGPL-2.1` | https://pypi.org/project/paramiko/ |
-| bcrypt | checked `5.0.0` | Apache-2.0 | https://pypi.org/project/bcrypt/ |
-| cryptography | checked `49.0.0` | Apache-2.0 OR BSD-3-Clause | https://pypi.org/project/cryptography/ |
-| invoke | checked `3.0.3` | BSD-2-Clause | https://pypi.org/project/invoke/ |
-| PyNaCl | checked `1.6.2` | Apache-2.0 | https://pypi.org/project/PyNaCl/ |
-| tzdata | `>=2025.2` / checked `2026.2` | Apache-2.0 | https://pypi.org/project/tzdata/ |
+shiboken6
+License: LGPL-3.0-only
+SPDX: LGPL-3.0-only
+URL: https://pypi.org/project/shiboken6/
+Notice: C++ binding generator and runtime support library for PySide6
 
-Notes:
+tzdata
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/tzdata/
+Notice: IANA time zone database provider for reliable schedule operations (>=2025.2)
 
-- `PySide6` installs the Qt for Python runtime wheel set, including `PySide6_Essentials`, `PySide6_Addons`, and `shiboken6`.
-- `paramiko` provides SFTP/SSH transport support and installs `bcrypt`, `cryptography`, `invoke`, and `PyNaCl`.
-- `tzdata` supplies the IANA timezone database on Windows and other systems
-  without a complete system timezone database.
-- ProSync itself is licensed under MIT; using PySide6 requires compliance with the selected Qt for Python open-source license terms or a commercial Qt license.
-- If `PyPDF2` or `python-docx` are uncommented in `requirements.txt` for a future release, regenerate this file for that release environment before publishing.
+paramiko
+License: LGPL-2.1-or-later
+SPDX: LGPL-2.1-or-later
+URL: https://pypi.org/project/paramiko/
+Notice: SSHv2 and SFTP transport client for remote synchronization targets (>=3.4.0, hardened against Terrapin attack GHSA-45x7-px36-x8w8)
+
+bcrypt
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/bcrypt/
+Notice: Modern password hashing library used by paramiko SSH authentications
+
+cryptography
+License: Apache-2.0 OR BSD-3-Clause
+SPDX: Apache-2.0 OR BSD-3-Clause
+URL: https://pypi.org/project/cryptography/
+Notice: Cryptographic primitives, ciphers, and key exchange algorithms powering paramiko
+
+invoke
+License: BSD-2-Clause
+SPDX: BSD-2-Clause
+URL: https://pypi.org/project/invoke/
+Notice: Task execution and command processing utility supporting paramiko
+
+PyNaCl
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://pypi.org/project/PyNaCl/
+Notice: Python binding to libsodium cryptographic library used by paramiko
+
+pypdf
+License: BSD-3-Clause
+SPDX: BSD-3-Clause
+URL: https://pypi.org/project/pypdf/
+Notice: Pure-Python PDF extraction and preview inspection library used by ProSyncReader (>=4.0.0)
+
+PyInstaller
+License: GPL-2.0-or-later WITH Bootloader-exception
+SPDX: GPL-2.0-or-later WITH Bootloader-exception
+URL: https://www.pyinstaller.org/
+Notice: Standalone executable packaging for Windows desktop releases (ProSync.spec)
+
+pyinstaller-hooks-contrib
+License: Apache-2.0
+SPDX: Apache-2.0
+URL: https://github.com/pyinstaller/pyinstaller-hooks-contrib
+Notice: Community packaging hooks for PySide6, paramiko, and standard libraries
+
+altgraph
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/altgraph/
+Notice: Static dependency graph analysis used by PyInstaller
+
+packaging
+License: Apache-2.0 OR BSD-2-Clause
+SPDX: Apache-2.0 OR BSD-2-Clause
+URL: https://pypi.org/project/packaging/
+Notice: PEP 440 and PEP 508 version parsing and specification utilities
+
+pytest
+License: MIT
+SPDX: MIT
+URL: https://pytest.org/
+Notice: Automated testing framework (>=9.1.1 hardened against CVE-2025-7117 / GHSA-6w46-j5rx-g56g)
+
+pluggy
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/pluggy/
+Notice: Plugin management and hook execution mechanism for pytest
+
+iniconfig
+License: MIT
+SPDX: MIT
+URL: https://pypi.org/project/iniconfig/
+Notice: Lightweight INI/configuration parser for pytest and pyproject.toml
+
+ruff
+License: MIT OR Apache-2.0
+SPDX: MIT OR Apache-2.0
+URL: https://github.com/astral-sh/ruff
+Notice: Fast Python linter and code analysis tooling (>=0.9.0)

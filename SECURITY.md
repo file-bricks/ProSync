@@ -33,7 +33,11 @@ Wenn Sie eine Sicherheitslücke oder ein kritisches Datenintegritätsproblem in 
    - `support@lukasgeiger.com`
    - `lukas@open-bricks.org`
 
-Bitte öffnen Sie für Sicherheitslücken **keine öffentlichen Issues** und veröffentlichen Sie keine Pfade, Konfigurationsdaten oder vertrauliche Informationen. Bestätigte Sicherheitsprobleme werden mit höchster Priorität behoben.
+Bitte öffnen Sie für Sicherheitslücken **keine öffentlichen Issues** und veröffentlichen Sie keine Pfade, Konfigurationsdaten oder vertrauliche Informationen.
+
+### Reaktionszeit & SLA
+
+Wir bestätigen den Eingang jeder Sicherheitsmeldung innerhalb von **48 Stunden** und streben eine erste Bewertung / Triage innerhalb von **5 Werktagen** an. Bestätigte Sicherheitsprobleme werden mit höchster Priorität behoben.
 
 ---
 
@@ -70,4 +74,8 @@ If you discover a security vulnerability or critical data integrity issue in Pro
    - `support@lukasgeiger.com`
    - `lukas@open-bricks.org`
 
-Please **do not disclose vulnerabilities in public issues**. Confirmed security patches are prioritized and released promptly.
+Please **do not disclose vulnerabilities in public issues**.
+
+### Response Time & SLA
+
+We acknowledge receipt of any security vulnerability report within **48 hours** and aim for an initial assessment/triage within **5 business days**. Confirmed security patches are prioritized and released promptly.

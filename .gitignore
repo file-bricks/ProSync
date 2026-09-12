@@ -59,6 +59,11 @@ ProSync_config.json
 *.tmp
 *.pem
 *.key
+*.pfx
+*.cer
+*.crt
+secrets.*
+LOCK.*
 keyring/
 
 # ---- Build-Artefakte & Releases ----
@@ -86,11 +91,18 @@ ehthumbs.db
 # ---- Lokale Sync-/Host-Nebenstaende ----
 *-ASUS-GEI.md
 *-WORKSTATION-LG.md
+*-WORKSTATION-LG*
+*-ASUS-GEI*
 * (kopie)*
 * (konflikt)*
 * (sync-conflict)*
+*.sync-conflict-*
+*.conflict
 * - Kopie.*
 * - Kopie (*).*
+
+# ---- Web / Node Dependencies ----
+node_modules/
 
 # ---- Planung & Interne Doku ----
 PLAN.txt

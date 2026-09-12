@@ -9,7 +9,8 @@ tzdata>=2025.2
 # SFTP/SSH target support
 paramiko>=3.4.0
 
-# Optional: ProSyncReader Dependencies
-# Uncomment if you need PDF/DOCX preview functionality
-# PyPDF2>=3.0.0
+# Document Reader & Preview Support
+pypdf>=4.0.0
+
+# Optional fallback reader dependencies
 # python-docx>=0.8.11
