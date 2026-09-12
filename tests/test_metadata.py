@@ -71,7 +71,7 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-08-22" in content, "llms.txt timestamp not updated to 2026-08-22"
+    assert "Last-checked: 2026-09-12" in content, "llms.txt timestamp not updated to 2026-09-12"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"

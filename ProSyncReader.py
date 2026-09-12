@@ -14,10 +14,17 @@ from logger import log_error
 
 # Optional libraries for preview
 try:
-    import PyPDF2
+    import pypdf
     HAS_PDF = True
+    _PDF_READER = pypdf.PdfReader
 except ImportError:
-    HAS_PDF = False
+    try:
+        import PyPDF2
+        HAS_PDF = True
+        _PDF_READER = PyPDF2.PdfReader
+    except ImportError:
+        HAS_PDF = False
+        _PDF_READER = None
 
 try:
     import docx
@@ -184,9 +191,9 @@ class PreviewWorker(QThread):
                 with open(self.path, "r", encoding="utf-8", errors="replace") as f:
                     text = f.read(3000) 
             
-            elif ext == ".pdf" and HAS_PDF:
+            elif ext == ".pdf" and HAS_PDF and _PDF_READER is not None:
                 with open(self.path, "rb") as f:
-                    reader = PyPDF2.PdfReader(f)
+                    reader = _PDF_READER(f)
                     if len(reader.pages) > 0:
                         extracted = reader.pages[0].extract_text()
                         text = extracted if extracted else "[Kein Text extrahierbar]"
@@ -419,7 +426,7 @@ def main():
     app.setStyle("Fusion")
     
     missing = []
-    if not HAS_PDF: missing.append("PyPDF2")
+    if not HAS_PDF: missing.append("pypdf / PyPDF2")
     if not HAS_DOCX: missing.append("python-docx")
     
     if missing:

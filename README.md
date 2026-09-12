@@ -10,7 +10,7 @@
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#installation)
 [![Python: 3.10 | 3.11 | 3.12](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue)](pyproject.toml)
-[![Tests: 128 passed](https://img.shields.io/badge/Tests-128%20passed-brightgreen)](#quality-checks)
+[![Tests: 133 passed](https://img.shields.io/badge/Tests-133%20passed-brightgreen)](#quality-checks)
 [![Privacy: 100% Local | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success)](PRIVACY_POLICY.md)
 [![Security: Local-First | WAL-Protected](https://img.shields.io/badge/Security-Local--First%20%7C%20WAL--Protected-orange)](SECURITY.md)
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo)](https://github.com/file-bricks)
@@ -311,7 +311,7 @@ ProSync is part of the modular **file-bricks** and **open-bricks** desktop ecosy
 
 ## Quality Checks
 
-Last verified on 2026-08-22: 99 Python tests and 29 Web/PWA tests passed (128 total tests).
+Last verified on 2026-09-12: 104 Python tests and 29 Web/PWA tests passed (133 total tests).
 
 ```bash
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py schedule_time.py logger.py run_tests.py

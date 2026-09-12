@@ -68,5 +68,19 @@ class TestU2ManageTranslations(unittest.TestCase):
         self.assertIn("JSONDecodeError", snippet,
                       "json.load in import_portable_profile ohne JSONDecodeError-Handler — BUG-U2")
 
+
+class TestPdfReaderFallback(unittest.TestCase):
+    """Test modern pypdf import with fallback to PyPDF2 in ProSyncReader."""
+
+    def test_prosyncreader_pdf_import_fallback(self):
+        src = (ROOT / "ProSyncReader.py").read_text(encoding="utf-8")
+        self.assertIn("import pypdf", src)
+        self.assertIn("import PyPDF2", src)
+        self.assertIn("_PDF_READER", src)
+        import ProSyncReader
+        self.assertTrue(hasattr(ProSyncReader, "HAS_PDF"))
+        self.assertTrue(hasattr(ProSyncReader, "_PDF_READER"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-09-12)
+- **GitHub Sync, Document Preview Fallback & Test Parity Check:**
+  - `ProSyncReader.py`: Modernes `pypdf` als primären PDF-Reader für Dokument-Vorschauen integriert mit defensivem Fallback auf `PyPDF2` und `None`-Absicherung bei fehlender Bibliothek.
+  - Regressionstest `TestPdfReaderFallback` in `tests/test_bug_regressions.py` implementiert; `tests/test_bug_regressions.py` in `run_tests.py` aufgenommen (jetzt 20 Testsuiten).
+  - `.gitignore` um Multi-Host- (`*-WORKSTATION-LG.md`) und Cloud-Konfliktmuster (`* (kopie)*`, `* (konflikt)*`, `* (sync-conflict)*`, `* - Kopie.*`) gehärtet.
+  - `README.md`, `README_de.md` und `llms.txt` auf 133 bestandene Tests (104 Python + 29 Node.js) sowie `tests/test_metadata.py` auf `Last-checked: 2026-09-12` synchronisiert.
+
 ### Hinzugefügt / Added (2026-08-22)
 - **Discoverability, Visual Showcase, Sequence Diagram, Security Policy & Metadata Parity Check:**
   - Zweisprachige `SECURITY.md` mit Local-First- und Zero-Egress-Garantien (100% Offline-Betrieb, 0 Telemetrie), unprivilegiertem User-Mode (Non-Elevation), SQLite-WAL-Datenbankschutz-Invarianten (`PRAGMA wal_checkpoint(TRUNCATE)`), Pfad- & Geheimnishygienen sowie direkten Sicherheitskontaktadressen (`security@file-bricks.org`, `security@ellmos.ai`, `support@lukasgeiger.com`, `lukas@open-bricks.org`) und GitHub Security Advisories Link implementiert.
