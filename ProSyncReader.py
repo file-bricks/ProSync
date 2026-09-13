@@ -229,13 +229,25 @@ class SettingsDialog(QDialog):
         lay = QVBoxLayout(self)
         
         self.list = QListWidget()
+        self.list.setAccessibleName("Eingebundene Suchdatenbanken")
+        self.list.setAccessibleDescription("Liste aller für die Suche eingebundenen SQLite-Indexdatenbanken.")
         self.refresh_list()
         lay.addWidget(QLabel("Verbundene Datenbanken:"))
         lay.addWidget(self.list)
         
         btn_lay = QHBoxLayout()
         btn_add = QPushButton("Hinzufügen")
+        btn_add.setToolTip("Indexdatenbank hinzufügen")
+        btn_add.setStatusTip("Öffnet den Dateidialog zum Hinzufügen einer SQLite-Indexdatenbank.")
+        btn_add.setAccessibleName("Indexdatenbank hinzufügen")
+        btn_add.setAccessibleDescription("Fügt eine neue SQLite-Indexdatenbank zur Suchliste hinzu.")
+
         btn_remove = QPushButton("Entfernen")
+        btn_remove.setToolTip("Ausgewählte Indexdatenbank entfernen")
+        btn_remove.setStatusTip("Entfernt die ausgewählte Indexdatenbank aus der Suchliste.")
+        btn_remove.setAccessibleName("Indexdatenbank entfernen")
+        btn_remove.setAccessibleDescription("Entfernt die markierte SQLite-Indexdatenbank aus der Suchliste.")
+
         btn_lay.addWidget(btn_add); btn_lay.addWidget(btn_remove)
         lay.addLayout(btn_lay)
         
@@ -285,6 +297,9 @@ class SearchWindow(QMainWindow):
         top_lay = QHBoxLayout()
         self.search_field = QLineEdit()
         self.search_field.setPlaceholderText("Suchbegriff eingeben...")
+        self.search_field.setAccessibleName("Suchbegriff")
+        self.search_field.setAccessibleDescription("Eingabefeld für den Suchbegriff in allen eingebundenen Indexdatenbanken.")
+        self.search_field.setToolTip("Suchbegriff eingeben (z. B. Dateiname oder Tag)")
         self.search_field.textChanged.connect(self.on_text_changed)
         self.search_field.setClearButtonEnabled(True)
         
@@ -306,6 +321,8 @@ class SearchWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         
         self.results_list = QListWidget()
+        self.results_list.setAccessibleName("Suchergebnisse")
+        self.results_list.setAccessibleDescription("Ergebnisliste der gefundenen Dateien und Tags.")
         self.results_list.itemClicked.connect(self.on_item_clicked)
         self.results_list.itemDoubleClicked.connect(self.open_file)
         self.results_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -317,6 +334,8 @@ class SearchWindow(QMainWindow):
         self.lbl_path = QLabel("Keine Auswahl")
         self.lbl_path.setStyleSheet("color: gray; font-size: 10px;")
         self.preview_text = QTextEdit()
+        self.preview_text.setAccessibleName("Dateivorschau")
+        self.preview_text.setAccessibleDescription("Vorschau des Inhalts der ausgewählten Datei.")
         self.preview_text.setReadOnly(True)
         
         preview_lay.addWidget(QLabel("<b>Vorschau</b>"))

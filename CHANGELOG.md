@@ -41,6 +41,8 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
   - Standalone-Runner `source_platform_smoke.py` modularisiert und `run_tests.py` auf 18 Testdateien erweitert.
   - CI-Workflow `.github/workflows/source-platform-smoke.yml` mit dedizierten Schritten für `ubuntu-latest` und `macos-latest` aktualisiert.
   - Gesamtzahl verifizierter Tests auf 112/112 (83 Pytest + 29 Node.js) erhöht.
+### Geändert / Changed (2026-08-11)
+- **UX- & Barrierefreiheits-Review:** `ProSyncStart_V3.1.py` und `ProSyncReader.py` mit umfassenden Screenreader-Attributen (`AccessibleName`, `AccessibleDescription`, `ToolTip`, `StatusTip`) für Hauptfenster-Buttons (`➕ Neue Aufgabe`, `🛡️ Sicherheitsprüfung`, `📚 ProFiler öffnen`, `⇄ Profil austauschen`, `🔍 Datenbank durchsuchen`, `▶ Start Sync`, `⏸ Pause`, `⏹ Stop`), Aufgabenliste (`Synchronisations-Aufgaben`), Suchdialoge und Suchergebnis-Listen ausgestattet. Statusleiste (`status_bar`) mit dynamischem accessible Indikator (`lbl_status_summary`: Aufgaben- und Auto-Sync-Anzahl) und Tastatur-Shortcuts (`Strg+N`, `Strg+Shift+A`, `Strg+F`, `F5`) nachgerüstet. Echte deutsche Umlaute verifiziert. Pytest-Suite (82/82 passed, 100% grün) inklusive neuem Regressionstest `test_main_window_controls_and_indicators_expose_accessible_context` bestanden.
 
 ### Geändert / Changed (2026-08-01)
 - **GitHub Privacy & Metadata Check:** konkrete lokale Beispiel- und Store-Pfade
