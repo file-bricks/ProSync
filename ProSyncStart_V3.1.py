@@ -61,6 +61,34 @@ def app_base_dir() -> str:
     return os.path.dirname(os.path.abspath(__file__))
 
 
+def load_app_icon() -> QIcon:
+    """Lädt das Anwendungs-Icon mit Multi-Pfad-Fallback.
+
+    Unterstützt Quelltext-Ausführung, PyInstaller (_MEIPASS) und
+    verschiedene Asset-Pfade (assets/app_icon.ico, assets/icon.ico,
+    assets/prosync.ico, assets/icon.png, ProSync.ico, ICO.ico, icon.ico).
+    """
+    base_dir = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    candidates = [
+        base_dir / "assets" / "app_icon.ico",
+        base_dir / "assets" / "icon.ico",
+        base_dir / "assets" / "prosync.ico",
+        base_dir / "assets" / "icon.png",
+        base_dir / "ProSync.ico",
+        base_dir / "ICO.ico",
+        base_dir / "icon.ico",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            icon = QIcon(str(candidate))
+            if not icon.isNull():
+                return icon
+    return QIcon()
+
+
+get_app_icon = load_app_icon
+
+
 WINDOWS_ENV_VAR_PATTERN = re.compile(r"%([^%]+)%")
 
 
@@ -3029,6 +3057,7 @@ class MainWindow(QMainWindow):
     def __init__(self, cfg):
         super().__init__()
         self.setWindowTitle("ProSync V3.2 - Sync & Index mit DB-Sicherheit")  # V3.2: Toast-Notifications
+        self.setWindowIcon(load_app_icon())
         self.resize(900, 600)
         self.cfg = cfg
         self.worker = None
@@ -3200,13 +3229,17 @@ class MainWindow(QMainWindow):
         self.scheduler.update_all()
 
     def setup_tray_icon(self):
-        icon_path = os.path.join(app_base_dir(), "ICO_TRAY.ico")
-        if os.path.exists(icon_path):
-            self.tray_icon.setIcon(QIcon(icon_path))
+        icon = load_app_icon()
+        if not icon.isNull():
+            self.tray_icon.setIcon(icon)
         else:
-            self.tray_icon.setIcon(
-                self.style().standardIcon(QStyle.StandardPixmap.SP_DriveNetIcon)
-            )
+            icon_path = os.path.join(app_base_dir(), "ICO_TRAY.ico")
+            if os.path.exists(icon_path):
+                self.tray_icon.setIcon(QIcon(icon_path))
+            else:
+                self.tray_icon.setIcon(
+                    self.style().standardIcon(QStyle.StandardPixmap.SP_DriveNetIcon)
+                )
         self.tray_icon.setToolTip("ProSync V3.2 - Läuft im Hintergrund")
 
     # ============ V3.2 NEW: TOAST-NOTIFICATION SYSTEM ============
@@ -4330,6 +4363,7 @@ def main() -> None:
         sys.exit(run_cli(sys.argv[1:]))
 
     app = QApplication(sys.argv)
+    app.setWindowIcon(load_app_icon())
     lock_file = QLockFile(QDir.temp().filePath("prosync.lock"))
     if not lock_file.tryLock(100):
         sys.exit(0)

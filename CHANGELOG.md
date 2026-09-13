@@ -5,6 +5,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-09-13)
+- **App Icon Generator, Multi-Resolution Icon Suite & Asset Parity Check:**
+  - Authentische 1024x1024 Master-PNGs (`icon.png`, `DesktopIcon.png`, `ProSync.png`, `assets/icon.png`, `assets/DesktopIcon.png`, `assets/ProSync.png`, `mobile_icons/icon.png`) generiert.
+  - Vollwertige 7-Layer Windows ICOs (16x16, 24x24, 32x32, 48x48, 64x64, 128x128, 256x256 px @ 32bpp RGBA) für `ICO.ico`, `ProSync.ico`, `DesktopIcon.ico`, `icon.ico`, `assets/icon.ico`, `assets/app_icon.ico`, `assets/prosync.ico`, `assets/DesktopIcon.ico` sowie 4-Layer Favicon-ICOs (16, 24, 32, 48 px) für `favicon.ico`, `assets/favicon.ico`, `mobile_icons/favicon.ico` bereitgestellt.
+  - Mobile & PWA Icon Suite unter `mobile_icons/` (`icon-192.png`, `icon-512.png`, `icon-maskable-192.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `apple-touch-icon-180.png`, `favicon.png`, `favicon.ico`, `manifest.json`, `icons/` Unterordner) standardkonform aufgebaut.
+  - Laufzeit-Code-Integration: `load_app_icon()` und `get_app_icon()` mit Multi-Pfad-Fallback in `ProSyncStart_V3.1.py` implementiert; verdrahtet in `MainWindow.__init__()`, `setup_tray_icon()` und `main()`.
+  - Automatisierte Asset-Vertragstestsuite `tests/test_assets_and_icons.py` (5 Contract-Tests) implementiert und in `run_tests.py` aufgenommen; 100% grün über alle 21 Testsuiten (119 Unit- & Contract-Tests).
+
 ### Geändert / Changed (2026-09-12)
 - **GitHub Sync, Document Preview Fallback & Test Parity Check:**
   - `ProSyncReader.py`: Modernes `pypdf` als primären PDF-Reader für Dokument-Vorschauen integriert mit defensivem Fallback auf `PyPDF2` und `None`-Absicherung bei fehlender Bibliothek.

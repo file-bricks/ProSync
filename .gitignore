@@ -142,8 +142,6 @@ web_companion/favicon.png
 web_companion/icons/apple-touch-icon*.png
 web_companion/icons/favicon.png
 assets/android-icon-*.png
-assets/favicon.png
-assets/icon.png
 assets/splash-icon.png
 
 # ---- Windows Store: track metadata, keep generated packages out ----
