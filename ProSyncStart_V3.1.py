@@ -3071,6 +3071,12 @@ class MainWindow(QMainWindow):
 
         # V3.1 NEW: Menu button for adding connections
         btn_add = QPushButton("➕ Neue Aufgabe")
+        btn_add.setToolTip("Neue Synchronisations-Aufgabe hinzufügen (Strg+N)")
+        btn_add.setStatusTip("Öffnet das Menü zum Erstellen einer Ordner-, Datei- oder SFTP-Synchronisation.")
+        btn_add.setAccessibleName("Neue Aufgabe hinzufügen")
+        btn_add.setAccessibleDescription("Öffnet ein Untermenü zum Erstellen einer neuen Ordner-, Datei- oder SFTP-Synchronisationsaufgabe.")
+        btn_add.setShortcut("Ctrl+N")
+
         add_menu = QMenu(self)
         act_folder = add_menu.addAction("📁 Ordner synchronisieren")
         act_folder.triggered.connect(self.add_folder_connection)
@@ -3082,14 +3088,25 @@ class MainWindow(QMainWindow):
 
         # V3 NEW: Database audit button
         btn_audit = QPushButton("🛡️ Sicherheitsprüfung")
-        btn_audit.setToolTip("Prüfe alle Verbindungen auf Datenbank-Sicherheit")
+        btn_audit.setToolTip("Prüfe alle Verbindungen auf Datenbank-Sicherheit (Strg+Shift+A)")
+        btn_audit.setStatusTip("Prüft alle eingerichteten Verbindungen auf Datenbank-Sicherheitskriterien.")
+        btn_audit.setAccessibleName("Sicherheitsprüfung ausführen")
+        btn_audit.setAccessibleDescription("Führt eine Sicherheitsprüfung aller Verbindungen hinsichtlich SQLite- und WAL-Sicherheit durch.")
+        btn_audit.setShortcut("Ctrl+Shift+A")
         btn_audit.clicked.connect(self.audit_all_connections)
 
         self.btn_profiler = QPushButton("📚 ProFiler öffnen")
         self.btn_profiler.setToolTip("Startet ProFiler als Companion-App")
+        self.btn_profiler.setStatusTip("Startet die ProFiler-Anwendung zur tiefen Dateianalyse.")
+        self.btn_profiler.setAccessibleName("ProFiler öffnen")
+        self.btn_profiler.setAccessibleDescription("Öffnet die ProFiler Companion-App zur erweiterten Analyse.")
         self.btn_profiler.clicked.connect(self.launch_profiler)
 
         btn_portable = QPushButton("⇄ Profil austauschen")
+        btn_portable.setToolTip("ProSync-Profil exportieren oder importieren")
+        btn_portable.setStatusTip("Exportiert oder importiert ein übertragbares ProSync-Profil.")
+        btn_portable.setAccessibleName("Profil austauschen")
+        btn_portable.setAccessibleDescription("Öffnet das Menü zum Exportieren oder Importieren übertragbarer Synchronisationsprofile.")
         portable_menu = QMenu(self)
         act_export_profile = portable_menu.addAction("📤 Profil exportieren")
         act_export_profile.triggered.connect(self.export_portable_profile_dialog)
@@ -3101,6 +3118,11 @@ class MainWindow(QMainWindow):
         empty.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self.btn_search = QPushButton("🔍 Datenbank durchsuchen")
+        self.btn_search.setToolTip("ProFiler-Search für Indexdatenbanken öffnen (Strg+F)")
+        self.btn_search.setStatusTip("Öffnet das ProFiler-Search-Fenster zur Volltextsuche in allen Indexdatenbanken.")
+        self.btn_search.setAccessibleName("Datenbank durchsuchen")
+        self.btn_search.setAccessibleDescription("Öffnet die Suchmaske zum Durchsuchen der erstellten Indexdatenbanken.")
+        self.btn_search.setShortcut("Ctrl+F")
         self.btn_search.clicked.connect(self.open_reader)
 
         toolbar_lay.addWidget(btn_add)
@@ -3114,6 +3136,8 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         self.list = QListWidget()
         self.list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.list.setAccessibleName("Synchronisations-Aufgaben")
+        self.list.setAccessibleDescription("Liste aller konfigurierten Ordner-, Datei- und SFTP-Synchronisationen.")
         self.list.itemClicked.connect(self.on_item_select)
         self.list.itemSelectionChanged.connect(self.refresh_selection_state)
         self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -3126,11 +3150,26 @@ class MainWindow(QMainWindow):
 
         ctrl_lay = QHBoxLayout()
         self.btn_run = QPushButton("▶ Start Sync")
+        self.btn_run.setToolTip("Ausgewählte Synchronisationsaufgabe(n) starten (F5 / Strg+R)")
+        self.btn_run.setStatusTip("Startet die Ausführung der aktuell ausgewählten Synchronisationsaufgabe(n).")
+        self.btn_run.setAccessibleName("Synchronisation starten")
+        self.btn_run.setAccessibleDescription("Startet die ausgewählte Synchronisationsaufgabe oder den Batch-Lauf.")
+        self.btn_run.setShortcut("F5")
         self.btn_run.clicked.connect(self.start_sync)
+
         self.btn_pause = QPushButton("⏸ Pause")
+        self.btn_pause.setToolTip("Laufende Synchronisation pausieren oder fortsetzen")
+        self.btn_pause.setStatusTip("Pausiert den aktiven Synchronisationslauf oder setzt ihn fort.")
+        self.btn_pause.setAccessibleName("Synchronisation pausieren")
+        self.btn_pause.setAccessibleDescription("Pausiert die aktuell laufende Synchronisationsaufgabe.")
         self.btn_pause.clicked.connect(self.toggle_pause)
         self.btn_pause.setEnabled(False)
+
         self.btn_stop = QPushButton("⏹ Stop")
+        self.btn_stop.setToolTip("Laufende Synchronisation abbrechen")
+        self.btn_stop.setStatusTip("Stoppt die aktuell laufende Synchronisationsaufgabe sofort.")
+        self.btn_stop.setAccessibleName("Synchronisation stoppen")
+        self.btn_stop.setAccessibleDescription("Bricht den laufenden Synchronisationsvorgang ab.")
         self.btn_stop.clicked.connect(self.stop_worker)
         self.btn_stop.setEnabled(False)
         ctrl_lay.addWidget(self.btn_run)
@@ -3150,6 +3189,12 @@ class MainWindow(QMainWindow):
         splitter.addWidget(right_panel)
         splitter.setStretchFactor(1, 2)
         main_lay.addWidget(splitter)
+
+        self.status_bar = self.statusBar()
+        self.lbl_status_summary = QLabel("Aufgaben: 0 | Auto-Sync: 0")
+        self.lbl_status_summary.setAccessibleName("Synchronisations-Statusübersicht")
+        self.lbl_status_summary.setAccessibleDescription("Zeigt die Gesamtanzahl der Aufgaben und aktiven Auto-Syncs an.")
+        self.status_bar.addPermanentWidget(self.lbl_status_summary)
 
         self.populate_list()
         self.scheduler.update_all()
@@ -3257,6 +3302,12 @@ class MainWindow(QMainWindow):
 
             item.setData(Qt.ItemDataRole.UserRole, c)
             self.list.addItem(item)
+
+        conns = self.cfg.list_connections()
+        auto_count = sum(1 for c in conns if c.get("autosync", {}).get("enabled"))
+        if hasattr(self, "lbl_status_summary"):
+            self.lbl_status_summary.setText(f"Aufgaben: {len(conns)} | Auto-Sync: {auto_count}")
+
         self.refresh_selection_state()
 
     def get_selected_connections(self):
