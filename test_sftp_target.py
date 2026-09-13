@@ -360,6 +360,122 @@ def test_create_sftp_transport_skips_probe_for_already_pinned_host(tmp_path: Pat
     assert client._host_keys.entries[host_key_name] == pinned_key
 
 
+def test_sftp_build_actions_normalizes_windows_backslashes() -> None:
+    prosync = load_prosync_module()
+    worker = prosync.SftpTargetSyncWorker({"id": "test", "target": "/remote"})
+    # Simulate src_tree with Windows backslashes and remote_tree with POSIX forward slashes
+    src_tree = {
+        "nested\\file.txt": {"size": 100, "mtime": 1000.0, "abs_path": "C:\\src\\nested\\file.txt"}
+    }
+    remote_tree = {
+        "nested/file.txt": {"size": 100, "mtime": 1000.0, "remote_path": "/remote/nested/file.txt"}
+    }
+
+    actions_update = worker._build_actions(src_tree, remote_tree, "update")
+    assert actions_update == [], "Identical subfolder files must not produce UPLOAD actions"
+
+    actions_mirror = worker._build_actions(src_tree, remote_tree, "mirror")
+    assert actions_mirror == [], "Identical subfolder files must not be deleted or re-uploaded in mirror mode"
+
+
+def test_sftp_worker_skips_unchanged_subfolder_files(tmp_path: Path) -> None:
+    QCoreApplication.instance() or QCoreApplication([])
+    prosync = load_prosync_module()
+    src = tmp_path / "src"
+    (src / "deep" / "sub").mkdir(parents=True)
+    doc = src / "deep" / "sub" / "doc.txt"
+    doc.write_text("persisted content", encoding="utf-8")
+
+    fake_sftp = FakeSftp()
+    fake_ssh = FakeSsh()
+    fake_sftp.mkdir("/backup")
+    fake_sftp.mkdir("/backup/prosync")
+    fake_sftp.mkdir("/backup/prosync/deep")
+    fake_sftp.mkdir("/backup/prosync/deep/sub")
+    fake_sftp.files["/backup/prosync/deep/sub/doc.txt"] = {
+        "content": b"persisted content",
+        "mtime": os.path.getmtime(doc),
+    }
+
+    # Test update mode
+    cfg_update = _base_config(tmp_path)
+    cfg_update["mode"] = "update"
+    reports = []
+    worker_update = prosync.SftpTargetSyncWorker(
+        cfg_update,
+        transport_factory=lambda _cfg: (fake_ssh, fake_sftp),
+    )
+    worker_update.sync_report.connect(reports.append)
+    worker_update.run()
+
+    assert reports[-1]["files_copied"] == 0
+    assert reports[-1]["files_deleted"] == 0
+    assert reports[-1]["total_actions"] == 0
+
+    # Test mirror mode
+    cfg_mirror = _base_config(tmp_path)
+    cfg_mirror["mode"] = "mirror"
+    reports.clear()
+    worker_mirror = prosync.SftpTargetSyncWorker(
+        cfg_mirror,
+        transport_factory=lambda _cfg: (fake_ssh, fake_sftp),
+    )
+    worker_mirror.sync_report.connect(reports.append)
+    worker_mirror.run()
+
+    assert reports[-1]["files_copied"] == 0
+    assert reports[-1]["files_deleted"] == 0
+    assert reports[-1]["total_actions"] == 0
+    assert "/backup/prosync/deep/sub/doc.txt" in fake_sftp.files
+
+
+def test_sftp_worker_preserves_remote_excluded_patterns_in_mirror_mode(tmp_path: Path) -> None:
+    QCoreApplication.instance() or QCoreApplication([])
+    prosync = load_prosync_module()
+    src = tmp_path / "src"
+    src.mkdir(parents=True)
+    (src / "keep.txt").write_text("keep this", encoding="utf-8")
+    (src / "local_ignore.tmp").write_text("local ignore", encoding="utf-8")
+
+    fake_sftp = FakeSftp()
+    fake_ssh = FakeSsh()
+    fake_sftp.mkdir("/backup")
+    fake_sftp.mkdir("/backup/prosync")
+    fake_sftp.mkdir("/backup/prosync/__pycache__")
+    fake_sftp.files["/backup/prosync/keep.txt"] = {
+        "content": b"keep this",
+        "mtime": os.path.getmtime(src / "keep.txt"),
+    }
+    fake_sftp.files["/backup/prosync/remote_ignore.tmp"] = {
+        "content": b"should be preserved",
+        "mtime": 100.0,
+    }
+    fake_sftp.files["/backup/prosync/__pycache__/compiled.pyc"] = {
+        "content": b"cache byte code",
+        "mtime": 100.0,
+    }
+
+    cfg = _base_config(tmp_path)
+    cfg["mode"] = "mirror"
+    cfg["exclude_patterns"] = ["*.tmp", "__pycache__"]
+
+    reports = []
+    errors = []
+    worker = prosync.SftpTargetSyncWorker(
+        cfg,
+        transport_factory=lambda _cfg: (fake_ssh, fake_sftp),
+    )
+    worker.sync_report.connect(reports.append)
+    worker.error.connect(errors.append)
+    worker.run()
+
+    assert errors == []
+    assert reports[-1]["files_copied"] == 0
+    assert reports[-1]["files_deleted"] == 0
+    assert "/backup/prosync/remote_ignore.tmp" in fake_sftp.files
+    assert "/backup/prosync/__pycache__/compiled.pyc" in fake_sftp.files
+
+
 class _SimpleMonkeyPatch:
     """Minimal stand-in for pytest's `monkeypatch` fixture, for the standalone `main()` runner.
 
@@ -381,7 +497,10 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as tmp:
         base = Path(tmp)
+        test_sftp_build_actions_normalizes_windows_backslashes()
         test_sftp_worker_uploads_and_deletes_mirror_stale_files(base / "worker")
+        test_sftp_worker_skips_unchanged_subfolder_files(base / "subfolder")
+        test_sftp_worker_preserves_remote_excluded_patterns_in_mirror_mode(base / "excludes")
         test_sftp_config_rejects_database_checkpoint_mode(base / "validate")
         test_sftp_portable_profile_redacts_remote_endpoint(base / "portable")
         test_create_sftp_transport_pins_unknown_host_key_via_tofu(base / "tofu1", _SimpleMonkeyPatch())

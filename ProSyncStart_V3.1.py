@@ -2049,9 +2049,11 @@ class SftpTargetSyncWorker(QThread):
                 except OSError:
                     sftp.stat(current)
 
-    def _scan_remote_tree(self, sftp, remote_root):
+    def _scan_remote_tree(self, sftp, remote_root, exclude_patterns=None):
         remote_root = normalize_remote_path(remote_root)
         tree = {}
+        walker = SyncWalker()
+        patterns = exclude_patterns or []
 
         def walk(current_remote, rel_prefix=""):
             try:
@@ -2061,6 +2063,8 @@ class SftpTargetSyncWorker(QThread):
             for entry in entries:
                 name = entry.filename
                 if name in (".", ".."):
+                    continue
+                if walker._should_exclude(name, patterns):
                     continue
                 rel = f"{rel_prefix}/{name}" if rel_prefix else name
                 full = join_remote_path(current_remote, name)
@@ -2136,16 +2140,18 @@ class SftpTargetSyncWorker(QThread):
                 log_warning(f"SFTP backup cleanup failed: {cleanup_error}")
 
     def _build_actions(self, src_tree, remote_tree, mode):
-        all_files = set(src_tree.keys()) | set(remote_tree.keys())
+        src_norm = {k.replace("\\", "/"): v for k, v in src_tree.items()}
+        remote_norm = {k.replace("\\", "/"): v for k, v in remote_tree.items()}
+        all_files = set(src_norm.keys()) | set(remote_norm.keys())
         actions = []
         for rel_path in sorted(all_files):
-            in_src = rel_path in src_tree
-            in_remote = rel_path in remote_tree
+            in_src = rel_path in src_norm
+            in_remote = rel_path in remote_norm
             if in_src and not in_remote:
                 actions.append(("UPLOAD", rel_path))
             elif in_src and in_remote:
-                src_meta = src_tree[rel_path]
-                remote_meta = remote_tree[rel_path]
+                src_meta = src_norm[rel_path]
+                remote_meta = remote_norm[rel_path]
                 if (
                     src_meta["size"] != remote_meta["size"]
                     or abs(src_meta["mtime"] - remote_meta["mtime"]) > 1
@@ -2171,11 +2177,15 @@ class SftpTargetSyncWorker(QThread):
             ssh_client, sftp = self.transport_factory(self.cfg)
 
             self.status.emit(f"[{self.cfg.get('name')}] Scanne Quelle...")
-            src_tree = SyncWalker().scan(source_root, exclude_patterns, strict=True)
+            raw_src_tree = SyncWalker().scan(source_root, exclude_patterns, strict=True)
+            src_tree = {
+                rel_p.replace("\\", "/"): meta
+                for rel_p, meta in raw_src_tree.items()
+            }
 
             self.status.emit(f"[{self.cfg.get('name')}] Scanne SFTP-Ziel...")
             self._ensure_remote_dir(sftp, remote_root)
-            remote_tree = self._scan_remote_tree(sftp, remote_root)
+            remote_tree = self._scan_remote_tree(sftp, remote_root, exclude_patterns)
 
             actions = self._build_actions(src_tree, remote_tree, mode)
             total = len(actions)
