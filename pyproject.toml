@@ -64,11 +64,15 @@ Issues = "https://github.com/file-bricks/ProSync/issues"
 Privacy = "https://github.com/file-bricks/ProSync/blob/master/PRIVACY_POLICY.md"
 Support = "https://github.com/file-bricks/ProSync/blob/master/SUPPORT.md"
 Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
+"Parent Organization" = "https://github.com/file-bricks"
+"Umbrella Ecosystem" = "https://github.com/open-bricks"
+"LLM Ready" = "https://github.com/file-bricks/ProSync/blob/master/llms.txt"
+"Marketing Log" = "https://github.com/file-bricks/ProSync/blob/master/MARKETING-LOG.txt"
 "Third-Party Licenses" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.txt"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q"
+addopts = "-ra -v"
 testpaths = [
     ".",
     "tests"

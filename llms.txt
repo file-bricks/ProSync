@@ -1,6 +1,6 @@
 # ProSync
 
-> Last-checked: 2026-09-12 (133/133 tests passing: 104 pytest + 29 node tests)
+> Last-checked: 2026-09-16 (153/153 tests passing: 124 pytest + 29 node tests)
 
 Canonical repository: https://github.com/file-bricks/ProSync
 Organization: file-bricks
@@ -8,6 +8,7 @@ Primary language: Python
 UI stack: PySide6 desktop system-tray application
 License: MIT
 Security Policy: SECURITY.md (Local-First, Zero-Egress, SQLite WAL Invariants)
+Marketing & Governance Log: MARKETING-LOG.txt
 
 ProSync is an intelligent backup synchronization tool with built-in SQLite database protection. It runs as a Windows system-tray app and supports folder sync, file sync, scheduled backups, and batch operations.
 
@@ -22,6 +23,7 @@ Core behavior:
 - Windows Store staged MSIX packaging with desktop AppxManifest, full tile asset sets, and automated readiness audit (`scripts/check_store_readiness.py`).
 - Optionally launches ProFiler companion for indexing and search across synchronized files.
 - Automated repository contract and metadata parity suite (`tests/test_metadata.py`).
+- Comprehensive marketing, discovery, and governance log (`MARKETING-LOG.txt`) with competitive matrix and 10 runtime invariant pillars.
 
 Privacy boundary:
 
@@ -32,10 +34,10 @@ Privacy boundary:
 Local verification:
 
 ```bash
-python -m pytest -q          # 104 Python tests
-cd web_companion && npm test  # 29 Node PWA companion tests (133 total tests)
+python -m pytest -ra -v       # 124 Python tests
+cd web_companion && npm test  # 29 Node PWA companion tests (153 total tests)
 python scripts/check_store_readiness.py # Windows Store readiness auditor
-python run_tests.py          # 20 test suites locally
+python run_tests.py           # 21 test suites locally
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 ```
 
@@ -59,4 +61,4 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - SQLite WAL safe copy python backup
 - Windows Store MSIX local backup sync utility
 
-## Last-checked: 2026-09-12
+## Last-checked: 2026-09-16

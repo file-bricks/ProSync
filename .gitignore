@@ -17,8 +17,14 @@ build/
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
+.hypothesis/
+.turbo/
+.nyc_output/
+wheelhouse/
+.wheel-smoke/
 
 # ---- Virtuelle Umgebungen ----
 venv/
@@ -28,8 +34,13 @@ env/
 
 # ---- BACH Interne Steuerungsdateien (NIEMALS in Git!) ----
 AUFGABEN.txt
+LOCK
+LOCK.*
 LOCK*.txt
 LOCK.permissions.json
+*.lock
+uv.lock
+!package-lock.json
 TEST.txt
 TESTS.txt
 TESTERGEBNISSE.txt
@@ -88,18 +99,29 @@ Thumbs.db
 .DS_Store
 ehthumbs.db
 
-# ---- Lokale Sync-/Host-Nebenstaende ----
+# ---- Lokale Sync-/Host-Nebenstaende & Multi-Host-Schutz ----
 *-ASUS-GEI.md
 *-WORKSTATION-LG.md
 *-WORKSTATION-LG*
 *-ASUS-GEI*
+*-WORKSTATION*
+*-ASUS*
+*-LAPTOP*
+*-Mac Studio*
 * (kopie)*
+* (copy)*
+* (Kopie)*
+* (Copy)*
 * (konflikt)*
 * (sync-conflict)*
 *.sync-conflict-*
+*.sync-temp-*
+*conflicted copy*
 *.conflict
 * - Kopie.*
 * - Kopie (*).*
+*.orig
+*.rej
 
 # ---- Web / Node Dependencies ----
 node_modules/

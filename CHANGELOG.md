@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-09-16)
+- **Pfad A Technische Hygiene, CI-Hardening & Contract-Test-Parität:**
+  - **CI Workflow Hardening (`.github/workflows/`):** Concurrency-Gruppen mit `cancel-in-progress: true` und explizite `timeout-minutes` (15 Min für Tests und Smoke, 10 Min für Stale, 5 Min für Welcome) in `tests.yml`, `source-platform-smoke.yml`, `stale.yml` und `welcome.yml` eingezogen; Testausführung auf `python -m pytest -ra -v` standardisiert.
+  - **PWA Web Companion Regression Fix:** Fehlenden SVG-Icon-Eintrag (`./icon.svg`, `type: "image/svg+xml"`) im Manifest (`web_companion/manifest.webmanifest`) ergänzt; 29/29 Node.js-PWA-Tests bestanden.
+  - **Multi-Host Sync- & Lock-Defense (`.gitignore`):** Schutzregeln für kanonische Sperren (`LOCK`, `LOCK.*`, `*.lock`, `uv.lock`, `!package-lock.json`), Cloud-Sync-Konfliktkopien (`* (copy)*`, `* (Copy)*`, `* (Kopie)*`, `*conflicted copy*`, `*-WORKSTATION*`, `*-ASUS*`, `*-LAPTOP*`, `*-Mac Studio*`, `*.sync-temp-*`, `*.sync-conflict-*`, `*.orig`, `*.rej`) sowie Test-/Build-Caches (`.coverage.*`, `.hypothesis/`, `.turbo/`, `.nyc_output/`, `wheelhouse/`, `.wheel-smoke/`) implementiert.
+  - **PEP 621 Standardisierung (`pyproject.toml`):** `[project.urls]` um `Parent Organization`, `Umbrella Ecosystem`, `LLM Ready` und `Marketing Log` erweitert; `[tool.pytest.ini_options]` addopts auf `-ra -v` standardisiert.
+  - **Marketing & Governance Log (`MARKETING-LOG.txt`):** Vollständiges Register mit Executive Value Proposition, 4 Ziel-Personas, EN/DE High-Intent-Suchbegriffen, Wettbewerbsmatrix, 10 Governance-Invarianten (`INV-LOCAL-01` bis `INV-SLA-10`), Ökosystem-Synergien und Pfad-A-Audit protokolliert.
+  - **Vertragstests & Dokumentation (`tests/test_metadata.py`, `README.md`, `README_de.md`, `llms.txt`):** 4 neue Contract-Tests (`test_ci_concurrency_and_timeout_guardrails`, `test_gitignore_multihost_and_lock_defense`, `test_marketing_log_recent_hygiene_entry`, `test_web_companion_pwa_svg_parity`) implementiert; Suite auf 124 Python- und 29 Node-Tests (153 Gesamt-Tests) erweitert und dokumentiert.
+
 ### Hinzugefügt / Added (2026-09-13)
 - **App Icon Generator, Multi-Resolution Icon Suite & Asset Parity Check:**
   - Authentische 1024x1024 Master-PNGs (`icon.png`, `DesktopIcon.png`, `ProSync.png`, `assets/icon.png`, `assets/DesktopIcon.png`, `assets/ProSync.png`, `mobile_icons/icon.png`) generiert.

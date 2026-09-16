@@ -71,10 +71,11 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-09-12" in content, "llms.txt timestamp not updated to 2026-09-12"
+    assert "Last-checked: 2026-09-16" in content, "llms.txt timestamp not updated to 2026-09-16"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"
+    assert "MARKETING-LOG.txt" in content, "MARKETING-LOG.txt reference missing in llms.txt"
 
 
 def test_sibling_ecosystem_matrix() -> None:
@@ -103,6 +104,11 @@ def test_pyproject_pep621_metadata() -> None:
     assert "Repository =" in content, "Repository URL missing in pyproject.toml"
     assert "Documentation =" in content, "Documentation URL missing in pyproject.toml"
     assert "Changelog =" in content, "Changelog URL missing in pyproject.toml"
+    assert '"Parent Organization" =' in content or "Parent Organization =" in content, "Parent Organization URL missing in pyproject.toml"
+    assert '"Umbrella Ecosystem" =' in content or "Umbrella Ecosystem =" in content, "Umbrella Ecosystem URL missing in pyproject.toml"
+    assert '"LLM Ready" =' in content or "LLM Ready =" in content, "LLM Ready URL missing in pyproject.toml"
+    assert '"Marketing Log" =' in content or "Marketing Log =" in content, "Marketing Log URL missing in pyproject.toml"
+    assert 'addopts = "-ra -v"' in content, "addopts -ra -v missing in pyproject.toml"
 
 
 def test_ci_workflow_integrity() -> None:
@@ -113,7 +119,75 @@ def test_ci_workflow_integrity() -> None:
 
     tests_yml = (workflow_dir / "tests.yml").read_text(encoding="utf-8")
     assert "python run_tests.py" in tests_yml
-    assert "python -m pytest -q" in tests_yml
+    assert "python -m pytest -ra -v" in tests_yml
+
+
+def test_ci_concurrency_and_timeout_guardrails() -> None:
+    """Verify CI workflows have concurrency cancellation and explicit timeout-minutes."""
+    workflow_dir = ROOT / ".github" / "workflows"
+    workflows = {
+        "tests.yml": 15,
+        "source-platform-smoke.yml": 15,
+        "stale.yml": 10,
+        "welcome.yml": 5,
+    }
+
+    for wf_name, expected_timeout in workflows.items():
+        wf_file = workflow_dir / wf_name
+        assert wf_file.is_file(), f"Workflow {wf_name} missing"
+        content = wf_file.read_text(encoding="utf-8")
+        assert "concurrency:" in content, f"concurrency missing in {wf_name}"
+        assert "cancel-in-progress: true" in content, f"cancel-in-progress missing in {wf_name}"
+        assert f"timeout-minutes: {expected_timeout}" in content, (
+            f"timeout-minutes: {expected_timeout} missing in {wf_name}"
+        )
+
+
+def test_gitignore_multihost_and_lock_defense() -> None:
+    """Verify .gitignore includes multi-host, cloud conflict, and canonical lock patterns."""
+    gitignore_file = ROOT / ".gitignore"
+    assert gitignore_file.is_file(), ".gitignore must exist"
+    content = gitignore_file.read_text(encoding="utf-8")
+
+    patterns = [
+        "*conflicted copy*",
+        "*-WORKSTATION*",
+        "*-ASUS*",
+        "*-LAPTOP*",
+        "*-Mac Studio*",
+        "LOCK",
+        "*.lock",
+        "uv.lock",
+        "!package-lock.json",
+        ".coverage.*",
+    ]
+    for pattern in patterns:
+        assert pattern in content, f"Pattern {pattern} missing in .gitignore"
+
+
+def test_marketing_log_recent_hygiene_entry() -> None:
+    """Verify MARKETING-LOG.txt exists, is up-to-date, and documents governance invariants."""
+    mktg_file = ROOT / "MARKETING-LOG.txt"
+    assert mktg_file.is_file(), "MARKETING-LOG.txt must exist"
+    content = mktg_file.read_text(encoding="utf-8")
+
+    assert "Stand: 2026-09-16" in content, "Recent audit date missing in MARKETING-LOG.txt"
+    assert "PROSYNC SUITE" in content
+    assert "INV-LOCAL-01" in content and "INV-SLA-10" in content, "Governance pillars missing in MARKETING-LOG.txt"
+    assert "Pfad A" in content or "PFAD A" in content, "Pfad A maintenance section missing in MARKETING-LOG.txt"
+
+
+def test_web_companion_pwa_svg_parity() -> None:
+    """Verify web companion manifest includes SVG icon for scalable PWA install."""
+    manifest_file = ROOT / "web_companion" / "manifest.webmanifest"
+    assert manifest_file.is_file(), "manifest.webmanifest must exist"
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+
+    icons = manifest_data.get("icons", [])
+    svg_icons = [icon for icon in icons if icon.get("src") == "./icon.svg"]
+    assert len(svg_icons) >= 1, "Missing ./icon.svg in manifest icons"
+    assert svg_icons[0].get("type") == "image/svg+xml"
+    assert (ROOT / "web_companion" / "icon.svg").is_file(), "web_companion/icon.svg file missing on disk"
 
 
 if __name__ == "__main__":

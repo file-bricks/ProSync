@@ -1,0 +1,170 @@
+﻿================================================================================
+PROSYNC SUITE — MARKETING, DISCOVERY & GOVERNANCE LOG
+================================================================================
+Stand: 2026-09-16
+Repository: file-bricks/ProSync
+Branch: master
+Version: 3.2.0
+Organization: file-bricks
+Umbrella Ecosystem: open-bricks
+Package Identity: Geiger.ProSync (Publisher: CN=52596601-BAB4-4F3F-B182-E8F3F273B202)
+Primary License: MIT
+================================================================================
+
+1. EXECUTIVE VALUE PROPOSITION
+--------------------------------------------------------------------------------
+ProSync is an intelligent, high-performance desktop backup and folder synchronization
+utility for Windows, Linux, and macOS with automated SQLite WAL database protection.
+It combines 5 synchronization modes (Mirror, Update, Two-Way, One-Way, Index-Only),
+transactional SFTP remote upload capabilities, automated SQLite WAL checkpoints
+(`PRAGMA wal_checkpoint(TRUNCATE)`), IANA-timezone-aware daily autosync schedules,
+a batch sync execution queue, system-tray background automation, and a portable
+companion export format (`prosync-profile-v1.json`) in a single native PySide6 (Qt 6)
+application engineered with 100% local-first data isolation and zero cloud egress.
+
+
+2. TARGET AUDIENCE & STAKEHOLDER PERSONAS
+--------------------------------------------------------------------------------
+Persona 1: Desktop Power Users & Windows Sysadmins
+- Context: Regular automated backups of vital working directories, NAS shares, and external drives.
+- Pain Point: Generic sync utilities either lack background tray operation, lack scheduling,
+  or corrupt open SQLite databases during live copies.
+- Benefit: Unobtrusive system-tray automation, IANA timezone-aware daily triggers, batch queues,
+  and atomic folder synchronization with fail-closed safety.
+
+Persona 2: SQLite & Database Application Developers
+- Context: Development and production environments utilizing SQLite in WAL (Write-Ahead Logging) mode.
+- Pain Point: Standard copy tools copy active database files while WAL transactions are uncommitted,
+  producing inconsistent, corrupt, or unusable backup copies.
+- Benefit: Automated pre-sync SQLite WAL checkpointing (`PRAGMA wal_checkpoint(TRUNCATE)`),
+  defensive lock contention detection (fail-closed on SQLITE_BUSY), and automated WAL auxiliary file exclusion.
+
+Persona 3: Privacy & Compliance Officers / DSGVO & Enterprise Auditors
+- Context: Regulated industries, legal/medical records, and sensitive local file archives.
+- Pain Point: Cloud storage clients and SaaS synchronization tools continuously exfiltrate telemetry
+  and risk unauthorized data leaks.
+- Benefit: Uncompromising 100% Local-First & Zero-Egress architecture; zero external telemetry;
+  fully unprivileged user-mode execution (Non-Elevation / RunAsInvoker).
+
+Persona 4: Automation Engineers & Multi-Agent Framework Architects
+- Context: Headless execution, batch scripts, CI pipelines, and LLM-assisted tool pipelines.
+- Pain Point: Inflexible GUI-only tools that cannot be scripted without window managers or user clicks.
+- Benefit: Full-featured headless CLI (`--list`, `--run <id|name>`, `--all`, `--quiet`),
+  redacted portable profile format (`prosync-profile-v1.json`), and comprehensive contract test suites.
+
+
+3. HIGH-INTENT SEARCH QUERIES (EN & DE)
+--------------------------------------------------------------------------------
+English Search Queries:
+- python desktop backup synchronization tool
+- pyside6 file sync folder backup windows tray
+- sqlite wal database safe backup python
+- local-first file synchronization zero egress
+- offline two-way folder sync python
+- sqlite wal checkpoint backup automation
+- scheduled folder backup iana timezone python
+- sftp atomic upload backup desktop app
+- windows store msix backup sync utility
+- open source backup sync tool mit license
+
+German Search Queries:
+- datei synchronisation windows desktop app
+- pyside6 ordner backup synchronisieren
+- sqlite wal datenbank sicherung python
+- lokales backup tool ohne cloud zero egress
+- automatisches backup system tray windows
+- ordner spiegeln aktualisieren offline python
+- datenbank sicherung wal checkpoint konsistent
+- sftp backup synchronisation desktop open source
+- datenschutz backup synchronisation zero egress
+- dateimanager synchronisation file-bricks
+
+
+4. COMPETITIVE POSITIONING & MATRIX
+--------------------------------------------------------------------------------
+Feature / Capability          | ProSync       | FreeFileSync     | Robocopy / Rsync | Syncthing        | Cloud SaaS Sync
+------------------------------|---------------|------------------|------------------|------------------|-------------------
+Local-First Zero-Egress       | 100% Local    | 100% Local       | 100% Local       | P2P Network      | Cloud dependency
+SQLite WAL Checkpoint Guard   | Automated     | None             | None             | None             | None
+5 Sync Modes (Mirror/Update..)| Built-in      | Built-in         | CLI flags        | Two-way only     | Proprietary sync
+Windows System Tray Mini      | Native Qt6    | External tool    | None             | Web UI / Service | Native client
+IANA Timezone Daily Autosync  | Built-in      | Task Scheduler   | Task Scheduler   | Continuous       | Cloud schedule
+Batch Sync Execution Queue    | Built-in      | Batch scripts    | Scripted         | Automatic        | Global sync
+Atomic SFTP Target Sync       | Built-in      | SFTP / FTP       | SSH / Rsync      | Relays / P2P     | Cloud storage
+Redacted PWA Companion Export | Built-in      | None             | None             | Web GUI          | Web portal
+Headless Automation CLI       | Built-in      | CLI flags        | Pure CLI         | REST API         | CLI / API
+Store Deployment Ready        | Staged MSIX   | Installer only   | In-OS            | Unpackaged       | Store / Web app
+
+
+5. GOVERNANCE & RUNTIME INVARIANTS (10 PILLARS)
+--------------------------------------------------------------------------------
+INV-LOCAL-01: 100% Offline & Zero-Egress Privacy
+  Pure local runtime. Zero network sockets opened to telemetry or analytics endpoints.
+INV-SEC-02: Unprivileged RunAsInvoker Non-Elevation
+  Standard unprivileged user mode. Never prompts for UAC elevation or root credentials.
+INV-WAL-03: SQLite WAL Crash-Consistent Checkpoint Guard
+  Automated `PRAGMA wal_checkpoint(TRUNCATE)` prior to file transfer; aborts fail-closed on lock contention.
+INV-MODES-04: Deterministic 5-Mode Synchronization Engine
+  Clear semantic separation: mirror, update, two_way, one_way, and index_only.
+INV-SFTP-05: Atomic SFTP Uploads & Rollback Safety
+  Remote SFTP uploads use atomic staging and roll back failed or incomplete transfers.
+INV-SCHED-06: IANA Timezone-Aware Daily Scheduling
+  Deterministic execution across daylight saving time (DST) shifts with no catch-up storms.
+INV-QUEUE-07: Batch Synchronization Execution Queue
+  Sequential multi-connection batch execution with granular progress and status reporting.
+INV-EXP-08: Redacted Portable Profile Export (`prosync-profile-v1.json`)
+  Exported profiles redact absolute local paths and credentials for mobile companion inspection.
+INV-ACC-09: Screen Reader Accessibility & Keyboard Shortcuts
+  AccessibleName, AccessibleDescription, and status indicators across all primary controls.
+INV-SLA-10: 48-Hour Security Response & 5-Day Triage SLA
+  Documented bilingual vulnerability response with GitHub Security Advisories integration.
+
+
+6. ECOSYSTEM SYNERGIES & CROSS-PROMOTION CHANNELS
+--------------------------------------------------------------------------------
+- file-bricks/ExplorerPro: Power-user file manager with multi-tab browsing and FTS5 search.
+- file-bricks/ProFiler: Metadata classification and deep file indexing companion.
+- file-bricks/CloudLockFixer: Unlocks cloud-locked files before backup or synchronization.
+- file-bricks/SQLiteViewer: Visual inspection and querying of SQLite databases and indexes.
+- file-bricks/SoftwareCenter: Local desktop software launcher and maintenance hub.
+- file-bricks/WinStorePackager: Automated toolchain for Windows Store MSIX package builds.
+- doc-bricks/DokuZen: Local-first document workflow and archiving suite.
+- dev-bricks/CodeBox: Multi-language developer editor companion.
+- ellmos-ai/ellmos-controlcenter-mcp: Model Context Protocol bridge for AI tool orchestration.
+- open-bricks: Central umbrella portal linking all local-first open-source utilities.
+
+
+7. TECHNICAL HYGIENE & PFAD A MAINTENANCE AUDIT
+--------------------------------------------------------------------------------
+Audit-Datum: 2026-09-16
+Status: Passed (100% Green)
+Durchgeführt von: Antigravity (Gemini) / GitHubBot Routine
+
+Prüfpunkte & Maßnahmen:
+1. CI-Workflow Hardening (.github/workflows/):
+   - `tests.yml`: Concurrency-Gruppe mit `cancel-in-progress: true` hinzugefügt; `timeout-minutes: 15`
+     auf Test-Job gesetzt; Test-Befehl auf `python -m pytest -ra -v` standardisiert.
+   - `source-platform-smoke.yml`: Concurrency-Gruppe mit `cancel-in-progress: true` hinzugefügt;
+     `timeout-minutes: 15` auf Smoke-Job gesetzt; Test-Befehl auf `python -m pytest -ra -v` standardisiert.
+   - `stale.yml`: Concurrency-Gruppe hinzugefügt; `timeout-minutes: 10` gesetzt.
+   - `welcome.yml`: Concurrency-Gruppe hinzugefügt; `timeout-minutes: 5` gesetzt.
+2. Web Companion PWA Fix:
+   - `web_companion/manifest.webmanifest`: Fehlenden `./icon.svg`-Eintrag (`type: "image/svg+xml"`)
+     im Icons-Array ergänzt; 29/29 Node.js PWA- und Library-Tests bestanden.
+3. Multi-Host Sync- & Lock-Schutz (.gitignore):
+   - Ergänzung kanonischer Lock-Muster (`LOCK`, `LOCK.*`, `LOCK*.txt`, `uv.lock`, `!package-lock.json`).
+   - Härtung gegen Cloud-Konflikte (`* (copy)*`, `* (Copy)*`, `* (Kopie)*`, `*conflicted copy*`,
+     `*-WORKSTATION*`, `*-ASUS*`, `*-LAPTOP*`, `*-Mac Studio*`, `*.sync-temp-*`, `*.sync-conflict-*`,
+     `*.orig`, `*.rej`).
+   - Absicherung von Test-, Coverage- und Build-Caches (`.coverage.*`, `.hypothesis/`, `.turbo/`,
+     `.nyc_output/`, `wheelhouse/`, `.wheel-smoke/`).
+4. PEP 621 Standardisierung (pyproject.toml):
+   - URLs um `Parent Organization`, `Umbrella Ecosystem`, `LLM Ready` und `Marketing Log` erweitert.
+   - `[tool.pytest.ini_options]` addopts auf `-ra -v` standardisiert.
+5. Dokumentation & Badges:
+   - `README.md`, `README_de.md` und `llms.txt` auf den aktuellen Teststand und Zeitstempel `2026-09-16`
+     nachgeführt.
+6. Testabdeckung & Vertragssuiten:
+   - `tests/test_metadata.py` um umfassende Guardrail-Tests für CI-Timeouts, Gitignore-Multi-Host-Schutz,
+     PEP 621 URLs, Marketing-Log und PWA-SVG-Parität erweitert.
+================================================================================

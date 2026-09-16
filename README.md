@@ -10,7 +10,7 @@
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue)](CHANGELOG.md)
 [![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](#installation)
 [![Python: 3.10 | 3.11 | 3.12](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue)](pyproject.toml)
-[![Tests: 133 passed](https://img.shields.io/badge/Tests-133%20passed-brightgreen)](#quality-checks)
+[![Tests: 153 passed](https://img.shields.io/badge/Tests-153%20passed-brightgreen)](#quality-checks)
 [![Privacy: 100% Local | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success)](PRIVACY_POLICY.md)
 [![Security: Local-First | WAL-Protected](https://img.shields.io/badge/Security-Local--First%20%7C%20WAL--Protected-orange)](SECURITY.md)
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo)](https://github.com/file-bricks)
@@ -20,7 +20,7 @@
 > [!NOTE]
 > **Disambiguation:** `file-bricks/ProSync` is an open-source Windows desktop and background application built with Python (PySide6) for local file/folder synchronization with automated SQLite WAL database protection. It is completely independent of enterprise database replication products (e.g., Tibero ProSync) or third-party macOS utilities.
 
-**Quick links:** [Features](#features) · [Architecture](#architecture--data-flow) · [Lifecycle Flow](#end-to-end-backup--wal-checkpoint-lifecycle) · [Visual Showcase](#visual-showcase--feature-gallery) · [Installation](#installation) · [CLI Usage](#headless-cli) · [Sync Modes](#synchronization-modes) · [Database Safety](#database-protection-v32) · [Web Companion](#webpwa-companion) · [Sibling Tools](#sibling-tools--file-bricks-ecosystem) · [Security Policy](SECURITY.md) · [User Guide](USER_GUIDE.md) · [Changelog](CHANGELOG.md) · [LLM Context](llms.txt)
+**Quick links:** [Features](#features) · [Architecture](#architecture--data-flow) · [Lifecycle Flow](#end-to-end-backup--wal-checkpoint-lifecycle) · [Visual Showcase](#visual-showcase--feature-gallery) · [Installation](#installation) · [CLI Usage](#headless-cli) · [Sync Modes](#synchronization-modes) · [Database Safety](#database-protection-v32) · [Web Companion](#webpwa-companion) · [Sibling Tools](#sibling-tools--file-bricks-ecosystem) · [Security Policy](SECURITY.md) · [Marketing Log](MARKETING-LOG.txt) · [User Guide](USER_GUIDE.md) · [Changelog](CHANGELOG.md) · [LLM Context](llms.txt)
 
 ---
 
@@ -311,12 +311,12 @@ ProSync is part of the modular **file-bricks** and **open-bricks** desktop ecosy
 
 ## Quality Checks
 
-Last verified on 2026-09-12: 104 Python tests and 29 Web/PWA tests passed (133 total tests).
+Last verified on 2026-09-16: 124 Python tests and 29 Web/PWA tests passed (153 total tests).
 
 ```bash
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py schedule_time.py logger.py run_tests.py
 python run_tests.py
-python -m pytest -q
+python -m pytest -ra -v
 ```
 
 Web companion verification:
