@@ -68,7 +68,7 @@ Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
 "Umbrella Ecosystem" = "https://github.com/open-bricks"
 "LLM Ready" = "https://github.com/file-bricks/ProSync/blob/master/llms.txt"
 "Marketing Log" = "https://github.com/file-bricks/ProSync/blob/master/MARKETING-LOG.txt"
-"Third-Party Licenses" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.txt"
+"Third-Party Licenses" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.md"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

@@ -5,6 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-09-18)
+- **Pfad B Marketing, Discoverability, Visual Architecture & 18-Punkte-Navigationsparität:**
+  - **18-Punkte Quick Navigation & Reziproke Anker:** Symmetrische Harmonisierung von `README.md` und `README_de.md` mit dualen HTML-Ankern (`<a id="..."></a>`) über alle 18 Standardabschnitte unter vollständiger Erhaltung historischer Legacy-Anker.
+  - **Zielgruppen-Personas & Discoverability:** Strukturierte Personas (`[PERSONA-01]` bis `[PERSONA-04]`) mit Kontext, Pain Points und Lösungsarchitektur sowie zweisprachigen High-Intent-Suchbegriffen.
+  - **10-Dimensionen Vergleichsmatrix:** Strukturierte Gegenüberstellung mit 4 Alternativen (FreeFileSync, Robocopy / Rsync, Syncthing, Commercial Cloud SaaS) abgebildet auf die Governance-Invarianten `INV-LOCAL-01` bis `INV-SLA-10`.
+  - **Duale Mermaid-Diagramme:** 5-schichtiges System-Architekturdiagramm (`flowchart TB`) und Sequenzdiagramm (`sequenceDiagram`) für den SQLite-WAL-Checkpoint- und Backup-Lebenszyklus mit strikter Fail-Closed-Verzweigung (`SQLITE_BUSY`).
+  - **Drittanbieter-Lizenzinventar & Non-Elevation (`THIRD_PARTY_LICENSES.md`):** Vollständiges Markdown-SBOM mit SPDX-Matrix, LGPL-3.0/2.1 dynamischer Verlinkungsisolation, Zero-Copyleft-Bestätigung und unprivilegierter `RunAsInvoker`-Zertifizierung.
+  - **Deutscher Rechtsbelehrungshinweis:** Aufnahme des Haftungsausschlusses gemäß § 521 BGB (Gefälligkeitsrecht) in `README_de.md`.
+  - **Vertragstests (`tests/test_metadata.py`):** Erweiterte Contract-Tests für Navigationsparität, Personas, Vergleichsmatrix, Mermaid-Syntax und Lizenzinventar.
+
 ### Geändert / Changed (2026-09-16)
 - **Pfad A Technische Hygiene, CI-Hardening & Contract-Test-Parität:**
   - **CI Workflow Hardening (`.github/workflows/`):** Concurrency-Gruppen mit `cancel-in-progress: true` und explizite `timeout-minutes` (15 Min für Tests und Smoke, 10 Min für Stale, 5 Min für Welcome) in `tests.yml`, `source-platform-smoke.yml`, `stale.yml` und `welcome.yml` eingezogen; Testausführung auf `python -m pytest -ra -v` standardisiert.

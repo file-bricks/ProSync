@@ -1,4 +1,4 @@
-﻿================================================================================
+================================================================================
 PROSYNC SUITE — MARKETING, DISCOVERY & GOVERNANCE LOG
 ================================================================================
 Stand: 2026-09-16
@@ -167,4 +167,43 @@ Prüfpunkte & Maßnahmen:
 6. Testabdeckung & Vertragssuiten:
    - `tests/test_metadata.py` um umfassende Guardrail-Tests für CI-Timeouts, Gitignore-Multi-Host-Schutz,
      PEP 621 URLs, Marketing-Log und PWA-SVG-Parität erweitert.
+================================================================================
+
+
+8. DISCOVERABILITY, VISUAL ARCHITECTURE & PFAD B AUDIT
+--------------------------------------------------------------------------------
+Audit-Datum: 2026-09-18
+Status: Passed (100% Green)
+Durchgeführt von: Antigravity (Gemini) / GitHubBot Pfad B Routine
+Repository: file-bricks/ProSync
+Branch: master
+
+Prüfpunkte & Maßnahmen:
+1. 18-Punkte Quick Navigation & Reziproke Anker-Parität:
+   - Vollständige Harmonisierung von README.md und README_de.md auf 18 standardisierte
+     Schnellnavigationspunkte mit dualen reziproken HTML-Ankern (<a id="..."></a>)
+     sowie Bewahrung aller historischen Legacy-Anker (#features, #architecture, etc.).
+2. Zielgruppen-Personas ([PERSONA-01] bis [PERSONA-04]):
+   - [PERSONA-01] Desktop Power Users & Windows Sysadmins (Tray-Betrieb, IANA-Scheduling).
+   - [PERSONA-02] SQLite & Database Application Developers (WAL Checkpoint Schutz, fail-closed).
+   - [PERSONA-03] Privacy & Compliance Officers / DSGVO & Enterprise Auditors (100% Local, Zero-Egress).
+   - [PERSONA-04] Automation Engineers & Multi-Agent Framework Architects (Headless CLI, PWA Export).
+3. 10-Dimensionen Vergleichsmatrix gegen 4 Alternativen:
+   - Gegenüberstellung mit FreeFileSync, Robocopy / Rsync, Syncthing und Commercial Cloud SaaS
+     über alle 10 Governance-Invarianten INV-LOCAL-01 bis INV-SLA-10.
+4. Duale gehärtete Mermaid-Diagramme:
+   - System Architecture Topology (flowchart TB) mit 5 klar partitionierten Schichten
+     (Input & Controls, Sync & Queue Dispatcher, WAL & Integrity Engine, Target Adapters, Offline PWA Companion).
+   - End-to-End Backup & WAL Checkpoint Lifecycle (sequenceDiagram) mit autonumber,
+     expliziter Checkpoint-Verifikation und SQLITE_BUSY Abbruchbehandlung.
+   - 0 Syntaxfehler im formalen Mermaid-Linter (lint_mermaid.py).
+5. Drittanbieter-Lizenzinventar & Non-Elevation Zertifizierung:
+   - Bereitstellung von THIRD_PARTY_LICENSES.md mit formaler SPDX-Matrix, LGPL-3.0/2.1
+     dynamischer Verlinkung, Zero-Copyleft-Garantie und unprivilegierter RunAsInvoker-Zertifizierung.
+6. Deutscher Rechtsbelehrungshinweis:
+   - Integration des Haftungsausschlusses gemäß § 521 BGB (Gefälligkeitsrecht) und
+     Ausschluss jeglicher Gewährleistung für unentgeltlich bereitgestellte Open-Source-Software in README_de.md.
+7. Vertragstest-Erweiterung (tests/test_metadata.py):
+   - Neue Contract-Tests für 18-Punkte-Navigationsparität, Personas, Vergleichsmatrix,
+     Duale Mermaid-Diagramme, Drittanbieter-Lizenzen und BGB-Rechtshinweis implementiert.
 ================================================================================

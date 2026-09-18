@@ -71,7 +71,7 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-09-16" in content, "llms.txt timestamp not updated to 2026-09-16"
+    assert "Last-checked: 2026-09-18" in content, "llms.txt timestamp not updated to 2026-09-18"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"
@@ -171,10 +171,10 @@ def test_marketing_log_recent_hygiene_entry() -> None:
     assert mktg_file.is_file(), "MARKETING-LOG.txt must exist"
     content = mktg_file.read_text(encoding="utf-8")
 
-    assert "Stand: 2026-09-16" in content, "Recent audit date missing in MARKETING-LOG.txt"
+    assert "2026-09-18" in content, "Recent audit date 2026-09-18 missing in MARKETING-LOG.txt"
     assert "PROSYNC SUITE" in content
     assert "INV-LOCAL-01" in content and "INV-SLA-10" in content, "Governance pillars missing in MARKETING-LOG.txt"
-    assert "Pfad A" in content or "PFAD A" in content, "Pfad A maintenance section missing in MARKETING-LOG.txt"
+    assert "Pfad B" in content or "PFAD B" in content, "Pfad B audit section missing in MARKETING-LOG.txt"
 
 
 def test_web_companion_pwa_svg_parity() -> None:
@@ -188,6 +188,99 @@ def test_web_companion_pwa_svg_parity() -> None:
     assert len(svg_icons) >= 1, "Missing ./icon.svg in manifest icons"
     assert svg_icons[0].get("type") == "image/svg+xml"
     assert (ROOT / "web_companion" / "icon.svg").is_file(), "web_companion/icon.svg file missing on disk"
+
+
+def test_quick_navigation_18_points_parity() -> None:
+    """Verify README.md and README_de.md have exactly 18 numbered sections with reciprocal anchors."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    for i in range(1, 19):
+        assert f"## {i}." in readme_en, f"Numbered section {i} missing in README.md"
+        assert f"## {i}." in readme_de, f"Numbered section {i} missing in README_de.md"
+
+    # Verify key anchors exist in both
+    key_anchors = [
+        "1-features", "features",
+        "2-architecture", "architecture",
+        "3-target-personas--discoverability", "target-personas",
+        "4-comparative-matrix-vs-alternatives", "comparative-matrix",
+        "5-dual-mermaid-diagrams", "dual-mermaid-diagrams",
+        "6-governance--runtime-invariants", "governance--runtime-invariants",
+        "7-synchronization-modes", "synchronization-modes",
+        "8-sqlite-wal-database-protection", "database-protection-v32",
+        "9-visual-showcase--feature-gallery", "visual-showcase",
+        "10-installation--dependencies", "installation",
+        "11-cli--headless-automation", "headless-cli",
+        "12-scheduled-backups--iana-timezones", "scheduled-backups",
+        "13-portable-webpwa-companion", "webpwa-companion",
+        "14-prosyncreader--profiler-search", "prosyncreader--profiler-companion",
+        "15-windows-store--msix-staging", "windows-build",
+        "16-testing--quality-checks", "quality-checks",
+        "17-third-party-licenses--transparency", "license",
+        "18-security-policy--sibling-ecosystem", "sibling-tools",
+    ]
+    for anchor in key_anchors:
+        assert f'id="{anchor}"' in readme_en, f'Anchor id="{anchor}" missing in README.md'
+        assert f'id="{anchor}"' in readme_de, f'Anchor id="{anchor}" missing in README_de.md'
+
+
+def test_target_personas_and_high_intent_queries() -> None:
+    """Verify target personas and high-intent discoverability terms in both READMEs."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    personas = ["[PERSONA-01]", "[PERSONA-02]", "[PERSONA-03]", "[PERSONA-04]"]
+    for p in personas:
+        assert p in readme_en, f"Persona {p} missing in README.md"
+        assert p in readme_de, f"Persona {p} missing in README_de.md"
+
+
+def test_comparative_matrix_vs_alternatives() -> None:
+    """Verify 10-dimension comparative matrix against 4 alternatives."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    for readme, lang in [(readme_en, "en"), (readme_de, "de")]:
+        assert "FreeFileSync" in readme, f"FreeFileSync missing in comparative matrix ({lang})"
+        assert "Robocopy" in readme, f"Robocopy missing in comparative matrix ({lang})"
+        assert "Syncthing" in readme, f"Syncthing missing in comparative matrix ({lang})"
+        assert "INV-LOCAL-01" in readme, f"INV-LOCAL-01 missing in comparative matrix ({lang})"
+        assert "INV-SLA-10" in readme, f"INV-SLA-10 missing in comparative matrix ({lang})"
+
+
+def test_dual_mermaid_diagrams() -> None:
+    """Verify dual Mermaid diagrams (flowchart and sequenceDiagram) are present in both READMEs."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+
+    for readme, lang in [(readme_en, "en"), (readme_de, "de")]:
+        assert "```mermaid" in readme, f"Mermaid block missing in {lang}"
+        assert "flowchart TB" in readme or "flowchart TD" in readme, f"Architecture flowchart missing in {lang}"
+        assert "sequenceDiagram" in readme, f"Sequence diagram missing in {lang}"
+        assert "wal_checkpoint" in readme, f"wal_checkpoint missing in Mermaid sequence ({lang})"
+        assert "SQLITE_BUSY" in readme, f"SQLITE_BUSY abort missing in Mermaid sequence ({lang})"
+
+
+def test_third_party_licenses_md_integrity() -> None:
+    """Verify THIRD_PARTY_LICENSES.md SBOM exists, documents SPDX identifiers, RunAsInvoker, and governance invariants."""
+    sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
+    assert sbom_file.is_file(), "THIRD_PARTY_LICENSES.md must exist"
+    content = sbom_file.read_text(encoding="utf-8")
+
+    assert "LGPL-3.0-only" in content, "PySide6 LGPL-3.0 SPDX missing in THIRD_PARTY_LICENSES.md"
+    assert "LGPL-2.1-or-later" in content, "Paramiko LGPL-2.1 SPDX missing in THIRD_PARTY_LICENSES.md"
+    assert "MIT License" in content or "MIT" in content, "MIT License missing in THIRD_PARTY_LICENSES.md"
+    assert "RunAsInvoker" in content, "RunAsInvoker non-elevation certification missing"
+    assert "Zero-Copyleft" in content, "Zero-Copyleft guarantee missing in THIRD_PARTY_LICENSES.md"
+    assert "INV-LOCAL-01" in content and "INV-SLA-10" in content, "Governance invariant table missing"
+
+
+def test_german_statutory_notice() -> None:
+    """Verify README_de.md includes German statutory disclaimer (§ 521 BGB Gefälligkeitsrecht)."""
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+    assert "521 BGB" in readme_de, "§ 521 BGB missing in README_de.md"
+    assert "Gefälligkeit" in readme_de, "Gefälligkeitsrecht missing in README_de.md"
 
 
 if __name__ == "__main__":
