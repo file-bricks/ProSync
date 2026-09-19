@@ -2,7 +2,7 @@
 
 # ProSync
 
-[English](README.md) · [Deutsch](README_de.md) · [User Guide](USER_GUIDE.md)
+[English](README.md) · [Deutsch](README_de.md) · [Español](README.es.md) · [User Guide](USER_GUIDE.md)
 
 > Intelligent local backup synchronization with automated SQLite WAL database protection.
 

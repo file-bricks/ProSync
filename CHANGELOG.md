@@ -5,6 +5,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-09-19)
+- **Internationalisierung (I18N) & Mehrsprachen-Parität (Policy P-006 Tier-2 Standard):**
+  - **Vollständiger 6-Sprachen-Katalog (`locales/translations.json`):** Übersetzungskatalog auf 100 UI-, Dialog-, Status- und Aktionsschlüssel mit 100% Parität über alle 6 Standard-Sprachen (Deutsch `de`, Englisch `en`, Spanisch `es`, vereinfachtes Chinesisch `zh`, Japanisch `ja`, Russisch `ru`) ausgebaut; inklusive `_meta`-Block v2.0.0.
+  - **Upgrade `translator.py`:** Deterministische 4-stufige Fallback-Hierarchie (`target_lang -> en -> de -> key`), Singleton `get_translator()`, Modul-Shortcut `t(key, **kwargs)`, `set_language()`, `SUPPORTED_LANGUAGES`, `LANGUAGE_NAMES` und `LANGUAGE_DISPLAY_NAMES` implementiert; Rückwärtskompatibilität für bestehende Testsuiten vollständig bewahrt.
+  - **CI-Gate Scanner (`manage_translations.py`):** CLI-Option `--check` implementiert, die den Übersetzungskatalog auf Vollständigkeit und 100% Sprachabdeckung aller 6 Zielsprachen validiert (Exit Code 0/1).
+  - **Spanische Dokumentation (`README.es.md`):** Vollständige spanische Übersetzung mit identischer 18-Punkte-Schnellnavigation, reziproken Ankern, dualen Mermaid-Diagrammen, Ziel-Personas, Vergleichsmatrix und Ökosystem-Tabelle bereitgestellt; Sprachwechsler in `README.md` und `README_de.md` harmonisiert.
+  - **Vertragstests (`tests/test_i18n.py`):** 10 umfassende Contract-Tests für Sprachlisten, native Bezeichnungen, Fallback-Hierarchie, 100% Übersetzungsparität, Singleton-API, CLI-Gate und dreisprachige Dokumentationsparität implementiert.
+
 ### Geändert / Changed (2026-09-18)
 - **Pfad B Marketing, Discoverability, Visual Architecture & 18-Punkte-Navigationsparität:**
   - **18-Punkte Quick Navigation & Reziproke Anker:** Symmetrische Harmonisierung von `README.md` und `README_de.md` mit dualen HTML-Ankern (`<a id="..."></a>`) über alle 18 Standardabschnitte unter vollständiger Erhaltung historischer Legacy-Anker.

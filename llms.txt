@@ -23,6 +23,7 @@ Core behavior:
 - Standardized 8-point platform smoke test suites for Linux and macOS (`tests/linux_platform_smoke.py`, `tests/macos_platform_smoke.py`).
 - Windows Store staged MSIX packaging with desktop AppxManifest, full tile asset sets, and automated readiness audit (`scripts/check_store_readiness.py`).
 - Optionally launches ProFiler companion for indexing and search across synchronized files.
+- Multilingual localization support compliant with Policy P-006 Tier-2 (DE, EN, ES, ZH, JA, RU) with deterministic 4-tier fallback and automated translation catalog verification (`manage_translations.py --check`).
 - Automated repository contract and metadata parity suite (`tests/test_metadata.py`).
 - Comprehensive marketing, discovery, and governance log (`MARKETING-LOG.txt`) with competitive matrix and 10 runtime invariant pillars.
 

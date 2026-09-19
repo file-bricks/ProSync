@@ -1,54 +1,814 @@
 {
+  "_meta": {
+    "version": "2.0.0",
+    "description": "ProSync Multi-Language Translation Catalog (Policy P-006 Tier-2)",
+    "languages": [
+      "de",
+      "en",
+      "es",
+      "zh",
+      "ja",
+      "ru"
+    ]
+  },
   "<b>🛡️ Datei-Sicherheit (V3.1)</b>": {
     "de": "<b>🛡️ Datei-Sicherheit (V3.1)</b>",
-    "en": "<b>🛡️ File Security (V3.1)</b>"
+    "en": "<b>🛡️ File Security (V3.1)</b>",
+    "es": "<b>🛡️ Seguridad de archivos (V3.1)</b>",
+    "zh": "<b>🛡️ 文件安全 (V3.1)</b>",
+    "ja": "<b>🛡️ ファイルセキュリティ (V3.1)</b>",
+    "ru": "<b>🛡️ Безопасность файлов (V3.1)</b>"
   },
   "<b>🛡️ Datenbank-Sicherheitsprüfung (V3)</b>": {
     "de": "<b>🛡️ Datenbank-Sicherheitsprüfung (V3)</b>",
-    "en": "<b>🛡️ Database Security Check (V3)</b>"
+    "en": "<b>🛡️ Database Security Check (V3)</b>",
+    "es": "<b>🛡️ Verificación de seguridad de base de datos (V3)</b>",
+    "zh": "<b>🛡️ 数据库安全检查 (V3)</b>",
+    "ja": "<b>🛡️ データベースセキュリティチェック (V3)</b>",
+    "ru": "<b>🛡️ Проверка безопасности базы данных (V3)</b>"
+  },
+  "<b>Vorschau</b>": {
+    "de": "<b>Vorschau</b>",
+    "en": "<b>Preview</b>",
+    "es": "<b>Vista previa</b>",
+    "zh": "<b>预览</b>",
+    "ja": "<b>プレビュー</b>",
+    "ru": "<b>Предпросмотр</b>"
   },
   "Datei synchronisieren": {
     "de": "Datei synchronisieren",
-    "en": "Synchronize File"
+    "en": "Synchronize File",
+    "es": "Sincronizar archivo",
+    "zh": "同步文件",
+    "ja": "ファイルを同期",
+    "ru": "Синхронизировать файл"
   },
   "Hinzufügen": {
     "de": "Hinzufügen",
-    "en": "Add"
+    "en": "Add",
+    "es": "Añadir",
+    "zh": "添加",
+    "ja": "追加",
+    "ru": "Добавить"
   },
   "Wähle eine Aufgabe...": {
     "de": "Wähle eine Aufgabe...",
-    "en": "Select a task..."
+    "en": "Select a task...",
+    "es": "Seleccione una tarea...",
+    "zh": "选择一项任务...",
+    "ja": "タスクを選択...",
+    "ru": "Выберите задачу..."
   },
   "[Bilddatei - Vorschau nicht implementiert]": {
     "de": "[Bilddatei - Vorschau nicht implementiert]",
-    "en": "[Image file - preview not implemented]"
+    "en": "[Image file - preview not implemented]",
+    "es": "[Archivo de imagen - vista previa no implementada]",
+    "zh": "[图像文件 - 预览未实现]",
+    "ja": "[画像ファイル - プレビューは実装されていません]",
+    "ru": "[Файл изображения - предпросмотр не реализован]"
   },
   "[Datei ist leer oder Inhalt nicht lesbar]": {
     "de": "[Datei ist leer oder Inhalt nicht lesbar]",
-    "en": "[File is empty or content not readable]"
+    "en": "[File is empty or content not readable]",
+    "es": "[El archivo está vacío o el contenido no es legible]",
+    "zh": "[文件为空或内容不可读]",
+    "ja": "[ファイルが空であるか、コンテンツを読み取れません]",
+    "ru": "[Файл пуст или содержимое не читается]"
   },
   "▶ Start Sync": {
     "de": "▶ Start Sync",
-    "en": "▶ Start Sync"
+    "en": "▶ Start Sync",
+    "es": "▶ Iniciar sincronización",
+    "zh": "▶ 开始同步",
+    "ja": "▶ 同期開始",
+    "ru": "▶ Начать синхронизацию"
   },
   "⚠ Bitte gültige Quelldatei angeben!": {
     "de": "⚠ Bitte gültige Quelldatei angeben!",
-    "en": "⚠ Please specify a valid source file!"
+    "en": "⚠ Please specify a valid source file!",
+    "es": "⚠ ¡Especifique un archivo de origen válido!",
+    "zh": "⚠ 请指定有效的源文件！",
+    "ja": "⚠ 有効なソースファイルを指定してください！",
+    "ru": "⚠ Пожалуйста, укажите действительный исходный файл!"
   },
   "⚠ Bitte gültiges Quellverzeichnis angeben!": {
     "de": "⚠ Bitte gültiges Quellverzeichnis angeben!",
-    "en": "⚠ Please specify a valid source directory!"
+    "en": "⚠ Please specify a valid source directory!",
+    "es": "⚠ ¡Especifique un directorio de origen válido!",
+    "zh": "⚠ 请指定有效的源目录！",
+    "ja": "⚠ Пожалуйста, укажите действительный исходный каталог!",
+    "ru": "⚠ Пожалуйста, укажите действительный исходный каталог!"
   },
-  "✓ Keine Datenbanken gefunden.\\nStandard-Einstellungen sind sicher.": {
-    "de": "✓ Keine Datenbanken gefunden.\\nStandard-Einstellungen sind sicher.",
-    "en": "✓ No databases found.\\nDefault settings are safe."
+  "✓ Keine Datenbanken gefunden.\nStandard-Einstellungen sind sicher.": {
+    "de": "✓ Keine Datenbanken gefunden.\nStandard-Einstellungen sind sicher.",
+    "en": "✓ No databases found.\nDefault settings are safe.",
+    "es": "✓ No se encontraron bases de datos.\nLa configuración predeterminada es segura.",
+    "zh": "✓ 未找到数据库。\n默认设置是安全的。",
+    "ja": "✓ データベースは見つかりませんでした。\nデフォルト設定は安全です。",
+    "ru": "✓ Базы данных не найдены.\nНастройки по умолчанию безопасны."
   },
   "🔍 Datei analysieren": {
     "de": "🔍 Datei analysieren",
-    "en": "🔍 Analyze File"
+    "en": "🔍 Analyze File",
+    "es": "🔍 Analizar archivo",
+    "zh": "🔍 分析文件",
+    "ja": "🔍 ファイルを解析",
+    "ru": "🔍 Анализировать файл"
   },
   "🛡️ Sicherheitsprüfung": {
     "de": "🛡️ Sicherheitsprüfung",
-    "en": "🛡️ Security Check"
+    "en": "🛡️ Security Check",
+    "es": "🛡️ Verificación de seguridad",
+    "zh": "🛡️ 安全检查",
+    "ja": "🛡️ セキュリティチェック",
+    "ru": "🛡️ Проверка безопасности"
+  },
+  "Abgebrochen.": {
+    "de": "Abgebrochen.",
+    "en": "Cancelled.",
+    "es": "Cancelado.",
+    "zh": "已取消。",
+    "ja": "キャンセルされました。",
+    "ru": "Отменено."
+  },
+  "Aufgabe löschen?": {
+    "de": "Aufgabe löschen?",
+    "en": "Delete task?",
+    "es": "¿Eliminar tarea?",
+    "zh": "删除任务？",
+    "ja": "タスクを削除しますか？",
+    "ru": "Удалить задачу?"
+  },
+  "Aufgaben: 0 | Auto-Sync: 0": {
+    "de": "Aufgaben: 0 | Auto-Sync: 0",
+    "en": "Tasks: 0 | Auto-Sync: 0",
+    "es": "Tareas: 0 | Auto-sincronización: 0",
+    "zh": "任务：0 | 自动同步：0",
+    "ja": "タスク: 0 | 自動同期: 0",
+    "ru": "Задачи: 0 | Авто-синхронизация: 0"
+  },
+  "Ausgewählte Indexdatenbank entfernen": {
+    "de": "Ausgewählte Indexdatenbank entfernen",
+    "en": "Remove selected index database",
+    "es": "Eliminar base de datos de índice seleccionada",
+    "zh": "移除选定的索引数据库",
+    "ja": "選択したインデックスデータベースを削除",
+    "ru": "Удалить выбранную индексную базу данных"
+  },
+  "Ausgewählte Synchronisationsaufgabe(n) starten (F5 / Strg+R)": {
+    "de": "Ausgewählte Synchronisationsaufgabe(n) starten (F5 / Strg+R)",
+    "en": "Start selected synchronization task(s) (F5 / Ctrl+R)",
+    "es": "Iniciar tarea(s) de sincronización seleccionada(s) (F5 / Ctrl+R)",
+    "zh": "启动选定的同步任务 (F5 / Ctrl+R)",
+    "ja": "選択した同期タスクを開始 (F5 / Ctrl+R)",
+    "ru": "Запустить выбранную задачу(и) синхронизации (F5 / Ctrl+R)"
+  },
+  "Autostart konnte nicht geändert werden (Rechte?).": {
+    "de": "Autostart konnte nicht geändert werden (Rechte?).",
+    "en": "Autostart could not be changed (permissions?).",
+    "es": "No se pudo cambiar el inicio automático (¿permisos?).",
+    "zh": "无法更改自启动设置（权限不足？）。",
+    "ja": "自動起動を変更できませんでした（権限？）。",
+    "ru": "Не удалось изменить автозапуск (права доступа?)."
+  },
+  "Batch abgebrochen.": {
+    "de": "Batch abgebrochen.",
+    "en": "Batch cancelled.",
+    "es": "Lote cancelado.",
+    "zh": "批处理已取消。",
+    "ja": "バッチ処理がキャンセルされました。",
+    "ru": "Пакет отменен."
+  },
+  "Bereit": {
+    "de": "Bereit",
+    "en": "Ready",
+    "es": "Listo",
+    "zh": "就绪",
+    "ja": "準備完了",
+    "ru": "Готово"
+  },
+  "Beschäftigt": {
+    "de": "Beschäftigt",
+    "en": "Busy",
+    "es": "Ocupado",
+    "zh": "忙碌",
+    "ja": "処理中",
+    "ru": "Занято"
+  },
+  "Breche ab...": {
+    "de": "Breche ab...",
+    "en": "Aborting...",
+    "es": "Cancelando...",
+    "zh": "正在中止...",
+    "ja": "中止中...",
+    "ru": "Прерывание..."
+  },
+  "Datei-Synchronisierung ist ideal für Datenbanken.\nWAL-Dateien werden automatisch übersprungen.": {
+    "de": "Datei-Synchronisierung ist ideal für Datenbanken.\nWAL-Dateien werden automatisch übersprungen.",
+    "en": "File sync is ideal for databases.\nWAL files are automatically skipped.",
+    "es": "La sincronización de archivos es ideal para bases de datos.\nLos archivos WAL se omiten automáticamente.",
+    "zh": "文件同步非常适合数据库。\nWAL 文件会自动跳过。",
+    "ja": "ファイル同期はデータベースに最適です。\nWALファイルは自動的にスキップされます。",
+    "ru": "Синхронизация файлов идеально подходит для баз данных.\nФайлы WAL пропускаются автоматически."
+  },
+  "Datenbanken verwalten": {
+    "de": "Datenbanken verwalten",
+    "en": "Manage Databases",
+    "es": "Administrar bases de datos",
+    "zh": "管理数据库",
+    "ja": "データベースの管理",
+    "ru": "Управление базами данных"
+  },
+  "Diese importierten Profile müssen vor dem ersten Sync lokal neu zugeordnet werden:\n\n": {
+    "de": "Diese importierten Profile müssen vor dem ersten Sync lokal neu zugeordnet werden:\n\n",
+    "en": "These imported profiles must be remapped locally before first sync:\n\n",
+    "es": "Estos perfiles importados deben reasignarse localmente antes de la primera sincronización:\n\n",
+    "zh": "在首次同步之前，必须在本地重新映射这些导入的配置文件：\n\n",
+    "ja": "これらのインポートされたプロファイルは、最初の同期の前にローカルで再マッピングする必要があります:\n\n",
+    "ru": "Эти импортированные профили необходимо переназначить локально перед первой синхронизацией:\n\n"
+  },
+  "Entfernen": {
+    "de": "Entfernen",
+    "en": "Remove",
+    "es": "Eliminar",
+    "zh": "移除",
+    "ja": "削除",
+    "ru": "Удалить"
+  },
+  "Erstellt eine DB für Suche und Versionierung.": {
+    "de": "Erstellt eine DB für Suche und Versionierung.",
+    "en": "Creates a DB for search and versioning.",
+    "es": "Crea una base de datos para búsqueda y control de versiones.",
+    "zh": "创建用于搜索和版本控制的数据库。",
+    "ja": "検索とバージョン管理用のDBを作成します。",
+    "ru": "Создает базу данных для поиска и версионирования."
+  },
+  "Es läuft bereits ein Synchronisationsvorgang.": {
+    "de": "Es läuft bereits ein Synchronisationsvorgang.",
+    "en": "A synchronization process is already running.",
+    "es": "Ya se está ejecutando un proceso de sincronización.",
+    "zh": "同步进程已在运行中。",
+    "ja": "同期プロセスがすでに実行中です。",
+    "ru": "Процесс синхронизации уже выполняется."
+  },
+  "Fehler": {
+    "de": "Fehler",
+    "en": "Error",
+    "es": "Error",
+    "zh": "错误",
+    "ja": "エラー",
+    "ru": "Ошибка"
+  },
+  "Fertig.": {
+    "de": "Fertig.",
+    "en": "Done.",
+    "es": "Completado.",
+    "zh": "完成。",
+    "ja": "完了。",
+    "ru": "Готово."
+  },
+  "Indexdatenbank hinzufügen": {
+    "de": "Indexdatenbank hinzufügen",
+    "en": "Add Index Database",
+    "es": "Añadir base de datos de índice",
+    "zh": "添加索引数据库",
+    "ja": "インデックスデータベースを追加",
+    "ru": "Добавить индексную базу данных"
+  },
+  "Intervall": {
+    "de": "Intervall",
+    "en": "Interval",
+    "es": "Intervalo",
+    "zh": "间隔",
+    "ja": "間隔",
+    "ru": "Интервал"
+  },
+  "Keine Auswahl": {
+    "de": "Keine Auswahl",
+    "en": "No selection",
+    "es": "Sin selección",
+    "zh": "未选择",
+    "ja": "選択なし",
+    "ru": "Ничего не выбрано"
+  },
+  "Keine Datenbanken in konfigurierten Quellen gefunden.": {
+    "de": "Keine Datenbanken in konfigurierten Quellen gefunden.",
+    "en": "No databases found in configured sources.",
+    "es": "No se encontraron bases de datos en las fuentes configuradas.",
+    "zh": "在配置的源中未找到数据库。",
+    "ja": "構成されたソースにデータベースが見つかりませんでした。",
+    "ru": "Базы данных в настроенных источниках не найдены."
+  },
+  "Keine Verbindungen konfiguriert.": {
+    "de": "Keine Verbindungen konfiguriert.",
+    "en": "No connections configured.",
+    "es": "No hay conexiones configuradas.",
+    "zh": "未配置任何连接。",
+    "ja": "接続が設定されていません。",
+    "ru": "Соединения не настроены."
+  },
+  "Lade Vorschau...": {
+    "de": "Lade Vorschau...",
+    "en": "Loading preview...",
+    "es": "Cargando vista previa...",
+    "zh": "正在加载预览...",
+    "ja": "プレビューを読み込み中...",
+    "ru": "Загрузка предпросмотра..."
+  },
+  "Laufende Synchronisation abbrechen": {
+    "de": "Laufende Synchronisation abbrechen",
+    "en": "Cancel running synchronization",
+    "es": "Cancelar sincronización en curso",
+    "zh": "取消正在运行的同步",
+    "ja": "実行中の同期をキャンセル",
+    "ru": "Отменить текущую синхронизацию"
+  },
+  "Laufende Synchronisation pausieren oder fortsetzen": {
+    "de": "Laufende Synchronisation pausieren oder fortsetzen",
+    "en": "Pause or resume running synchronization",
+    "es": "Pausar o reanudar sincronización en curso",
+    "zh": "暂停或继续正在运行的同步",
+    "ja": "実行中の同期を一時停止または再開",
+    "ru": "Приостановить или возобновить синхронизацию"
+  },
+  "Löschen": {
+    "de": "Löschen",
+    "en": "Delete",
+    "es": "Eliminar",
+    "zh": "删除",
+    "ja": "削除",
+    "ru": "Удалить"
+  },
+  "Neue Synchronisations-Aufgabe hinzufügen (Strg+N)": {
+    "de": "Neue Synchronisations-Aufgabe hinzufügen (Strg+N)",
+    "en": "Add new synchronization task (Ctrl+N)",
+    "es": "Añadir nueva tarea de sincronización (Ctrl+N)",
+    "zh": "添加新的同步任务 (Ctrl+N)",
+    "ja": "新しい同期タスクを追加 (Ctrl+N)",
+    "ru": "Добавить новую задачу синхронизации (Ctrl+N)"
+  },
+  "Nicht gefunden": {
+    "de": "Nicht gefunden",
+    "en": "Not found",
+    "es": "No encontrado",
+    "zh": "未找到",
+    "ja": "見つかりません",
+    "ru": "Не найдено"
+  },
+  "Ordner öffnen": {
+    "de": "Ordner öffnen",
+    "en": "Open Folder",
+    "es": "Abrir carpeta",
+    "zh": "打开文件夹",
+    "ja": "フォルダーを開く",
+    "ru": "Открыть папку"
+  },
+  "Pfadzuordnung erforderlich": {
+    "de": "Pfadzuordnung erforderlich",
+    "en": "Path mapping required",
+    "es": "Asignación de ruta requerida",
+    "zh": "需要路径映射",
+    "ja": "パスのマッピングが必要です",
+    "ru": "Требуется сопоставление путей"
+  },
+  "ProFiler Search": {
+    "de": "ProFiler Search",
+    "en": "ProFiler Search",
+    "es": "Búsqueda ProFiler",
+    "zh": "ProFiler 搜索",
+    "ja": "ProFiler 検索",
+    "ru": "Поиск ProFiler"
+  },
+  "ProFiler gestartet": {
+    "de": "ProFiler gestartet",
+    "en": "ProFiler launched",
+    "es": "ProFiler iniciado",
+    "zh": "ProFiler 已启动",
+    "ja": "ProFiler が起動しました",
+    "ru": "ProFiler запущен"
+  },
+  "ProFiler konnte nicht automatisch gefunden werden.\n\n": {
+    "de": "ProFiler konnte nicht automatisch gefunden werden.\n\n",
+    "en": "ProFiler could not be found automatically.\n\n",
+    "es": "No se pudo encontrar ProFiler automáticamente.\n\n",
+    "zh": "无法自动找到 ProFiler。\n\n",
+    "ja": "ProFiler を自動的に見つけることができませんでした。\n\n",
+    "ru": "ProFiler не удалось найти автоматически.\n\n"
+  },
+  "ProFiler nicht gefunden": {
+    "de": "ProFiler nicht gefunden",
+    "en": "ProFiler not found",
+    "es": "ProFiler no encontrado",
+    "zh": "未找到 ProFiler",
+    "ja": "ProFiler が見つかりません",
+    "ru": "ProFiler не найден"
+  },
+  "ProFiler wurde als optionale Companion-App gestartet.\n\n": {
+    "de": "ProFiler wurde als optionale Companion-App gestartet.\n\n",
+    "en": "ProFiler was started as an optional companion app.\n\n",
+    "es": "ProFiler se inició como una aplicación complementaria opcional.\n\n",
+    "zh": "ProFiler 已作为可选配套应用启动。\n\n",
+    "ja": "ProFiler はオプションのコンパニオンアプリとして起動されました。\n\n",
+    "ru": "ProFiler был запущен как дополнительное вспомогательное приложение.\n\n"
+  },
+  "ProFiler-Search für Indexdatenbanken öffnen (Strg+F)": {
+    "de": "ProFiler-Search für Indexdatenbanken öffnen (Strg+F)",
+    "en": "Open ProFiler search for index databases (Ctrl+F)",
+    "es": "Abrir búsqueda ProFiler para bases de datos de índice (Ctrl+F)",
+    "zh": "打开索引数据库的 ProFiler 搜索 (Ctrl+F)",
+    "ja": "インデックスデータベースの ProFiler 検索を開く (Ctrl+F)",
+    "ru": "Открыть поиск ProFiler для индексных баз данных (Ctrl+F)"
+  },
+  "ProSync V3.2 - Läuft im Hintergrund": {
+    "de": "ProSync V3.2 - Läuft im Hintergrund",
+    "en": "ProSync V3.2 - Running in background",
+    "es": "ProSync V3.2 - Ejecutándose en segundo plano",
+    "zh": "ProSync V3.2 - 后台运行中",
+    "ja": "ProSync V3.2 - バックグラウンドで実行中",
+    "ru": "ProSync V3.2 - Работает в фоновом режиме"
+  },
+  "ProSync V3.2 - Sync & Index mit DB-Sicherheit": {
+    "de": "ProSync V3.2 - Sync & Index mit DB-Sicherheit",
+    "en": "ProSync V3.2 - Sync & Index with DB Safety",
+    "es": "ProSync V3.2 - Sincronización e índice con seguridad de base de datos",
+    "zh": "ProSync V3.2 - 带数据库安全保障的同步与索引",
+    "ja": "ProSync V3.2 - DB安全性を備えた同期とインデックス",
+    "ru": "ProSync V3.2 - Синхронизация и индексация с защитой БД"
+  },
+  "ProSync-Profil exportieren oder importieren": {
+    "de": "ProSync-Profil exportieren oder importieren",
+    "en": "Export or import ProSync profile",
+    "es": "Exportar o importar perfil de ProSync",
+    "zh": "导出或导入 ProSync 配置文件",
+    "ja": "ProSyncプロファイルをエクスポートまたはインポート",
+    "ru": "Экспорт или импорт профиля ProSync"
+  },
+  "ProSyncReader wurde nicht gefunden.": {
+    "de": "ProSyncReader wurde nicht gefunden.",
+    "en": "ProSyncReader was not found.",
+    "es": "No se encontró ProSyncReader.",
+    "zh": "未找到 ProSyncReader。",
+    "ja": "ProSyncReader が見つかりませんでした。",
+    "ru": "ProSyncReader не найден."
+  },
+  "Prüfe alle Verbindungen auf Datenbank-Sicherheit (Strg+Shift+A)": {
+    "de": "Prüfe alle Verbindungen auf Datenbank-Sicherheit (Strg+Shift+A)",
+    "en": "Audit all connections for database safety (Ctrl+Shift+A)",
+    "es": "Auditar todas las conexiones para la seguridad de la base de datos (Ctrl+Shift+A)",
+    "zh": "审计所有连接的数据库安全性 (Ctrl+Shift+A)",
+    "ja": "データベースの安全性についてすべての接続を監査 (Ctrl+Shift+A)",
+    "ru": "Проверить безопасность баз данных для всех соединений (Ctrl+Shift+A)"
+  },
+  "SFTP/SSH-Ziel synchronisieren": {
+    "de": "SFTP/SSH-Ziel synchronisieren",
+    "en": "Synchronize SFTP/SSH Target",
+    "es": "Sincronizar destino SFTP/SSH",
+    "zh": "同步 SFTP/SSH 目标",
+    "ja": "SFTP/SSHターゲットを同期",
+    "ru": "Синхронизировать цель SFTP/SSH"
+  },
+  "Sicherheitsprüfung": {
+    "de": "Sicherheitsprüfung",
+    "en": "Security Check",
+    "es": "Verificación de seguridad",
+    "zh": "安全检查",
+    "ja": "セキュリティチェック",
+    "ru": "Проверка безопасности"
+  },
+  "Startet ProFiler als Companion-App": {
+    "de": "Startet ProFiler als Companion-App",
+    "en": "Launches ProFiler as companion app",
+    "es": "Inicia ProFiler como aplicación complementaria",
+    "zh": "启动 ProFiler 作为配套应用",
+    "ja": "コンパニオンアプリとしてProFilerを起動",
+    "ru": "Запускает ProFiler как сопутствующее приложение"
+  },
+  "Suchbegriff eingeben (z. B. Dateiname oder Tag)": {
+    "de": "Suchbegriff eingeben (z. B. Dateiname oder Tag)",
+    "en": "Enter search term (e.g. filename or tag)",
+    "es": "Introduzca término de búsqueda (ej. nombre de archivo o etiqueta)",
+    "zh": "输入搜索词（例如文件名或标签）",
+    "ja": "検索語を入力（例：ファイル名またはタグ）",
+    "ru": "Введите поисковый запрос (например, имя файла или тег)"
+  },
+  "Suchbegriff eingeben...": {
+    "de": "Suchbegriff eingeben...",
+    "en": "Enter search term...",
+    "es": "Introduzca término de búsqueda...",
+    "zh": "输入搜索词...",
+    "ja": "検索語を入力...",
+    "ru": "Введите поисковый запрос..."
+  },
+  "Suchdatenbanken verwalten": {
+    "de": "Suchdatenbanken verwalten",
+    "en": "Manage Search Databases",
+    "es": "Administrar bases de datos de búsqueda",
+    "zh": "管理搜索数据库",
+    "ja": "検索データベースの管理",
+    "ru": "Управление базами данных поиска"
+  },
+  "Synchronisierung einrichten": {
+    "de": "Synchronisierung einrichten",
+    "en": "Set Up Synchronization",
+    "es": "Configurar sincronización",
+    "zh": "设置同步",
+    "ja": "同期を設定",
+    "ru": "Настроить синхронизацию"
+  },
+  "Tägliche Uhrzeit festlegen…": {
+    "de": "Tägliche Uhrzeit festlegen…",
+    "en": "Set daily time…",
+    "es": "Establecer hora diaria…",
+    "zh": "设置每日时间…",
+    "ja": "毎日の時間を設定…",
+    "ru": "Установить ежедневное время…"
+  },
+  "Verbundene Datenbanken:": {
+    "de": "Verbundene Datenbanken:",
+    "en": "Connected databases:",
+    "es": "Bases de datos conectadas:",
+    "zh": "已连接的数据库：",
+    "ja": "接続されたデータベース:",
+    "ru": "Подключенные базы данных:"
+  },
+  "z.B. *.tmp; __pycache__; *.db-wal": {
+    "de": "z.B. *.tmp; __pycache__; *.db-wal",
+    "en": "e.g. *.tmp; __pycache__; *.db-wal",
+    "es": "ej. *.tmp; __pycache__; *.db-wal",
+    "zh": "例如 *.tmp; __pycache__; *.db-wal",
+    "ja": "例: *.tmp; __pycache__; *.db-wal",
+    "ru": "напр. *.tmp; __pycache__; *.db-wal"
+  },
+  "Öffnen": {
+    "de": "Öffnen",
+    "en": "Open",
+    "es": "Abrir",
+    "zh": "打开",
+    "ja": "開く",
+    "ru": "Открыть"
+  },
+  "Öffnet das Menü zum Erstellen einer Ordner-, Datei- oder SFTP-Synchronisation.": {
+    "de": "Öffnet das Menü zum Erstellen einer Ordner-, Datei- oder SFTP-Synchronisation.",
+    "en": "Opens the menu for creating folder, file, or SFTP synchronization.",
+    "es": "Abre el menú para crear sincronización de carpetas, archivos o SFTP.",
+    "zh": "打开用于创建文件夹、文件或 SFTP 同步的菜单。",
+    "ja": "フォルダー、ファイル、またはSFTP同期を作成するためのメニューを開きます。",
+    "ru": "Открывает меню для создания синхронизации папок, файлов или SFTP."
+  },
+  "⇄ Profil austauschen": {
+    "de": "⇄ Profil austauschen",
+    "en": "⇄ Exchange Profile",
+    "es": "⇄ Intercambiar perfil",
+    "zh": "⇄ 交换配置文件",
+    "ja": "⇄ プロファイルを交換",
+    "ru": "⇄ Обмен профилями"
+  },
+  "⏸ Pause": {
+    "de": "⏸ Pause",
+    "en": "⏸ Pause",
+    "es": "⏸ Pausa",
+    "zh": "⏸ 暂停",
+    "ja": "⏸ 一時停止",
+    "ru": "⏸ Пауза"
+  },
+  "⏹ Stop": {
+    "de": "⏹ Stop",
+    "en": "⏹ Stop",
+    "es": "⏹ Detener",
+    "zh": "⏹ 停止",
+    "ja": "⏹ 停止",
+    "ru": "⏹ Стоп"
+  },
+  "▶ Batch starten": {
+    "de": "▶ Batch starten",
+    "en": "▶ Start Batch",
+    "es": "▶ Iniciar lote",
+    "zh": "▶ 开始批处理",
+    "ja": "▶ バッチ開始",
+    "ru": "▶ Запустить пакет"
+  },
+  "▶ Fortsetzen": {
+    "de": "▶ Fortsetzen",
+    "en": "▶ Resume",
+    "es": "▶ Reanudar",
+    "zh": "▶ 继续",
+    "ja": "▶ 再開",
+    "ru": "▶ Возобновить"
+  },
+  "➕ Neue Aufgabe": {
+    "de": "➕ Neue Aufgabe",
+    "en": "➕ New Task",
+    "es": "➕ Nueva tarea",
+    "zh": "➕ 新任务",
+    "ja": "➕ 新規タスク",
+    "ru": "➕ Новая задача"
+  },
+  "📚 ProFiler öffnen": {
+    "de": "📚 ProFiler öffnen",
+    "en": "📚 Open ProFiler",
+    "es": "📚 Abrir ProFiler",
+    "zh": "📚 打开 ProFiler",
+    "ja": "📚 ProFiler を開く",
+    "ru": "📚 Открыть ProFiler"
+  },
+  "📥 Profil importieren": {
+    "de": "📥 Profil importieren",
+    "en": "📥 Import Profile",
+    "es": "📥 Importar perfil",
+    "zh": "📥 导入配置文件",
+    "ja": "📥 プロファイルをインポート",
+    "ru": "📥 Импортировать профиль"
+  },
+  "📤 Profil exportieren": {
+    "de": "📤 Profil exportieren",
+    "en": "📤 Export Profile",
+    "es": "📤 Exportar perfil",
+    "zh": "📤 导出配置文件",
+    "ja": "📤 プロファイルをエクスポート",
+    "ru": "📤 Экспортировать профиль"
+  },
+  "🔍 Datenbank durchsuchen": {
+    "de": "🔍 Datenbank durchsuchen",
+    "en": "🔍 Search Database",
+    "es": "🔍 Buscar en base de datos",
+    "zh": "🔍 搜索数据库",
+    "ja": "🔍 データベースを検索",
+    "ru": "🔍 Поиск в базе данных"
+  },
+  "🔍 Quelle auf Datenbanken scannen": {
+    "de": "🔍 Quelle auf Datenbanken scannen",
+    "en": "🔍 Scan Source for Databases",
+    "es": "🔍 Escanear origen en busca de bases de datos",
+    "zh": "🔍 扫描源中的数据库",
+    "ja": "🔍 ソース内のデータベースをスキャン",
+    "ru": "🔍 Сканировать источник на наличие баз данных"
+  },
+  "🔍 Scanne Verzeichnis...": {
+    "de": "🔍 Scanne Verzeichnis...",
+    "en": "🔍 Scanning directory...",
+    "es": "🔍 Escaneando directorio...",
+    "zh": "🔍 正在扫描目录...",
+    "ja": "🔍 ディレクトリをスキャン中...",
+    "ru": "🔍 Сканирование каталога..."
+  },
+  "📁 Ordner synchronisieren": {
+    "de": "📁 Ordner synchronisieren",
+    "en": "📁 Synchronize Folder",
+    "es": "📁 Sincronizar carpeta",
+    "zh": "📁 同步文件夹",
+    "ja": "📁 フォルダーを同期",
+    "ru": "📁 Синхронизировать папку"
+  },
+  "📄 Datei synchronisieren": {
+    "de": "📄 Datei synchronisieren",
+    "en": "📄 Synchronize File",
+    "es": "📄 Sincronizar archivo",
+    "zh": "📄 同步文件",
+    "ja": "📄 ファイルを同期",
+    "ru": "📄 Синхронизировать файл"
+  },
+  "🌐 SFTP/SSH-Ziel synchronisieren": {
+    "de": "🌐 SFTP/SSH-Ziel synchronisieren",
+    "en": "🌐 Synchronize SFTP/SSH Target",
+    "es": "🌐 Sincronizar destino SFTP/SSH",
+    "zh": "🌐 同步 SFTP/SSH 目标",
+    "ja": "🌐 SFTP/SSHターゲットを同期",
+    "ru": "🌐 Синхронизировать цель SFTP/SSH"
+  },
+  "Mit Windows starten": {
+    "de": "Mit Windows starten",
+    "en": "Start with Windows",
+    "es": "Iniciar con Windows",
+    "zh": "随 Windows 启动",
+    "ja": "Windows起動時に実行",
+    "ru": "Запускать вместе с Windows"
+  },
+  "Beenden": {
+    "de": "Beenden",
+    "en": "Exit",
+    "es": "Salir",
+    "zh": "退出",
+    "ja": "終了",
+    "ru": "Выход"
+  },
+  "Einstellungen": {
+    "de": "Einstellungen",
+    "en": "Settings",
+    "es": "Configuración",
+    "zh": "设置",
+    "ja": "設定",
+    "ru": "Настройки"
+  },
+  "Sprache": {
+    "de": "Sprache",
+    "en": "Language",
+    "es": "Idioma",
+    "zh": "语言",
+    "ja": "言語",
+    "ru": "Язык"
+  },
+  "Sprache ändern": {
+    "de": "Sprache ändern",
+    "en": "Change Language",
+    "es": "Cambiar idioma",
+    "zh": "更改语言",
+    "ja": "言語を変更",
+    "ru": "Изменить язык"
+  },
+  "Synchronisation": {
+    "de": "Synchronisation",
+    "en": "Synchronization",
+    "es": "Sincronización",
+    "zh": "同步",
+    "ja": "同期",
+    "ru": "Синхронизация"
+  },
+  "Datei oeffnen": {
+    "de": "Datei oeffnen",
+    "en": "Open File",
+    "es": "Abrir archivo",
+    "zh": "打开文件",
+    "ja": "ファイルを開く",
+    "ru": "Открыть файл"
+  },
+  "Datei öffnen": {
+    "de": "Datei öffnen",
+    "en": "Open File",
+    "es": "Abrir archivo",
+    "zh": "打开文件",
+    "ja": "ファイルを開く",
+    "ru": "Открыть файл"
+  },
+  "Datei": {
+    "de": "Datei",
+    "en": "File",
+    "es": "Archivo",
+    "zh": "文件",
+    "ja": "ファイル",
+    "ru": "Файл"
+  },
+  "Ordner": {
+    "de": "Ordner",
+    "en": "Folder",
+    "es": "Carpeta",
+    "zh": "文件夹",
+    "ja": "フォルダー",
+    "ru": "Папка"
+  },
+  "Hilfe": {
+    "de": "Hilfe",
+    "en": "Help",
+    "es": "Ayuda",
+    "zh": "帮助",
+    "ja": "ヘルプ",
+    "ru": "Помощь"
+  },
+  "Über ProSync": {
+    "de": "Über ProSync",
+    "en": "About ProSync",
+    "es": "Acerca de ProSync",
+    "zh": "关于 ProSync",
+    "ja": "ProSync について",
+    "ru": "О программе ProSync"
+  },
+  "Erfolg": {
+    "de": "Erfolg",
+    "en": "Success",
+    "es": "Éxito",
+    "zh": "成功",
+    "ja": "成功",
+    "ru": "Успех"
+  },
+  "Warnung": {
+    "de": "Warnung",
+    "en": "Warning",
+    "es": "Advertencia",
+    "zh": "警告",
+    "ja": "警告",
+    "ru": "Предупреждение"
+  },
+  "Abbrechen": {
+    "de": "Abbrechen",
+    "en": "Cancel",
+    "es": "Cancelar",
+    "zh": "取消",
+    "ja": "キャンセル",
+    "ru": "Отмена"
+  },
+  "Speichern": {
+    "de": "Speichern",
+    "en": "Save",
+    "es": "Guardar",
+    "zh": "保存",
+    "ja": "保存",
+    "ru": "Сохранить"
+  },
+  "Schließen": {
+    "de": "Schließen",
+    "en": "Close",
+    "es": "Cerrar",
+    "zh": "关闭",
+    "ja": "閉じる",
+    "ru": "Закрыть"
   }
 }
