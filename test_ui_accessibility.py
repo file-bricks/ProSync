@@ -110,3 +110,20 @@ def test_main_window_controls_and_indicators_expose_accessible_context(tmp_path)
     window.close()
     app.processEvents()
 
+
+def test_file_connection_dialog_safety_info_case_insensitive(tmp_path):
+    app = QApplication.instance() or QApplication([])
+    prosync = load_prosync_module()
+
+    db_file = tmp_path / "orders.MDB"
+    db_file.write_bytes(b"orders")
+
+    dialog = prosync.FileConnectionDialog()
+    dialog.source_file.setText(str(db_file))
+    dialog.analyze_file()
+
+    assert "MS Access" in dialog.safety_info.toPlainText()
+    assert dialog.mode.currentText() == "one_way"
+    dialog.close()
+    app.processEvents()
+

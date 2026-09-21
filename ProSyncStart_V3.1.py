@@ -279,6 +279,11 @@ class DatabaseSafetyManager:
         ".ldb", ".laccdb"
     }
 
+    # MS Access database files
+    ACCESS_DB_EXTENSIONS = {
+        ".mdb", ".accdb"
+    }
+
     @classmethod
     def is_database_file(cls, filepath: str) -> bool:
         """
@@ -292,6 +297,20 @@ class DatabaseSafetyManager:
         """
         ext = Path(filepath).suffix.lower()
         return ext in cls.DB_EXTENSIONS
+
+    @classmethod
+    def is_access_database(cls, filepath: str) -> bool:
+        """
+        Prüft ob eine Datei eine MS Access Datenbank ist (.mdb, .accdb).
+
+        Args:
+            filepath: Pfad zur zu prüfenden Datei
+
+        Returns:
+            True wenn die Datei eine MS Access Datenbank ist
+        """
+        ext = Path(filepath).suffix.lower()
+        return ext in cls.ACCESS_DB_EXTENSIONS
 
     @classmethod
     def is_access_lock_file(cls, filepath: str) -> bool:
@@ -417,7 +436,7 @@ class DatabaseSafetyManager:
             db_info["is_critical"] = db_info["wal_mode"] or db_info["has_wal_files"]
 
         # Analyze MS Access databases
-        elif filepath.endswith(('.mdb', '.accdb')):
+        elif cls.is_access_database(filepath):
             db_info["type"] = "ms_access"
 
         # Get file size
@@ -583,7 +602,7 @@ class DatabaseSafetyManager:
                         warnings.append("✓ WAL-Checkpoint vor Sync aktiviert")
                         was_changed = True
 
-            elif source_file.endswith(('.mdb', '.accdb')):
+            elif cls.is_access_database(source_file):
                 db_info["type"] = "ms_access"
 
             # Get size
@@ -2864,7 +2883,7 @@ class FileConnectionDialog(QDialog):
                     info_lines.append(f"Typ: {db_type} (Journal-Modus ✓)")
                     info_lines.append("\n✓ Sicher für Sync")
 
-            elif source_file.endswith(('.mdb', '.accdb')):
+            elif DatabaseSafetyManager.is_access_database(source_file):
                 db_type = "MS Access"
                 info_lines.append(f"Typ: {db_type}")
                 info_lines.append("\n💡 Empfehlung: one_way Modus")

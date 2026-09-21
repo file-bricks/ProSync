@@ -336,5 +336,67 @@ def test_scheduler_clamps_huge_interval_to_qtimer_safe_maximum():
     scheduler.stop_all()
 
 
+@pytest.mark.parametrize("filename", ["company.MDB", "archive.ACCDB", "test.mDb", "data.AcCdB"])
+def test_access_database_case_insensitivity_analysis(tmp_path, filename):
+    prosync = load_prosync_module()
+    db_file = tmp_path / filename
+    db_file.write_bytes(b"test access content")
+
+    dsm = prosync.DatabaseSafetyManager
+    assert dsm.is_database_file(str(db_file)) is True
+    assert dsm.is_access_database(str(db_file)) is True
+
+    analysis = dsm._analyze_database_file(str(db_file), str(tmp_path))
+    assert analysis["type"] == "ms_access"
+
+
+def test_access_database_folder_safe_settings_case_insensitive(tmp_path):
+    prosync = load_prosync_module()
+    (tmp_path / "customers.MDB").write_bytes(b"customers")
+    (tmp_path / "orders.AcCdB").write_bytes(b"orders")
+
+    dsm = prosync.DatabaseSafetyManager
+    scanned = dsm.scan_directory_for_databases(str(tmp_path))
+    assert len(scanned) == 2
+    assert all(db["type"] == "ms_access" for db in scanned)
+
+    conn_config = {
+        "id": "access-folder-test",
+        "name": "Access Folder",
+        "type": "folder",
+        "source": str(tmp_path),
+        "target": str(tmp_path / "backup"),
+        "mode": "two_way",
+    }
+    modified, warnings, excluded, changed = dsm.apply_safe_settings_folder(conn_config, scanned)
+    assert changed is True
+    assert "*.ldb" in modified.get("exclude_patterns", [])
+    assert "*.laccdb" in modified.get("exclude_patterns", [])
+    assert any("MS Access Lock-Dateien" in w for w in warnings)
+
+
+@pytest.mark.parametrize("filename", ["finance.MDB", "records.ACCDB"])
+def test_access_database_file_safe_settings_case_insensitive(tmp_path, filename):
+    prosync = load_prosync_module()
+    db_file = tmp_path / filename
+    db_file.write_bytes(b"finance data")
+
+    dsm = prosync.DatabaseSafetyManager
+    conn_config = {
+        "id": "access-file-test",
+        "name": "Access File",
+        "type": "file",
+        "source_file": str(db_file),
+        "target_file": str(tmp_path / f"backup_{filename}"),
+        "mode": "two_way",
+        "autosync": {"enabled": True, "interval_minutes": 30},
+    }
+    modified, warnings, changed = dsm.apply_safe_settings_file(conn_config)
+    assert changed is True
+    assert modified["mode"] == "one_way"
+    assert modified["autosync"]["enabled"] is False
+    assert any("one_way" in w for w in warnings)
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
