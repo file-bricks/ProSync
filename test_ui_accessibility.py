@@ -127,3 +127,143 @@ def test_file_connection_dialog_safety_info_case_insensitive(tmp_path):
     dialog.close()
     app.processEvents()
 
+
+def test_connection_dialog_form_inputs_expose_accessible_context():
+    app = QApplication.instance() or QApplication([])
+    prosync = load_prosync_module()
+    dialog = prosync.ConnectionDialog()
+
+    assert dialog.name.accessibleName() == "Name der Aufgabe"
+    assert dialog.name.placeholderText() != ""
+    assert dialog.source.accessibleName() == "Quellordner"
+    assert dialog.target.accessibleName() == "Zielordner"
+    assert dialog.mode.accessibleName() == "Synchronisationsmodus"
+    assert dialog.conflict.accessibleName() == "Konfliktbehandlung"
+    assert dialog.chk_indexing.accessibleName() == "Datenbank-Indexierung & Historie aktivieren"
+    assert dialog.chk_tags.accessibleName() == "Auto-Tags aus Ordnernamen generieren"
+    assert dialog.db_path.accessibleName() == "Datenbank-Dateipfad"
+    assert dialog.safety_info.accessibleName() == "Datenbank-Sicherheitsbericht"
+
+    dialog.close()
+    app.processEvents()
+
+
+def test_file_connection_dialog_form_inputs_expose_accessible_context():
+    app = QApplication.instance() or QApplication([])
+    prosync = load_prosync_module()
+    dialog = prosync.FileConnectionDialog()
+
+    assert dialog.name.accessibleName() == "Name der Aufgabe"
+    assert dialog.name.placeholderText() != ""
+    assert dialog.source_file.accessibleName() == "Quelldatei"
+    assert dialog.target_file.accessibleName() == "Zieldatei"
+    assert dialog.mode.accessibleName() == "Synchronisationsmodus"
+    assert dialog.chk_checkpoint.accessibleName() == "WAL-Checkpoint vor Sync (für SQLite)"
+    assert dialog.safety_info.accessibleName() == "Datei-Sicherheitsbericht"
+
+    dialog.close()
+    app.processEvents()
+
+
+def test_sftp_target_dialog_accessible_context():
+    app = QApplication.instance() or QApplication([])
+    prosync = load_prosync_module()
+    dialog = prosync.SftpTargetDialog()
+
+    assert dialog.name.accessibleName() == "Name der Aufgabe"
+    assert dialog.source.accessibleName() == "Lokaler Quellordner"
+    assert dialog.remote_host.accessibleName() == "SFTP-Host"
+    assert dialog.remote_port.accessibleName() == "SFTP-Port"
+    assert dialog.remote_username.accessibleName() == "SFTP-Benutzername"
+    assert dialog.remote_key_file.accessibleName() == "SSH-Schlüsseldatei"
+    assert dialog.target.accessibleName() == "Remote-Zielpfad"
+    assert dialog.mode.accessibleName() == "Synchronisationsmodus"
+    assert dialog.exclude_patterns.accessibleName() == "Dateiausschluss-Muster"
+    assert dialog.allow_unknown_host_key.accessibleName() == "Unbekannten Host-Key beim ersten Verbinden automatisch vertrauen"
+
+    dialog.close()
+    app.processEvents()
+
+
+def test_connection_list_widget_keyboard_navigation_and_shortcuts(tmp_path):
+    from PySide6.QtCore import Qt, QEvent
+    from PySide6.QtGui import QKeyEvent
+
+    app = QApplication.instance() or QApplication([])
+    prosync = load_prosync_module()
+    cfg_file = tmp_path / "prosync_test_config.json"
+    cfg = prosync.ConfigManager(str(cfg_file))
+    cfg.add_or_update_connection({
+        "id": "c1",
+        "name": "Test Aufgabe",
+        "source": str(tmp_path / "src"),
+        "target": str(tmp_path / "tgt"),
+        "mode": "mirror",
+        "type": "folder",
+    })
+
+    window = prosync.MainWindow(cfg)
+    assert window.list.count() == 1
+    window.list.setCurrentRow(0)
+
+    # Test F2 triggers edit_selected_connection
+    edit_called = []
+    window.edit_selected_connection = lambda item=None: edit_called.append(True)
+    event_f2 = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F2, Qt.KeyboardModifier.NoModifier)
+    window.list.keyPressEvent(event_f2)
+    assert len(edit_called) == 1
+
+    # Test Return triggers start_sync
+    sync_called = []
+    window.start_sync = lambda: sync_called.append(True)
+    event_return = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Return, Qt.KeyboardModifier.NoModifier)
+    window.list.keyPressEvent(event_return)
+    assert len(sync_called) == 1
+
+    # Test Delete triggers delete_selected_connection
+    delete_called = []
+    window.delete_selected_connection = lambda: delete_called.append(True)
+    event_del = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Delete, Qt.KeyboardModifier.NoModifier)
+    window.list.keyPressEvent(event_del)
+    assert len(delete_called) == 1
+
+    # Test Ctrl+C triggers copy_selected_connection_info
+    copy_called = []
+    window.copy_selected_connection_info = lambda: copy_called.append(True)
+    event_copy = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier)
+    window.list.keyPressEvent(event_copy)
+    assert len(copy_called) == 1
+
+    # Test Ctrl+R shortcut exists and is connected
+    assert hasattr(window, "shortcut_sync_r")
+    assert window.shortcut_sync_r.key().toString() in ("Ctrl+R", "Strg+R")
+
+    window.close()
+    app.processEvents()
+
+
+def test_reader_settings_dialog_keyboard_delete(tmp_path):
+    from PySide6.QtCore import Qt, QEvent
+    from PySide6.QtGui import QKeyEvent
+
+    app = QApplication.instance() or QApplication([])
+    reader = load_reader_module()
+    manager = reader.DBManager()
+    dummy_db = tmp_path / "test.db"
+    dummy_db.write_bytes(b"")
+    manager.add_db(str(dummy_db))
+
+    dlg = reader.SettingsDialog(manager)
+    assert dlg.list.count() == 1
+    dlg.list.setCurrentRow(0)
+
+    # Press Delete on list
+    event_del = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Delete, Qt.KeyboardModifier.NoModifier)
+    dlg.list.keyPressEvent(event_del)
+
+    assert str(dummy_db) not in manager.dbs
+    assert dlg.list.count() == 0
+
+    dlg.close()
+    app.processEvents()
+

@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QTextEdit, QInputDialog
 )
 from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir, QCoreApplication
-from PySide6.QtGui import QAction, QActionGroup, QIcon
+from PySide6.QtGui import QAction, QActionGroup, QIcon, QShortcut, QKeySequence
 
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
@@ -2472,16 +2472,31 @@ class ConnectionDialog(QDialog):
         form = QFormLayout()
 
         self.name = QLineEdit(existing["name"] if existing else "")
+        self.name.setAccessibleName("Name der Aufgabe")
+        self.name.setPlaceholderText("z.B. Dokumente-Synchronisation")
+        self.name.setToolTip("Eindeutiger Name für diese Synchronisationsaufgabe")
+
         self.source = QLineEdit(existing["source"] if existing else "")
+        self.source.setAccessibleName("Quellordner")
+        self.source.setPlaceholderText("Pfad zum Quellordner")
+        self.source.setToolTip("Quellverzeichnis für die Synchronisation")
+
         self.target = QLineEdit(existing["target"] if existing else "")
+        self.target.setAccessibleName("Zielordner")
+        self.target.setPlaceholderText("Pfad zum Zielordner")
+        self.target.setToolTip("Zielverzeichnis für die Synchronisation")
 
         self.mode = QComboBox()
+        self.mode.setAccessibleName("Synchronisationsmodus")
+        self.mode.setToolTip("Wähle den Synchronisationsmodus (mirror, update, two_way, index_only, one_way)")
         self.mode.addItems(["mirror", "update", "two_way", "index_only", "one_way"])  # V3: Added one_way
         if existing:
             self.mode.setCurrentText(existing.get("mode", "mirror"))
         self.mode.currentTextChanged.connect(self.on_mode_change)
 
         self.conflict = QComboBox()
+        self.conflict.setAccessibleName("Konfliktbehandlung")
+        self.conflict.setToolTip("Strategie bei beidseitigen Dateiänderungen (source, target, newest)")
         self.conflict.addItems(["source", "target", "newest"])  # V3: Changed order (source first)
         if existing:
             self.conflict.setCurrentText(existing.get("conflict_policy", "source"))
@@ -2519,7 +2534,8 @@ class ConnectionDialog(QDialog):
 
         # Indexierung optional machen
         self.chk_indexing = QCheckBox("Datenbank-Indexierung & Historie aktivieren")
-        self.chk_indexing.setToolTip("Erstellt eine DB für Suche und Versionierung.")
+        self.chk_indexing.setAccessibleName("Datenbank-Indexierung & Historie aktivieren")
+        self.chk_indexing.setToolTip("Erstellt eine SQLite-Datenbank für Volltextsuche und Dateiversionierung.")
         if existing:
             self.chk_indexing.setChecked(existing.get("indexing", True))
         else:
@@ -2528,6 +2544,8 @@ class ConnectionDialog(QDialog):
         form.addRow("", self.chk_indexing)
 
         self.chk_tags = QCheckBox("Auto-Tags aus Ordnernamen")
+        self.chk_tags.setAccessibleName("Auto-Tags aus Ordnernamen generieren")
+        self.chk_tags.setToolTip("Generiert automatische Schlagwörter aus den Verzeichnisnamen.")
         if existing and "structure" in existing:
             self.chk_tags.setChecked(existing["structure"].get("auto_tags", True))
         else:
@@ -2538,6 +2556,9 @@ class ConnectionDialog(QDialog):
         db_lay = QHBoxLayout(self.db_container)
         db_lay.setContentsMargins(0,0,0,0)
         self.db_path = QLineEdit(existing["db_path"] if existing else "")
+        self.db_path.setAccessibleName("Datenbank-Dateipfad")
+        self.db_path.setPlaceholderText("Pfad zur SQLite-Indexdatenbank (optional)")
+        self.db_path.setToolTip("Speicherort der SQLite-Indexdatenbank für diese Aufgabe")
         btn_db = QPushButton("💾")
         configure_compact_button_accessibility(
             btn_db,
@@ -2594,6 +2615,8 @@ class ConnectionDialog(QDialog):
         self.safety_info = QTextEdit()
         self.safety_info.setReadOnly(True)
         self.safety_info.setMaximumHeight(100)
+        self.safety_info.setAccessibleName("Datenbank-Sicherheitsbericht")
+        self.safety_info.setAccessibleDescription("Zeigt das Ergebnis der Datenbank-Sicherheitsprüfung an.")
         self.safety_info.setPlaceholderText(
             "Klicke 'Scannen' um Datenbanken zu erkennen und "
             "sichere Einstellungen zu erhalten."
@@ -2741,10 +2764,16 @@ class FileConnectionDialog(QDialog):
 
         # Name
         self.name = QLineEdit(existing["name"] if existing else "")
+        self.name.setAccessibleName("Name der Aufgabe")
+        self.name.setPlaceholderText("z.B. Datenbank-Backup")
+        self.name.setToolTip("Eindeutiger Name für diese Datei-Synchronisationsaufgabe")
         form.addRow("Name der Aufgabe", self.name)
 
         # Source File
         self.source_file = QLineEdit(existing.get("source_file", suggested_file or "") if existing else (suggested_file or ""))
+        self.source_file.setAccessibleName("Quelldatei")
+        self.source_file.setPlaceholderText("Pfad zur Quelldatei")
+        self.source_file.setToolTip("Quelldatei, die synchronisiert werden soll")
         btn_src = QPushButton("📄")
         configure_compact_button_accessibility(
             btn_src,
@@ -2760,6 +2789,9 @@ class FileConnectionDialog(QDialog):
 
         # Target File
         self.target_file = QLineEdit(existing.get("target_file", "") if existing else "")
+        self.target_file.setAccessibleName("Zieldatei")
+        self.target_file.setPlaceholderText("Pfad zur Zieldatei")
+        self.target_file.setToolTip("Zieldatei, in die synchronisiert werden soll")
         btn_tgt = QPushButton("📄")
         configure_compact_button_accessibility(
             btn_tgt,
@@ -2775,6 +2807,8 @@ class FileConnectionDialog(QDialog):
 
         # Mode (for files, usually one-way)
         self.mode = QComboBox()
+        self.mode.setAccessibleName("Synchronisationsmodus")
+        self.mode.setToolTip("Wähle den Synchronisationsmodus für Dateien (one_way empfohlen)")
         self.mode.addItems(["one_way", "two_way"])
         if existing:
             self.mode.setCurrentText(existing.get("mode", "one_way"))
@@ -2782,6 +2816,8 @@ class FileConnectionDialog(QDialog):
 
         # Checkpoint option
         self.chk_checkpoint = QCheckBox("WAL-Checkpoint vor Sync (für SQLite)")
+        self.chk_checkpoint.setAccessibleName("WAL-Checkpoint vor Sync (für SQLite)")
+        self.chk_checkpoint.setToolTip("Führt vor der Synchronisation einen WAL-Checkpoint aus, um Datenkonsistenz sicherzustellen")
         if existing:
             self.chk_checkpoint.setChecked(existing.get("checkpoint_before_sync", False))
         form.addRow("", self.chk_checkpoint)
@@ -2799,6 +2835,8 @@ class FileConnectionDialog(QDialog):
         self.safety_info = QTextEdit()
         self.safety_info.setReadOnly(True)
         self.safety_info.setMaximumHeight(120)
+        self.safety_info.setAccessibleName("Datei-Sicherheitsbericht")
+        self.safety_info.setAccessibleDescription("Zeigt die Analyse der Datei hinsichtlich SQLite- und WAL-Sicherheit an.")
         self.safety_info.setPlaceholderText("Datei-Synchronisierung ist ideal für Datenbanken.\nWAL-Dateien werden automatisch übersprungen.")
         safety_lay.addWidget(self.safety_info)
 
@@ -2942,12 +2980,38 @@ class SftpTargetDialog(QDialog):
         form = QFormLayout()
 
         self.name = QLineEdit(self.existing.get("name", ""))
+        self.name.setAccessibleName("Name der Aufgabe")
+        self.name.setPlaceholderText("z.B. Webserver-Backup")
+        self.name.setToolTip("Eindeutiger Name für diese SFTP-Synchronisationsaufgabe")
+
         self.source = QLineEdit(self.existing.get("source", ""))
+        self.source.setAccessibleName("Lokaler Quellordner")
+        self.source.setPlaceholderText("Pfad zum lokalen Quellordner")
+        self.source.setToolTip("Lokaler Quellordner, der zum SFTP-Server übertragen werden soll")
+
         self.remote_host = QLineEdit(self.existing.get("remote_host", ""))
+        self.remote_host.setAccessibleName("SFTP-Host")
+        self.remote_host.setPlaceholderText("z.B. sftp.example.com oder IP-Adresse")
+        self.remote_host.setToolTip("Hostname oder IP-Adresse des SFTP/SSH-Servers")
+
         self.remote_port = QLineEdit(str(self.existing.get("remote_port", 22)))
+        self.remote_port.setAccessibleName("SFTP-Port")
+        self.remote_port.setToolTip("SSH/SFTP-Port (Standard: 22)")
+
         self.remote_username = QLineEdit(self.existing.get("remote_username", ""))
+        self.remote_username.setAccessibleName("SFTP-Benutzername")
+        self.remote_username.setPlaceholderText("z.B. backup_user")
+        self.remote_username.setToolTip("Benutzername für die SSH/SFTP-Authentifizierung")
+
         self.remote_key_file = QLineEdit(self.existing.get("remote_key_file", ""))
+        self.remote_key_file.setAccessibleName("SSH-Schlüsseldatei")
+        self.remote_key_file.setPlaceholderText("Optional: Pfad zu id_rsa / id_ed25519")
+        self.remote_key_file.setToolTip("Pfad zur privaten SSH-Schlüsseldatei (optional bei SSH-Agent)")
+
         self.target = QLineEdit(self.existing.get("target", ""))
+        self.target.setAccessibleName("Remote-Zielpfad")
+        self.target.setPlaceholderText("z.B. /var/backup/data")
+        self.target.setToolTip("Zielverzeichnis auf dem SFTP-Server")
 
         btn_src = QPushButton("📂")
         configure_compact_button_accessibility(
@@ -2974,10 +3038,14 @@ class SftpTargetDialog(QDialog):
         h_key.addWidget(btn_key)
 
         self.mode = QComboBox()
+        self.mode.setAccessibleName("Synchronisationsmodus")
+        self.mode.setToolTip("SFTP-Synchronisationsmodus (update, mirror, one_way)")
         self.mode.addItems(["update", "mirror", "one_way"])
         self.mode.setCurrentText(self.existing.get("mode", "update"))
 
         self.allow_unknown_host_key = QCheckBox("Unbekannten Host-Key beim ersten Verbinden automatisch vertrauen (wird dauerhaft gepinnt)")
+        self.allow_unknown_host_key.setAccessibleName("Unbekannten Host-Key beim ersten Verbinden automatisch vertrauen")
+        self.allow_unknown_host_key.setToolTip("Pinnt den SSH-Host-Key beim ersten Verbindungsaufbau automatisch dauerhaft via TOFU")
         self.allow_unknown_host_key.setChecked(bool(self.existing.get("allow_unknown_host_key", False)))
 
         raw_patterns = self.existing.get("exclude_patterns", [])
@@ -2986,6 +3054,8 @@ class SftpTargetDialog(QDialog):
         else:
             patterns_text = "; ".join(str(p) for p in raw_patterns if str(p).strip())
         self.exclude_patterns = QLineEdit(patterns_text)
+        self.exclude_patterns.setAccessibleName("Dateiausschluss-Muster")
+        self.exclude_patterns.setToolTip("Muster für auszuschließende Dateien oder Verzeichnisse, getrennt durch Semikolon")
         self.exclude_patterns.setPlaceholderText("z.B. *.tmp; __pycache__; *.db-wal")
 
         form.addRow("Name der Aufgabe", self.name)
@@ -3003,6 +3073,8 @@ class SftpTargetDialog(QDialog):
         warning = QTextEdit()
         warning.setReadOnly(True)
         warning.setMaximumHeight(110)
+        warning.setAccessibleName("SFTP-Sicherheitshinweis")
+        warning.setAccessibleDescription("Sicherheitshinweis zur Eignung von SFTP für relationale Datenbanken und Passwörter.")
         warning.setText(
             f"⚠ {REMOTE_UNSAFE_DATABASE_WARNING}\n\n"
             "Passwörter werden in ProSync nicht gespeichert. Nutze SSH-Agent "
@@ -3064,6 +3136,52 @@ class SftpTargetDialog(QDialog):
             "remote_warning": REMOTE_UNSAFE_DATABASE_WARNING,
         }
         return conn_config
+
+
+class ConnectionListWidget(QListWidget):
+    """V3.2 NEW: Barrierefreie Aufgabenliste mit Tastaturnavigation und Schnellaktionen."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setAccessibleName("Synchronisations-Aufgaben")
+        self.setAccessibleDescription(
+            "Liste aller konfigurierten Ordner-, Datei- und SFTP-Synchronisationen. "
+            "Tastenkürzel: F2 oder Doppelklick zum Bearbeiten, Entf zum Löschen, "
+            "F5, Strg+R oder Eingabe zum Starten, Strg+C zum Kopieren der Pfade."
+        )
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        modifiers = event.modifiers()
+        parent_window = self.window()
+
+        if key in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            if hasattr(parent_window, "delete_selected_connection"):
+                parent_window.delete_selected_connection()
+                event.accept()
+                return
+
+        elif key == Qt.Key.Key_F2:
+            if hasattr(parent_window, "edit_selected_connection"):
+                parent_window.edit_selected_connection()
+                event.accept()
+                return
+
+        elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            if hasattr(parent_window, "start_sync"):
+                parent_window.start_sync()
+                event.accept()
+                return
+
+        elif key == Qt.Key.Key_C and bool(modifiers & Qt.KeyboardModifier.ControlModifier):
+            if hasattr(parent_window, "copy_selected_connection_info"):
+                parent_window.copy_selected_connection_info()
+                event.accept()
+                return
+
+        super().keyPressEvent(event)
+
 
 class MainWindow(QMainWindow):
     # V3.2 NEW: Notification-Typen für Toast-System
@@ -3182,11 +3300,9 @@ class MainWindow(QMainWindow):
         main_lay.addLayout(toolbar_lay)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.list = QListWidget()
-        self.list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.list.setAccessibleName("Synchronisations-Aufgaben")
-        self.list.setAccessibleDescription("Liste aller konfigurierten Ordner-, Datei- und SFTP-Synchronisationen.")
+        self.list = ConnectionListWidget(self)
         self.list.itemClicked.connect(self.on_item_select)
+        self.list.itemDoubleClicked.connect(self.edit_selected_connection)
         self.list.itemSelectionChanged.connect(self.refresh_selection_state)
         self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.list.customContextMenuRequested.connect(self.open_context_menu)
@@ -3198,12 +3314,16 @@ class MainWindow(QMainWindow):
 
         ctrl_lay = QHBoxLayout()
         self.btn_run = QPushButton("▶ Start Sync")
-        self.btn_run.setToolTip("Ausgewählte Synchronisationsaufgabe(n) starten (F5 / Strg+R)")
+        self.btn_run.setToolTip("Ausgewählte Synchronisationsaufgabe(n) starten (F5 / Strg+R / Eingabe)")
         self.btn_run.setStatusTip("Startet die Ausführung der aktuell ausgewählten Synchronisationsaufgabe(n).")
         self.btn_run.setAccessibleName("Synchronisation starten")
         self.btn_run.setAccessibleDescription("Startet die ausgewählte Synchronisationsaufgabe oder den Batch-Lauf.")
         self.btn_run.setShortcut("F5")
         self.btn_run.clicked.connect(self.start_sync)
+
+        # V3.2 NEW: Ergänzender Shortcut Strg+R gemäß Tooltip
+        self.shortcut_sync_r = QShortcut(QKeySequence("Ctrl+R"), self)
+        self.shortcut_sync_r.activated.connect(self.start_sync)
 
         self.btn_pause = QPushButton("⏸ Pause")
         self.btn_pause.setToolTip("Laufende Synchronisation pausieren oder fortsetzen")
@@ -3576,6 +3696,8 @@ class MainWindow(QMainWindow):
         self.refresh_selection_state()
 
     def start_sync(self):
+        if hasattr(self, "btn_run") and not self.btn_run.isEnabled():
+            return
         selected = self.get_selected_connections()
         if not selected:
             return
@@ -3930,6 +4052,82 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Sicherheitsprüfung",
                                   "Keine Datenbanken in konfigurierten Quellen gefunden.")
 
+    def edit_selected_connection(self, item=None):
+        """Öffnet den Bearbeitungsdialog für die aktuell ausgewählte Verbindung."""
+        conn = None
+        if item is not None and hasattr(item, "data"):
+            conn = item.data(Qt.ItemDataRole.UserRole)
+        if not conn:
+            selected = self.get_selected_connections()
+            if selected:
+                conn = selected[0]
+        if not conn:
+            return
+
+        conn_type = conn.get("type", ConnectionType.FOLDER)
+        if conn_type == ConnectionType.FILE:
+            dlg = FileConnectionDialog(self, existing=conn)
+        elif conn_type == ConnectionType.SFTP:
+            dlg = SftpTargetDialog(self, existing=conn)
+        else:
+            dlg = ConnectionDialog(self, existing=conn)
+
+        if dlg.exec():
+            updated = dlg.get_result()
+            if updated.get("type") == ConnectionType.SFTP:
+                try:
+                    validate_sftp_connection(updated)
+                except ValueError as exc:
+                    QMessageBox.warning(self, "SFTP-Konfiguration prüfen", str(exc))
+                    return
+            self.cfg.add_or_update_connection(updated)
+            self.scheduler.update_all()
+            self.populate_list()
+
+    def delete_selected_connection(self):
+        """Löscht die ausgewählte(n) Verbindung(en) nach Sicherheitsabfrage."""
+        selected = self.get_selected_connections()
+        if not selected:
+            return
+
+        if self.worker and self.worker.isRunning():
+            running_id = getattr(self.worker, "conn_id", None)
+            if any(conn.get("id") == running_id for conn in selected):
+                QMessageBox.warning(self, "Beschäftigt", "Eine laufende Aufgabe kann nicht gelöscht werden.")
+                return
+
+        if len(selected) == 1:
+            conn_name = selected[0].get("name", "Aufgabe")
+            msg = f"Aufgabe '{conn_name}' wirklich löschen?"
+        else:
+            msg = f"{len(selected)} ausgewählte Aufgaben wirklich löschen?"
+
+        if QMessageBox.question(self, "Löschen", msg) == QMessageBox.StandardButton.Yes:
+            for conn in selected:
+                self.cfg.remove_connection(conn["id"])
+            self.scheduler.update_all()
+            self.populate_list()
+
+    def copy_selected_connection_info(self):
+        """Kopiert Name, Modus, Quell- und Zielpfade der ausgewählten Aufgaben in die Zwischenablage."""
+        selected = self.get_selected_connections()
+        if not selected:
+            return
+        lines = []
+        for conn in selected:
+            conn_type = conn.get("type", ConnectionType.FOLDER)
+            name = conn.get("name", "Unbenannt")
+            mode = conn.get("mode", "")
+            src = self._format_connection_endpoint(conn, "source")
+            tgt = self._format_connection_endpoint(conn, "target")
+            lines.append(f"{name} [{conn_type}, {mode}]: {src} -> {tgt}")
+        text = "\n".join(lines)
+        clipboard = QApplication.clipboard()
+        if clipboard:
+            clipboard.setText(text)
+            if hasattr(self, "statusBar") and self.statusBar():
+                self.statusBar().showMessage(f"{len(selected)} Aufgabe(n) in Zwischenablage kopiert.", 3000)
+
     def open_context_menu(self, pos):
         item = self.list.itemAt(pos)
         if not item:
@@ -3946,8 +4144,9 @@ class MainWindow(QMainWindow):
                 f"Batch aus Auswahl starten ({len(selected_connections)})"
             )
             menu.addSeparator()
-        act_edit = menu.addAction("Bearbeiten")
-        act_del = menu.addAction("Löschen")
+        act_edit = menu.addAction("Bearbeiten (F2)")
+        act_del = menu.addAction("Löschen (Entf)")
+        act_copy = menu.addAction("Details kopieren (Strg+C)")
         menu.addSeparator()
 
         act_auto = QAction("Automatisch ausführen", self)
@@ -3975,32 +4174,13 @@ class MainWindow(QMainWindow):
             self.start_batch_sync(selected_connections)
 
         elif res == act_del:
-            if self.worker and self.worker.isRunning() and self.worker.conn_id == conn['id']:
-                return
-            if QMessageBox.question(self, "Löschen", "Aufgabe löschen?") == QMessageBox.StandardButton.Yes:
-                self.cfg.remove_connection(conn['id'])
-                self.scheduler.update_all()
-                self.populate_list()
+            self.delete_selected_connection()
 
         elif res == act_edit:
-            conn_type = conn.get("type", ConnectionType.FOLDER)
-            if conn_type == ConnectionType.FILE:
-                dlg = FileConnectionDialog(self, existing=conn)
-            elif conn_type == ConnectionType.SFTP:
-                dlg = SftpTargetDialog(self, existing=conn)
-            else:
-                dlg = ConnectionDialog(self, existing=conn)
-            if dlg.exec():
-                updated = dlg.get_result()
-                if updated.get("type") == ConnectionType.SFTP:
-                    try:
-                        validate_sftp_connection(updated)
-                    except ValueError as exc:
-                        QMessageBox.warning(self, "SFTP-Konfiguration prüfen", str(exc))
-                        return
-                self.cfg.add_or_update_connection(updated)
-                self.scheduler.update_all()
-                self.populate_list()
+            self.edit_selected_connection(item)
+
+        elif res == act_copy:
+            self.copy_selected_connection_info()
 
         elif res == act_auto:
             conn["autosync"] = conn.get("autosync", {})

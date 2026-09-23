@@ -230,7 +230,8 @@ class SettingsDialog(QDialog):
         
         self.list = QListWidget()
         self.list.setAccessibleName("Eingebundene Suchdatenbanken")
-        self.list.setAccessibleDescription("Liste aller für die Suche eingebundenen SQLite-Indexdatenbanken.")
+        self.list.setAccessibleDescription("Liste aller für die Suche eingebundenen SQLite-Indexdatenbanken. Tastenkürzel: Entf zum Entfernen.")
+        self.list.keyPressEvent = self._list_key_press_event
         self.refresh_list()
         lay.addWidget(QLabel("Verbundene Datenbanken:"))
         lay.addWidget(self.list)
@@ -243,10 +244,10 @@ class SettingsDialog(QDialog):
         btn_add.setAccessibleDescription("Fügt eine neue SQLite-Indexdatenbank zur Suchliste hinzu.")
 
         btn_remove = QPushButton("Entfernen")
-        btn_remove.setToolTip("Ausgewählte Indexdatenbank entfernen")
-        btn_remove.setStatusTip("Entfernt die ausgewählte Indexdatenbank aus der Suchliste.")
+        btn_remove.setToolTip("Ausgewählte Indexdatenbank entfernen (Entf)")
+        btn_remove.setStatusTip("Entfernt die ausgewählte Indexdatenbank aus der Suchliste (Entf).")
         btn_remove.setAccessibleName("Indexdatenbank entfernen")
-        btn_remove.setAccessibleDescription("Entfernt die markierte SQLite-Indexdatenbank aus der Suchliste.")
+        btn_remove.setAccessibleDescription("Entfernt die markierte SQLite-Indexdatenbank aus der Suchliste (Entf).")
 
         btn_lay.addWidget(btn_add); btn_lay.addWidget(btn_remove)
         lay.addLayout(btn_lay)
@@ -276,6 +277,13 @@ class SettingsDialog(QDialog):
         if item:
             self.manager.remove_db(item.text())
             self.refresh_list()
+
+    def _list_key_press_event(self, event):
+        if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
+            self.remove_db()
+            event.accept()
+            return
+        QListWidget.keyPressEvent(self.list, event)
 
 class SearchWindow(QMainWindow):
     def __init__(self, manager):
