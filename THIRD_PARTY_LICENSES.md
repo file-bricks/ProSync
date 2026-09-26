@@ -1,11 +1,11 @@
 # Third-Party Licenses & Software Inventory
 
-**Project:** `ProSync` (Intelligent Local Backup Synchronization & SQLite WAL Database Protection)  
-**License:** [MIT License](LICENSE)  
-**Audit Date:** 2026-09-18  
-**Repository:** [file-bricks/ProSync](https://github.com/file-bricks/ProSync)  
-**Organization:** [file-bricks](https://github.com/file-bricks)  
-**Umbrella Collective:** [open-bricks](https://github.com/open-bricks)  
+**Project:** `ProSync` (Intelligent Local Backup Synchronization & SQLite WAL Database Protection)<br>
+**License:** [MIT License](LICENSE) · [Attribution Notice](NOTICE)<br>
+**Audit Date:** 2026-09-26<br>
+**Repository:** [file-bricks/ProSync](https://github.com/file-bricks/ProSync)<br>
+**Organization:** [file-bricks](https://github.com/file-bricks)<br>
+**Umbrella Collective:** [open-bricks](https://github.com/open-bricks)
 
 ---
 
@@ -52,7 +52,7 @@ The following tools are utilized strictly for local development, code quality en
 ## Licensing Architecture, Dynamic Linking & Unprivileged Execution
 
 ### Dynamic Linking & LGPL-3.0 / LGPL-2.1 Isolation
-- **ProSync Core:** All application code, business logic, sync engine workers, scheduling routines, and the offline Web/PWA companion are licensed under the permissive [MIT License](LICENSE).
+- **ProSync Core:** All application code, business logic, sync engine workers, scheduling routines, and the offline Web/PWA companion are licensed under the permissive [MIT License](LICENSE) with canonical attribution documented in [NOTICE](NOTICE).
 - **PySide6 (LGPL-3.0-only):** The Qt 6 bindings and Qt runtime binaries are linked dynamically via official CPython wheels. In frozen binary distributions (PyInstaller), Qt libraries reside as separate shared objects / DLLs (`Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Widgets.dll`), permitting end users to replace the Qt library binaries in compliance with LGPL-3.0 Section 4.
 - **Paramiko (LGPL-2.1-or-later):** The SSH/SFTP networking library is dynamically imported as a standard Python module without static merging into ProSync source files.
 - **Zero-Copyleft Contamination:** The application codebase contains no GPL or AGPL proprietary-restricting source code. The PyInstaller bootloader exception expressly permits combining with the application without viral licensing effects.

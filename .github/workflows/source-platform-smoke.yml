@@ -65,6 +65,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install "PySide6>=6.5.0" paramiko tzdata pytest
 
+      - name: Compile modules (bytecode validation)
+        run: python -m compileall -q .
+
       - name: Run cross-platform source smoke runner
         run: python source_platform_smoke.py
 

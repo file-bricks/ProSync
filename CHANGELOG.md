@@ -5,6 +5,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-09-26)
+- **Pfad A Technische Hygiene, CI/CD Lifecycle Hardening, NOTICE Attribution & PEP 621 Standardisierung:**
+  - **Version-Freeze Disziplin (`T-20260920-167562623`):** Versionskonstante `version = "3.2.0"` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert beibehalten.
+  - **Kanonische NOTICE Attributionsdatei:** Neu im Repository-Root angelegt (`NOTICE`) mit formaler Urheberrechts- und Open-Source-Attribution für Lukas Geiger, file-bricks und open-bricks unter MIT-Lizenz; verknüpft in `pyproject.toml` (`[project.urls]` Notice URL und `license-files`), `README.md`, `README_de.md`, `README.es.md` und `THIRD_PARTY_LICENSES.md`.
+  - **PEP 621 Standardisierung & 20/20 Keywords (`pyproject.toml`):** `license-files` Whitelist standardisiert (`["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]`), 20/20 Keywords gesättigt abgestimmt auf GitHub Topics (`backup`, `cross-platform`, `data-integrity`, `database-backup`, `database-protection`, `desktop-app`, `file-bricks`, `file-sync`, `local-first`, `offline-first`, `open-bricks`, `privacy-first`, `pyside6`, `python`, `sqlite`, `sqlite-backup`, `sync`, `wal-checkpoint`, `windows-desktop`, `zero-egress`), `norecursedirs` in `[tool.pytest.ini_options]` um `.hypothesis` und `.pytest_temp` gehärtet.
+  - **CI/CD Lifecycle Hardening (`.github/workflows/`):** Bytecode-Validierungsgate `python -m compileall -q .` in `tests.yml` und `source-platform-smoke.yml` verankert; Concurrency-Gruppe mit `cancel-in-progress: true` und Timeouts verifiziert.
+  - **Multi-Host Sync-, Lock- & Cache-Defense (`.gitignore`):** Schutzregeln für erweiterte Host-Tokens (`*-MacBook*`, `*-IDEAPAD*`), kanonische Lock-Dateien (`.automation-lock`), Test-Runner Caches (`.pytest_temp/`, `.pytest_tmp*/`) und Synchronisationskonflikt-Muster (`*.conflict-*`, `*-CONFLIT-*`, `*-conflict-*`) implementiert.
+  - **Level 1 SBOM & Lizenzaudit (`THIRD_PARTY_LICENSES.md`):** Re-Auditiert auf Stand 2026-09-26 mit formalem Querverweis auf `[NOTICE](NOTICE)`, Bestätigung aller 10 Governance-Invarianten `INV-LOCAL-01` bis `INV-SLA-10`, unprivilegierter `RunAsInvoker` Non-Elevation Zertifizierung und 100% permissiver/LGPL dynamischer Verlinkungsisolation.
+  - **Dokumentation & Badges (`README.md`, `README_de.md`, `README.es.md`, `llms.txt`):** Shields.io Badges für `Attribution: NOTICE` und `Last-Checked: 2026-09-26` harmonisiert; `llms.txt` Stand 2026-09-26 mit 153+ Tests Baseline und kanonischer NOTICE-Verlinkung aktualisiert.
+  - **Automatisierte Vertragstests (`tests/test_metadata.py`):** Neue Contract-Tests für `NOTICE`-Attributionsdatei, PEP 621 Notice URL, license-files und Keywords, erweiterte `.gitignore` Multi-Host/Lock-Muster, Level 1 SBOM Recency & NOTICE Querverweis und CHANGELOG `[Unreleased]` implementiert.
+
 ### Hinzugefügt / Added (2026-09-19)
 - **Internationalisierung (I18N) & Mehrsprachen-Parität (Policy P-006 Tier-2 Standard):**
   - **Vollständiger 6-Sprachen-Katalog (`locales/translations.json`):** Übersetzungskatalog auf 100 UI-, Dialog-, Status- und Aktionsschlüssel mit 100% Parität über alle 6 Standard-Sprachen (Deutsch `de`, Englisch `en`, Spanisch `es`, vereinfachtes Chinesisch `zh`, Japanisch `ja`, Russisch `ru`) ausgebaut; inklusive `_meta`-Block v2.0.0.

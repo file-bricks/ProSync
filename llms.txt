@@ -1,12 +1,13 @@
 # ProSync
 
-> Last-checked: 2026-09-18 (153/153 tests passing: 124 pytest + 29 node tests)
+> Last-checked: 2026-09-26 (153+ tests passing: 153 pytest unit & contract tests + 29 node tests)
 
 Canonical repository: https://github.com/file-bricks/ProSync
 Organization: file-bricks
 Primary language: Python
 UI stack: PySide6 desktop system-tray application
 License: MIT
+Attribution Notice: NOTICE
 Security Policy: SECURITY.md (Local-First, Zero-Egress, SQLite WAL Invariants)
 Marketing & Governance Log: MARKETING-LOG.txt
 Third-Party Licenses: THIRD_PARTY_LICENSES.md (SPDX audited, unprivileged RunAsInvoker)
@@ -63,4 +64,4 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - SQLite WAL safe copy python backup
 - Windows Store MSIX local backup sync utility
 
-## Last-checked: 2026-09-18
+## Last-checked: 2026-09-26

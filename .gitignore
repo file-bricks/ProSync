@@ -14,6 +14,8 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.pytest_temp/
+.pytest_tmp*/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -38,6 +40,7 @@ LOCK
 LOCK.*
 LOCK*.txt
 LOCK.permissions.json
+.automation-lock
 *.lock
 uv.lock
 !package-lock.json
@@ -108,6 +111,8 @@ ehthumbs.db
 *-ASUS*
 *-LAPTOP*
 *-Mac Studio*
+*-MacBook*
+*-IDEAPAD*
 * (kopie)*
 * (copy)*
 * (Kopie)*
@@ -118,6 +123,9 @@ ehthumbs.db
 *.sync-temp-*
 *conflicted copy*
 *.conflict
+*.conflict-*
+*-CONFLIT-*
+*-conflict-*
 * - Kopie.*
 * - Kopie (*).*
 *.orig

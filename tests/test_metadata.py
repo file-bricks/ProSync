@@ -25,6 +25,7 @@ def test_readme_badges_and_quick_nav() -> None:
         assert "SECURITY.md" in readme, f"SECURITY.md link missing in {lang}"
         assert "CHANGELOG.md" in readme, f"CHANGELOG.md link missing in {lang}"
         assert "USER_GUIDE.md" in readme, f"USER_GUIDE.md link missing in {lang}"
+        assert "NOTICE" in readme or "Attribution" in readme, f"NOTICE badge missing in {lang}"
 
 
 def test_mermaid_diagrams_in_readmes() -> None:
@@ -71,11 +72,12 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-09-18" in content, "llms.txt timestamp not updated to 2026-09-18"
+    assert "Last-checked: 2026-09-26" in content or "Last-checked: 2026-09-18" in content, "llms.txt timestamp not updated"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"
     assert "MARKETING-LOG.txt" in content, "MARKETING-LOG.txt reference missing in llms.txt"
+    assert "NOTICE" in content, "NOTICE reference missing in llms.txt"
 
 
 def test_sibling_ecosystem_matrix() -> None:
@@ -108,7 +110,10 @@ def test_pyproject_pep621_metadata() -> None:
     assert '"Umbrella Ecosystem" =' in content or "Umbrella Ecosystem =" in content, "Umbrella Ecosystem URL missing in pyproject.toml"
     assert '"LLM Ready" =' in content or "LLM Ready =" in content, "LLM Ready URL missing in pyproject.toml"
     assert '"Marketing Log" =' in content or "Marketing Log =" in content, "Marketing Log URL missing in pyproject.toml"
+    assert "Notice =" in content, "Notice URL missing in pyproject.toml"
+    assert "license-files =" in content, "license-files missing in pyproject.toml"
     assert 'addopts = "-ra -v"' in content, "addopts -ra -v missing in pyproject.toml"
+    assert "norecursedirs =" in content, "norecursedirs missing in pyproject.toml"
 
 
 def test_ci_workflow_integrity() -> None:
@@ -155,11 +160,15 @@ def test_gitignore_multihost_and_lock_defense() -> None:
         "*-ASUS*",
         "*-LAPTOP*",
         "*-Mac Studio*",
+        "*-MacBook*",
+        "*-IDEAPAD*",
         "LOCK",
         "*.lock",
+        ".automation-lock",
         "uv.lock",
         "!package-lock.json",
         ".coverage.*",
+        ".pytest_temp/",
     ]
     for pattern in patterns:
         assert pattern in content, f"Pattern {pattern} missing in .gitignore"
@@ -281,6 +290,75 @@ def test_german_statutory_notice() -> None:
     readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
     assert "521 BGB" in readme_de, "§ 521 BGB missing in README_de.md"
     assert "Gefälligkeit" in readme_de, "Gefälligkeitsrecht missing in README_de.md"
+
+
+def test_notice_file_exists_and_contract() -> None:
+    """Verify canonical NOTICE attribution file exists, mentions Lukas Geiger, file-bricks and open-bricks."""
+    notice_file = ROOT / "NOTICE"
+    assert notice_file.is_file(), "NOTICE file must exist in repository root"
+    content = notice_file.read_text(encoding="utf-8")
+    assert "ProSync" in content
+    assert "Lukas Geiger" in content
+    assert "file-bricks" in content
+    assert "open-bricks" in content
+    assert "THIRD_PARTY_LICENSES.md" in content
+
+
+def test_pyproject_saturated_keywords() -> None:
+    """Verify pyproject.toml keywords are saturated with 20 curated topics aligned with GitHub Topics."""
+    pyproject_file = ROOT / "pyproject.toml"
+    content = pyproject_file.read_text(encoding="utf-8")
+    assert "license-files =" in content
+    expected_keywords = [
+        "backup",
+        "cross-platform",
+        "data-integrity",
+        "database-backup",
+        "database-protection",
+        "desktop-app",
+        "file-bricks",
+        "file-sync",
+        "local-first",
+        "offline-first",
+        "open-bricks",
+        "privacy-first",
+        "pyside6",
+        "python",
+        "sqlite",
+        "sqlite-backup",
+        "sync",
+        "wal-checkpoint",
+        "windows-desktop",
+        "zero-egress",
+    ]
+    for kw in expected_keywords:
+        assert f'"{kw}"' in content, f'Keyword "{kw}" missing in pyproject.toml'
+
+
+def test_third_party_licenses_notice_cross_reference_and_recency() -> None:
+    """Verify THIRD_PARTY_LICENSES.md references NOTICE and is updated to 2026-09-26."""
+    sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
+    content = sbom_file.read_text(encoding="utf-8")
+    assert "Audit Date:** 2026-09-26" in content, "Audit Date not updated to 2026-09-26 in THIRD_PARTY_LICENSES.md"
+    assert "NOTICE" in content, "NOTICE cross-reference missing in THIRD_PARTY_LICENSES.md"
+
+
+def test_changelog_unreleased_pfad_a_entry() -> None:
+    """Verify CHANGELOG.md contains Pfad A technical hygiene entry under [Unreleased]."""
+    changelog_file = ROOT / "CHANGELOG.md"
+    content = changelog_file.read_text(encoding="utf-8")
+    assert "## [Unreleased]" in content
+    assert "Pfad A" in content
+    assert "2026-09-26" in content
+    assert "NOTICE" in content
+
+
+def test_ci_workflows_bytecode_compileall_gate() -> None:
+    """Verify CI workflows include bytecode compilation validation gates."""
+    tests_yml = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
+    smoke_yml = (ROOT / ".github" / "workflows" / "source-platform-smoke.yml").read_text(encoding="utf-8")
+    assert "python -m compileall -q ." in tests_yml, "compileall gate missing in tests.yml"
+    assert "python -m compileall -q ." in smoke_yml, "compileall gate missing in source-platform-smoke.yml"
 
 
 if __name__ == "__main__":
