@@ -5,6 +5,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-09-28)
+- **Pfad B Marketing, Discoverability, Visual Architecture & Trilinguale 18-Punkte-Navigationsparität:**
+  - **Version-Freeze Disziplin (`T-20260920-167562623`):** Versionsnummer `3.2.0` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert beibehalten.
+  - **Trilinguale 18-Punkte-Schnellnavigation mit reziproken dualen HTML-Ankern:** Vollständige Harmonisierung von `README.md`, `README_de.md` und `README.es.md` mit reziproken dualen HTML-Anker-Aliasen (`<a id="sec-01"></a>` bis `<a id="sec-18"></a>`) über alle 18 Standardabschnitte unter lückenloser Erhaltung aller historischen Legacy-Anker.
+  - **Statutory Notice & 48h Security Response SLA:** Gesetzlicher Haftungsausschluss gemäß § 521 BGB (Gefälligkeitsrecht) und verbindliche 48h Security Response SLA über alle drei Sprachfassungen (`README.md`, `README_de.md`, `README.es.md`) sowie `SECURITY.md` harmonisiert.
+  - **Level 1 SBOM Invariant Cross-Reference Matrix (`THIRD_PARTY_LICENSES.md`):** Re-Auditiert auf Stand 2026-09-28 (v3.2.0) mit formaler 10-Invarianten-Kreuztabelle (`INV-LOCAL-01` bis `INV-SLA-10`), `RunAsInvoker` Non-Elevation Zertifizierung, Zero-Copyleft & Zero-Egress isolation guarantee, Verlinkung von `NOTICE` und `THIRD_PARTY_LICENSES.txt`.
+  - **Kanonische NOTICE Attribution:** Formale `NOTICE`-Datei im Repo-Root um Querverweis auf `THIRD_PARTY_LICENSES.txt` ergänzt; in `pyproject.toml` Notice URL und `license-files` Whitelist verankert.
+  - **Paketierung & Pytest-Härtung (`pyproject.toml`):** `addopts = "-ra -v --basetemp=.pytest_temp"` und gehärtetes `norecursedirs` mit `.pytest_temp` verankert; kanonische Homepage-URL auf `https://github.com/file-bricks/ProSync#readme` und `Third-Party Licenses (Text)` URL registriert.
+  - **Dokumentations-, Badge- & RAG-Kontext-Aktualisierung:** Shields.io Badges für `Attribution: NOTICE`, `Level 1 SBOM: Verified`, `Tests: 158 passed | 100% green`, `Python: 3.10 | 3.11 | 3.12 | 3.13` und `Verified: 2026-09-28` (`Geprüft` / `Verificado`) über alle drei Sprachfassungen synchronisiert; `llms.txt` auf Stand 2026-09-28 und 158 verifizierte Tests Baseline aktualisiert.
+  - **Automatisierte Vertragstests (`tests/test_metadata.py`):** Contract-Tests für trilinguale `sec-01`..`sec-18` Anker-Parität, Level 1 SBOM Invariant Cross-Reference Matrix, § 521 BGB Rechtsbelehrung, aktualisierte Badges und Pytest `--basetemp` Härtung erweitert.
+
 ### Geändert / Changed (2026-09-26)
 - **Pfad A Technische Hygiene, CI/CD Lifecycle Hardening, NOTICE Attribution & PEP 621 Standardisierung:**
   - **Version-Freeze Disziplin (`T-20260920-167562623`):** Versionskonstante `version = "3.2.0"` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert beibehalten.

@@ -1,6 +1,6 @@
 # ProSync
 
-> Last-checked: 2026-09-26 (153+ tests passing: 153 pytest unit & contract tests + 29 node tests)
+> Last-checked: 2026-09-28 (158+ tests passing: 158 pytest unit & contract tests + 29 node companion tests | 100% green)
 
 Canonical repository: https://github.com/file-bricks/ProSync
 Organization: file-bricks
@@ -8,9 +8,9 @@ Primary language: Python
 UI stack: PySide6 desktop system-tray application
 License: MIT
 Attribution Notice: NOTICE
-Security Policy: SECURITY.md (Local-First, Zero-Egress, SQLite WAL Invariants)
+Security Policy: SECURITY.md (Local-First, Zero-Egress, SQLite WAL Invariants, § 521 BGB Gefälligkeitsrecht, 48h SLA)
 Marketing & Governance Log: MARKETING-LOG.txt
-Third-Party Licenses: THIRD_PARTY_LICENSES.md (SPDX audited, unprivileged RunAsInvoker)
+Third-Party Licenses: THIRD_PARTY_LICENSES.md (SPDX audited, Level 1 SBOM INV-LOCAL-01..INV-SLA-10, unprivileged RunAsInvoker)
 
 ProSync is an intelligent backup synchronization tool with built-in SQLite database protection. It runs as a Windows system-tray app and supports folder sync, file sync, scheduled backups, and batch operations.
 
@@ -27,6 +27,7 @@ Core behavior:
 - Multilingual localization support compliant with Policy P-006 Tier-2 (DE, EN, ES, ZH, JA, RU) with deterministic 4-tier fallback and automated translation catalog verification (`manage_translations.py --check`).
 - Automated repository contract and metadata parity suite (`tests/test_metadata.py`).
 - Comprehensive marketing, discovery, and governance log (`MARKETING-LOG.txt`) with competitive matrix and 10 runtime invariant pillars.
+- Trilingual 18-point quick navigation parity across `README.md`, `README_de.md`, and `README.es.md` with reciprocal dual HTML anchors `sec-01`..`sec-18`.
 
 Privacy boundary:
 
@@ -37,8 +38,8 @@ Privacy boundary:
 Local verification:
 
 ```bash
-python -m pytest -ra -v       # 124 Python tests
-cd web_companion && npm test  # 29 Node PWA companion tests (153 total tests)
+python -m pytest -ra -v       # 158 Python tests
+cd web_companion && npm test  # 29 Node PWA companion tests (187 total tests)
 python scripts/check_store_readiness.py # Windows Store readiness auditor
 python run_tests.py           # 21 test suites locally
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
@@ -64,4 +65,4 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - SQLite WAL safe copy python backup
 - Windows Store MSIX local backup sync utility
 
-## Last-checked: 2026-09-26
+## Last-checked: 2026-09-28

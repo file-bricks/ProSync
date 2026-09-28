@@ -72,7 +72,7 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-09-26" in content or "Last-checked: 2026-09-18" in content, "llms.txt timestamp not updated"
+    assert "Last-checked: 2026-09-28" in content, "llms.txt timestamp not updated to 2026-09-28"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"
@@ -102,7 +102,7 @@ def test_pyproject_pep621_metadata() -> None:
     assert 'name = "prosync"' in content
     assert 'version = "3.2.0"' in content
     assert "Security =" in content, "Security URL missing in pyproject.toml"
-    assert "Homepage =" in content, "Homepage URL missing in pyproject.toml"
+    assert 'Homepage = "https://github.com/file-bricks/ProSync#readme"' in content, "Homepage URL with #readme missing in pyproject.toml"
     assert "Repository =" in content, "Repository URL missing in pyproject.toml"
     assert "Documentation =" in content, "Documentation URL missing in pyproject.toml"
     assert "Changelog =" in content, "Changelog URL missing in pyproject.toml"
@@ -110,9 +110,10 @@ def test_pyproject_pep621_metadata() -> None:
     assert '"Umbrella Ecosystem" =' in content or "Umbrella Ecosystem =" in content, "Umbrella Ecosystem URL missing in pyproject.toml"
     assert '"LLM Ready" =' in content or "LLM Ready =" in content, "LLM Ready URL missing in pyproject.toml"
     assert '"Marketing Log" =' in content or "Marketing Log =" in content, "Marketing Log URL missing in pyproject.toml"
+    assert '"Third-Party Licenses (Text)" =' in content, "Third-Party Licenses (Text) URL missing in pyproject.toml"
     assert "Notice =" in content, "Notice URL missing in pyproject.toml"
     assert "license-files =" in content, "license-files missing in pyproject.toml"
-    assert 'addopts = "-ra -v"' in content, "addopts -ra -v missing in pyproject.toml"
+    assert 'addopts = "-ra -v --basetemp=.pytest_temp"' in content, "addopts with --basetemp=.pytest_temp missing in pyproject.toml"
     assert "norecursedirs =" in content, "norecursedirs missing in pyproject.toml"
 
 
@@ -180,7 +181,7 @@ def test_marketing_log_recent_hygiene_entry() -> None:
     assert mktg_file.is_file(), "MARKETING-LOG.txt must exist"
     content = mktg_file.read_text(encoding="utf-8")
 
-    assert "2026-09-18" in content, "Recent audit date 2026-09-18 missing in MARKETING-LOG.txt"
+    assert "2026-09-28" in content, "Recent audit date 2026-09-28 missing in MARKETING-LOG.txt"
     assert "PROSYNC SUITE" in content
     assert "INV-LOCAL-01" in content and "INV-SLA-10" in content, "Governance pillars missing in MARKETING-LOG.txt"
     assert "Pfad B" in content or "PFAD B" in content, "Pfad B audit section missing in MARKETING-LOG.txt"
@@ -336,18 +337,21 @@ def test_pyproject_saturated_keywords() -> None:
 
 
 def test_third_party_licenses_notice_cross_reference_and_recency() -> None:
-    """Verify THIRD_PARTY_LICENSES.md references NOTICE and is updated to 2026-09-26."""
+    """Verify THIRD_PARTY_LICENSES.md references NOTICE, text inventory, and is updated to 2026-09-28."""
     sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
     content = sbom_file.read_text(encoding="utf-8")
-    assert "Audit Date:** 2026-09-26" in content, "Audit Date not updated to 2026-09-26 in THIRD_PARTY_LICENSES.md"
+    assert "Audit Date:** 2026-09-28" in content, "Audit Date not updated to 2026-09-28 in THIRD_PARTY_LICENSES.md"
     assert "NOTICE" in content, "NOTICE cross-reference missing in THIRD_PARTY_LICENSES.md"
+    assert "THIRD_PARTY_LICENSES.txt" in content, "THIRD_PARTY_LICENSES.txt reference missing"
 
 
-def test_changelog_unreleased_pfad_a_entry() -> None:
-    """Verify CHANGELOG.md contains Pfad A technical hygiene entry under [Unreleased]."""
+def test_changelog_unreleased_entries() -> None:
+    """Verify CHANGELOG.md contains Pfad B and Pfad A entries under [Unreleased]."""
     changelog_file = ROOT / "CHANGELOG.md"
     content = changelog_file.read_text(encoding="utf-8")
     assert "## [Unreleased]" in content
+    assert "Pfad B" in content
+    assert "2026-09-28" in content
     assert "Pfad A" in content
     assert "2026-09-26" in content
     assert "NOTICE" in content
@@ -359,6 +363,53 @@ def test_ci_workflows_bytecode_compileall_gate() -> None:
     smoke_yml = (ROOT / ".github" / "workflows" / "source-platform-smoke.yml").read_text(encoding="utf-8")
     assert "python -m compileall -q ." in tests_yml, "compileall gate missing in tests.yml"
     assert "python -m compileall -q ." in smoke_yml, "compileall gate missing in source-platform-smoke.yml"
+
+
+def test_trilingual_18_points_sec_anchors_parity() -> None:
+    """Verify sec-01 through sec-18 anchors are present across README.md, README_de.md, and README.es.md."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+    readme_es = (ROOT / "README.es.md").read_text(encoding="utf-8")
+
+    for i in range(1, 19):
+        sec_anchor = f'id="sec-{i:02d}"'
+        assert sec_anchor in readme_en, f"{sec_anchor} missing in README.md"
+        assert sec_anchor in readme_de, f"{sec_anchor} missing in README_de.md"
+        assert sec_anchor in readme_es, f"{sec_anchor} missing in README.es.md"
+
+
+def test_statutory_notice_trilingual() -> None:
+    """Verify § 521 BGB Gefälligkeitsrecht statutory notice in all three README versions."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+    readme_es = (ROOT / "README.es.md").read_text(encoding="utf-8")
+
+    assert "521 BGB" in readme_en, "§ 521 BGB missing in README.md"
+    assert "521 BGB" in readme_de, "§ 521 BGB missing in README_de.md"
+    assert "521 BGB" in readme_es, "§ 521 BGB missing in README.es.md"
+
+
+def test_level_1_sbom_invariants_table() -> None:
+    """Verify Level 1 SBOM Invariant Cross-Reference Matrix table in THIRD_PARTY_LICENSES.md."""
+    sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
+    content = sbom_file.read_text(encoding="utf-8")
+
+    assert "Level 1 SBOM Invariant Cross-Reference Matrix" in content
+    expected_invariants = [
+        "INV-LOCAL-01",
+        "INV-RUNAS-02",
+        "INV-WAL-03",
+        "INV-INTEG-04",
+        "INV-SCHED-05",
+        "INV-PWA-06",
+        "INV-PLAT-07",
+        "INV-STORE-08",
+        "INV-DOCS-09",
+        "INV-SLA-10",
+    ]
+    for inv in expected_invariants:
+        assert inv in content, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.md"
+    assert "VERIFIED" in content
 
 
 if __name__ == "__main__":

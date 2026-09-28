@@ -1,8 +1,8 @@
 # Third-Party Licenses & Software Inventory
 
 **Project:** `ProSync` (Intelligent Local Backup Synchronization & SQLite WAL Database Protection)<br>
-**License:** [MIT License](LICENSE) · [Attribution Notice](NOTICE)<br>
-**Audit Date:** 2026-09-26<br>
+**License:** [MIT License](LICENSE) · [Attribution Notice](NOTICE) · [Text Inventory](THIRD_PARTY_LICENSES.txt)<br>
+**Audit Date:** 2026-09-28 (v3.2.0)<br>
 **Repository:** [file-bricks/ProSync](https://github.com/file-bricks/ProSync)<br>
 **Organization:** [file-bricks](https://github.com/file-bricks)<br>
 **Umbrella Collective:** [open-bricks](https://github.com/open-bricks)
@@ -64,22 +64,23 @@ The following tools are utilized strictly for local development, code quality en
 
 ---
 
-## Governance & Runtime Invariants
+## Level 1 SBOM Invariant Cross-Reference Matrix
 
-`ProSync` adheres to ten foundational governance and runtime invariants:
+`ProSync` adheres to ten foundational governance and runtime invariants verified continuously across all builds:
 
-| Invariant | Category | Description | Verification Method |
-|---|---|---|---|
-| `INV-LOCAL-01` | Local-First & Zero Egress | 100% offline-first execution; zero telemetry, analytics, or unsolicited network calls. | `tests/test_security_license_contract.py` |
-| `INV-RUNAS-02` | Unprivileged User Mode (`RunAsInvoker`) | Strictly unprivileged execution; no UAC or root prompts required. | `SECURITY.md` & `pyproject.toml` |
-| `INV-WAL-03` | SQLite WAL Crash Safety | Automated pre-sync checkpoint (`PRAGMA wal_checkpoint(TRUNCATE)`); aborts fail-closed on lock contention (`SQLITE_BUSY`). | `tests/test_sftp_target.py` & `ProSyncStart_V3.1.py` |
-| `INV-INTEG-04` | Atomic File Copy & Crash Resilience | Staging to temporary files (`.tmp`) prior to atomic replacement; target files never corrupted by interruption. | `tests/test_bugsweep_resweep_20260622.py` |
-| `INV-SCHED-05` | DST-Aware Canonical Scheduling | Deterministic daily scheduling using IANA timezones and exact wall-time calculations without catch-up cascades. | `tests/test_schedule_time.py` |
-| `INV-PWA-06` | Redacted Offline Companion Export | Exported profile (`prosync-profile-v1.json`) strictly redacts personal paths, credentials, and tokens. | `tests/test_portable_profile.py` |
-| `INV-PLAT-07` | Cross-Platform Parity | Standardized 8-point smoke test suites for Linux and macOS execution parity. | `tests/test_platform_smoke_contract.py` |
-| `INV-STORE-08` | Windows Store / MSIX Staging | Valid AppxManifest (`Geiger.ProSync`), Policy 10.1.3 compliant metadata, and verified tile asset dimensions. | `tests/test_store_materials.py` |
-| `INV-DOCS-09` | 1:1 Bilingual Documentation | Symmetrical 18-point documentation parity across English (`README.md`) and German (`README_de.md`) backed by `llms.txt`. | `tests/test_metadata.py` |
-| `INV-SLA-10` | Open Source Governance & SLA | MIT License, public GitHub issues, and committed 48h initial response / 5d triage security SLA. | `SECURITY.md` & `tests/test_metadata.py` |
+| Invariant | Category | Description | Verification Method / Evidence | Status |
+|---|---|---|---|---|
+| `INV-LOCAL-01` | Local-First & Zero Egress | 100% offline-first execution; zero telemetry, analytics, or unsolicited network calls. | `tests/test_security_license_contract.py::test_local_first_and_offline_invariants` | **VERIFIED** |
+| `INV-RUNAS-02` | Unprivileged User Mode (`RunAsInvoker`) | Strictly unprivileged execution; no UAC or root prompts required or requested. | `SECURITY.md`, `pyproject.toml`, `ProSyncStart_V3.1.py` | **VERIFIED** |
+| `INV-WAL-03` | SQLite WAL Crash Safety | Automated pre-sync checkpoint (`PRAGMA wal_checkpoint(TRUNCATE)`); aborts fail-closed on lock contention (`SQLITE_BUSY`). | `tests/test_sftp_target.py`, `tests/test_database_safety.py`, `ProSyncStart_V3.1.py` | **VERIFIED** |
+| `INV-INTEG-04` | Atomic File Copy & Crash Resilience | Staging to temporary files (`.tmp`) prior to atomic replacement; target files never corrupted by interruption. | `tests/test_bugsweep_resweep_20260622.py`, `tests/test_core_safety_regressions.py` | **VERIFIED** |
+| `INV-SCHED-05` | DST-Aware Canonical Scheduling | Deterministic daily scheduling using IANA timezones and exact wall-time calculations without catch-up cascades. | `tests/test_schedule_time.py`, `tests/test_daily_scheduler.py` | **VERIFIED** |
+| `INV-PWA-06` | Redacted Offline Companion Export | Exported profile (`prosync-profile-v1.json`) strictly redacts personal paths, credentials, and tokens. | `tests/test_portable_profile.py`, `web_companion/` | **VERIFIED** |
+| `INV-PLAT-07` | Cross-Platform Parity | Standardized 8-point smoke test suites for Linux and macOS execution parity. | `tests/test_platform_smoke_contract.py` | **VERIFIED** |
+| `INV-STORE-08` | Windows Store / MSIX Staging | Valid AppxManifest (`Geiger.ProSync`), Policy 10.1.3 compliant metadata, and verified tile asset dimensions. | `tests/test_store_materials.py`, `scripts/check_store_readiness.py` | **VERIFIED** |
+| `INV-DOCS-09` | Trilingual 18-Point Quick Navigation Parity | Symmetrical 18-point documentation parity across English (`README.md`), German (`README_de.md`), and Spanish (`README.es.md`) with reciprocal dual HTML anchors (`sec-01`..`sec-18`). | `tests/test_metadata.py`, `tests/test_i18n.py` | **VERIFIED** |
+| `INV-SLA-10` | Open Source Governance & SLA | MIT License, public GitHub issues, § 521 BGB Gefälligkeitsrecht, and committed 48h initial response / 5d triage security SLA. | `SECURITY.md`, `tests/test_metadata.py` | **VERIFIED** |
+
 
 ---
 

@@ -10,47 +10,49 @@
 [![Attribution: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue?style=flat-square)](NOTICE)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#10-installation--dependencies)
-[![Python: 3.10 | 3.11 | 3.12](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue?style=flat-square)](pyproject.toml)
-[![Tests: 153 passed](https://img.shields.io/badge/Tests-153%20passed-brightgreen?style=flat-square)](#16-testing--quality-checks)
+[![Python: 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square)](pyproject.toml)
+[![Tests: 158 passed](https://img.shields.io/badge/Tests-158%20passed%20%7C%20100%25%20green-brightgreen?style=flat-square)](#sec-16)
 [![Privacy: 100% Local | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success?style=flat-square)](PRIVACY_POLICY.md)
 [![Security: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-success?style=flat-square)](SECURITY.md)
 [![Security SLA: 48h / 5d](https://img.shields.io/badge/Security%20SLA-48h%20Response%20%7C%205d%20Triage-blue?style=flat-square)](SECURITY.md)
+[![Level 1 SBOM: Verified](https://img.shields.io/badge/Level%201%20SBOM-Verified%20INV--LOCAL--01..INV--SLA--10-success?style=flat-square)](THIRD_PARTY_LICENSES.md)
 [![Third-Party: Audited](https://img.shields.io/badge/Third--Party-Audited%20SPDX-success?style=flat-square)](THIRD_PARTY_LICENSES.md)
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo?style=flat-square)](https://github.com/file-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-purple?style=flat-square)](https://github.com/open-bricks)
 [![Context: llms.txt](https://img.shields.io/badge/Context-llms.txt-teal?style=flat-square)](llms.txt)
-[![Last Checked](https://img.shields.io/badge/Last--Checked-2026--09--26-blue?style=flat-square)](CHANGELOG.md)
+[![Verified: 2026-09-28](https://img.shields.io/badge/Verified-2026--09--28-blue?style=flat-square)](CHANGELOG.md)
 
 > [!NOTE]
 > **Disambiguation:** `file-bricks/ProSync` is an open-source Windows desktop and background application built with Python (PySide6) for local file/folder synchronization with automated SQLite WAL database protection. It is completely independent of enterprise database replication products (e.g., Tibero ProSync) or third-party macOS utilities.
 
-**Machine-readable index:** Specification available at [`llms.txt`](llms.txt). Last checked: **2026-09-26**.
+**Machine-readable index:** Specification available at [`llms.txt`](llms.txt). Last checked: **2026-09-28**.
 
 ---
 
 ## Quick Navigation
 
-1. [Features & Core Capabilities](#1-features)
-2. [System Architecture & Data Flow](#2-architecture)
-3. [Target Personas & Discoverability](#3-target-personas--discoverability)
-4. [Comparative Matrix vs. Alternatives](#4-comparative-matrix-vs-alternatives)
-5. [Dual Mermaid Diagrams](#5-dual-mermaid-diagrams)
-6. [Governance & Runtime Invariants](#6-governance--runtime-invariants)
-7. [Synchronization Modes & Semantics](#7-synchronization-modes)
-8. [SQLite WAL Database Protection](#8-sqlite-wal-database-protection)
-9. [Visual Showcase & Feature Gallery](#9-visual-showcase--feature-gallery)
-10. [Installation & Dependencies](#10-installation--dependencies)
-11. [CLI & Headless Automation](#11-cli--headless-automation)
-12. [Scheduled Backups & IANA Timezones](#12-scheduled-backups--iana-timezones)
-13. [Portable Web/PWA Companion](#13-portable-webpwa-companion)
-14. [ProSyncReader & ProFiler Search](#14-prosyncreader--profiler-search)
-15. [Windows Store & MSIX Staging](#15-windows-store--msix-staging)
-16. [Testing & Quality Checks](#16-testing--quality-checks)
-17. [Third-Party Licenses & Transparency](#17-third-party-licenses--transparency)
-18. [Security Policy & Sibling Ecosystem](#18-security-policy--sibling-ecosystem)
+1. [Features & Core Capabilities](#sec-01)
+2. [System Architecture & Data Flow](#sec-02)
+3. [Target Personas & Discoverability](#sec-03)
+4. [Comparative Matrix vs. Alternatives](#sec-04)
+5. [Dual Mermaid Diagrams](#sec-05)
+6. [Governance & Runtime Invariants](#sec-06)
+7. [Synchronization Modes & Semantics](#sec-07)
+8. [SQLite WAL Database Protection](#sec-08)
+9. [Visual Showcase & Feature Gallery](#sec-09)
+10. [Installation & Dependencies](#sec-10)
+11. [CLI & Headless Automation](#sec-11)
+12. [Scheduled Backups & IANA Timezones](#sec-12)
+13. [Portable Web/PWA Companion](#sec-13)
+14. [ProSyncReader & ProFiler Search](#sec-14)
+15. [Windows Store & MSIX Staging](#sec-15)
+16. [Testing & Quality Checks](#sec-16)
+17. [Third-Party Licenses & Transparency](#sec-17)
+18. [Security Policy & Sibling Ecosystem](#sec-18)
 
 ---
 
+<a id="sec-01"></a>
 <a id="1-features"></a>
 <a id="features"></a>
 <a id="key-features"></a>
@@ -74,6 +76,7 @@
 
 ---
 
+<a id="sec-02"></a>
 <a id="2-architecture"></a>
 <a id="architecture"></a>
 <a id="architecture--data-flow"></a>
@@ -122,6 +125,7 @@ ProSync separates user interaction, synchronization scheduling, database integri
 
 ---
 
+<a id="sec-03"></a>
 <a id="3-target-personas--discoverability"></a>
 <a id="target-personas--discoverability"></a>
 <a id="target-personas"></a>
@@ -167,6 +171,7 @@ ProSync separates user interaction, synchronization scheduling, database integri
 
 ---
 
+<a id="sec-04"></a>
 <a id="4-comparative-matrix-vs-alternatives"></a>
 <a id="comparative-matrix-vs-alternatives"></a>
 <a id="comparative-matrix"></a>
@@ -190,6 +195,7 @@ ProSync separates user interaction, synchronization scheduling, database integri
 
 ---
 
+<a id="sec-05"></a>
 <a id="5-dual-mermaid-diagrams"></a>
 <a id="dual-mermaid-diagrams"></a>
 <a id="mermaid-diagrams"></a>
@@ -292,6 +298,7 @@ sequenceDiagram
 
 ---
 
+<a id="sec-06"></a>
 <a id="6-governance--runtime-invariants"></a>
 <a id="governance--runtime-invariants"></a>
 <a id="runtime-invariants"></a>
@@ -317,6 +324,7 @@ ProSync strictly enforces ten foundational governance and runtime invariants:
 
 ---
 
+<a id="sec-07"></a>
 <a id="7-synchronization-modes"></a>
 <a id="synchronization-modes"></a>
 <a id="sync-modes"></a>
@@ -337,6 +345,7 @@ ProSync provides five deterministic synchronization modes to suit various backup
 
 ---
 
+<a id="sec-08"></a>
 <a id="8-sqlite-wal-database-protection"></a>
 <a id="sqlite-wal-database-protection"></a>
 <a id="database-protection-v32"></a>
@@ -362,6 +371,7 @@ ProSync proactively detects active SQLite database files and enforces crash-cons
 
 ---
 
+<a id="sec-09"></a>
 <a id="9-visual-showcase--feature-gallery"></a>
 <a id="visual-showcase--feature-gallery"></a>
 <a id="visual-showcase"></a>
@@ -377,6 +387,7 @@ ProSync proactively detects active SQLite database files and enforces crash-cons
 
 ---
 
+<a id="sec-10"></a>
 <a id="10-installation--dependencies"></a>
 <a id="installation--dependencies"></a>
 <a id="installation"></a>
@@ -399,6 +410,7 @@ pip install -r requirements.txt
 
 ---
 
+<a id="sec-11"></a>
 <a id="11-cli--headless-automation"></a>
 <a id="cli--headless-automation"></a>
 <a id="headless-cli"></a>
@@ -426,6 +438,7 @@ python ProSyncStart_V3.1.py --all --quiet --config path/to/config.json
 
 ---
 
+<a id="sec-12"></a>
 <a id="12-scheduled-backups--iana-timezones"></a>
 <a id="scheduled-backups--iana-timezones"></a>
 <a id="scheduled-backups"></a>
@@ -440,6 +453,7 @@ ProSync features a robust scheduling engine with dual trigger modes:
 
 ---
 
+<a id="sec-13"></a>
 <a id="13-portable-webpwa-companion"></a>
 <a id="portable-webpwa-companion"></a>
 <a id="webpwa-companion"></a>
@@ -462,6 +476,7 @@ python -m http.server 4179
 
 ---
 
+<a id="sec-14"></a>
 <a id="14-prosyncreader--profiler-search"></a>
 <a id="prosyncreader--profiler-search"></a>
 <a id="prosyncreader--profiler-companion"></a>
@@ -481,6 +496,7 @@ python ProSyncReader.py
 
 ---
 
+<a id="sec-15"></a>
 <a id="15-windows-store--msix-staging"></a>
 <a id="windows-store--msix-staging"></a>
 <a id="windows-build"></a>
@@ -500,6 +516,7 @@ ProSync includes complete Microsoft Store / MSIX staging materials:
 
 ---
 
+<a id="sec-16"></a>
 <a id="16-testing--quality-checks"></a>
 <a id="testing--quality-checks"></a>
 <a id="quality-checks"></a>
@@ -508,7 +525,7 @@ ProSync includes complete Microsoft Store / MSIX staging materials:
 <a id="qualitaetssicherung"></a>
 ## 16. Testing & Quality Checks
 
-Last verified on **2026-09-18**: 124 Python tests and 29 Web/PWA tests passed (153 total tests).
+Last verified on **2026-09-28**: 158 Python tests and 29 Web/PWA tests passed (187 total tests | 100% green).
 
 ```bash
 # Compile check across all core modules
@@ -533,6 +550,7 @@ node --check sw.js
 
 ---
 
+<a id="sec-17"></a>
 <a id="17-third-party-licenses--transparency"></a>
 <a id="third-party-licenses--transparency"></a>
 <a id="license"></a>
@@ -549,6 +567,7 @@ ProSync is licensed under the permissive [MIT License](LICENSE).
 
 ---
 
+<a id="sec-18"></a>
 <a id="18-security-policy--sibling-ecosystem"></a>
 <a id="security-policy--sibling-ecosystem"></a>
 <a id="sibling-tools--file-bricks-ecosystem"></a>
@@ -561,6 +580,10 @@ ProSync is licensed under the permissive [MIT License](LICENSE).
 ## 18. Security Policy & Sibling Ecosystem
 
 ProSync is maintained by **file-bricks** under the **open-bricks** open-source initiative. For vulnerability reporting, consult [SECURITY.md](SECURITY.md) (48-hour response SLA).
+
+### Statutory Disclaimer (§ 521 BGB Gratuitous Contract / Gefälligkeitsrecht)
+> [!NOTE]
+> ProSync is provided free of charge under the statutory principles of gratuitous contracts (§ 521 BGB German Civil Code). Liability of the author and maintainers is strictly limited to intentional misconduct and gross negligence. Any further warranty or liability for data loss or indirect damages is expressly disclaimed to the maximum extent permitted by applicable law.
 
 ### Sibling Ecosystem Matrix
 

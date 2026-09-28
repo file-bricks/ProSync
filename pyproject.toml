@@ -48,6 +48,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: System :: Archiving :: Backup",
     "Topic :: System :: Filesystems"
 ]
@@ -68,7 +69,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/file-bricks/ProSync"
+Homepage = "https://github.com/file-bricks/ProSync#readme"
 Documentation = "https://github.com/file-bricks/ProSync/blob/master/USER_GUIDE.md"
 Changelog = "https://github.com/file-bricks/ProSync/blob/master/CHANGELOG.md"
 Repository = "https://github.com/file-bricks/ProSync.git"
@@ -81,11 +82,12 @@ Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
 "LLM Ready" = "https://github.com/file-bricks/ProSync/blob/master/llms.txt"
 "Marketing Log" = "https://github.com/file-bricks/ProSync/blob/master/MARKETING-LOG.txt"
 "Third-Party Licenses" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.md"
+"Third-Party Licenses (Text)" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.txt"
 Notice = "https://github.com/file-bricks/ProSync/blob/master/NOTICE"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -v"
+addopts = "-ra -v --basetemp=.pytest_temp"
 norecursedirs = [
     ".git",
     ".pytest_cache",
