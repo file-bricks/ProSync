@@ -11,7 +11,7 @@
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![Platform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#10-installation--dependencies)
 [![Python: 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square)](pyproject.toml)
-[![Tests: 158 passed](https://img.shields.io/badge/Tests-158%20passed%20%7C%20100%25%20green-brightgreen?style=flat-square)](#sec-16)
+[![Tests: 163 passed](https://img.shields.io/badge/Tests-163%20passed%20%7C%20100%25%20green-brightgreen?style=flat-square)](#sec-16)
 [![Privacy: 100% Local | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success?style=flat-square)](PRIVACY_POLICY.md)
 [![Security: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-success?style=flat-square)](SECURITY.md)
 [![Security SLA: 48h / 5d](https://img.shields.io/badge/Security%20SLA-48h%20Response%20%7C%205d%20Triage-blue?style=flat-square)](SECURITY.md)
@@ -20,12 +20,12 @@
 [![Ecosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo?style=flat-square)](https://github.com/file-bricks)
 [![Umbrella: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-purple?style=flat-square)](https://github.com/open-bricks)
 [![Context: llms.txt](https://img.shields.io/badge/Context-llms.txt-teal?style=flat-square)](llms.txt)
-[![Verified: 2026-09-28](https://img.shields.io/badge/Verified-2026--09--28-blue?style=flat-square)](CHANGELOG.md)
+[![Verified: 2026-09-29](https://img.shields.io/badge/Verified-2026--09--29-blue?style=flat-square)](CHANGELOG.md)
 
 > [!NOTE]
 > **Disambiguation:** `file-bricks/ProSync` is an open-source Windows desktop and background application built with Python (PySide6) for local file/folder synchronization with automated SQLite WAL database protection. It is completely independent of enterprise database replication products (e.g., Tibero ProSync) or third-party macOS utilities.
 
-**Machine-readable index:** Specification available at [`llms.txt`](llms.txt). Last checked: **2026-09-28**.
+**Machine-readable index:** Specification available at [`llms.txt`](llms.txt). Last checked: **2026-09-29**.
 
 ---
 

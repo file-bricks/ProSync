@@ -39,6 +39,9 @@ AUFGABEN.txt
 LOCK
 LOCK.*
 LOCK*.txt
+LOCK.user.*
+LOCK.until.*
+LOCK.condition.*
 LOCK.permissions.json
 .automation-lock
 *.lock
@@ -98,6 +101,7 @@ releases/
 
 # ---- Betriebssystem ----
 desktop.ini
+Desktop.ini
 Thumbs.db
 .DS_Store
 ehthumbs.db
@@ -106,8 +110,12 @@ ehthumbs.db
 *-ASUS-GEI.md
 *-WORKSTATION-LG.md
 *-WORKSTATION-LG*
+*_WORKSTATION-LG*
+*-WORKSTATION-LG.*
 *-ASUS-GEI*
 *-WORKSTATION*
+*_WORKSTATION*
+*-WORKSTATION.*
 *-ASUS*
 *-LAPTOP*
 *-Mac Studio*

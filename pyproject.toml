@@ -83,6 +83,7 @@ Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
 "Marketing Log" = "https://github.com/file-bricks/ProSync/blob/master/MARKETING-LOG.txt"
 "Third-Party Licenses" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.md"
 "Third-Party Licenses (Text)" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.txt"
+"Level 1 SBOM" = "https://github.com/file-bricks/ProSync/blob/master/THIRD_PARTY_LICENSES.md"
 Notice = "https://github.com/file-bricks/ProSync/blob/master/NOTICE"
 
 [tool.pytest.ini_options]
@@ -94,6 +95,8 @@ norecursedirs = [
     ".pytest_temp",
     ".ruff_cache",
     ".hypothesis",
+    ".turbo",
+    ".nyc_output",
     "build",
     "dist",
     "venv",

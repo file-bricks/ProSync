@@ -11,7 +11,7 @@
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![Plattform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#10-installation--abhaengigkeiten)
 [![Python: 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square)](pyproject.toml)
-[![Tests: 158 bestanden](https://img.shields.io/badge/Tests-158%20bestanden%20%7C%20100%25%20gr%C3%BCn-brightgreen?style=flat-square)](#sec-16)
+[![Tests: 163 bestanden](https://img.shields.io/badge/Tests-163%20bestanden%20%7C%20100%25%20gr%C3%BCn-brightgreen?style=flat-square)](#sec-16)
 [![Datenschutz: 100% Lokal | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success?style=flat-square)](PRIVACY_POLICY.md)
 [![Sicherheit: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-success?style=flat-square)](SECURITY.md)
 [![Sicherheits-SLA: 48h / 5d](https://img.shields.io/badge/Security%20SLA-48h%20Response%20%7C%205d%20Triage-blue?style=flat-square)](SECURITY.md)
@@ -20,12 +20,12 @@
 [![Ökosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo?style=flat-square)](https://github.com/file-bricks)
 [![Dach: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-purple?style=flat-square)](https://github.com/open-bricks)
 [![Kontext: llms.txt](https://img.shields.io/badge/Context-llms.txt-teal?style=flat-square)](llms.txt)
-[![Geprüft: 2026-09-28](https://img.shields.io/badge/Gepr%C3%BCft-2026--09--28-blue?style=flat-square)](CHANGELOG.md)
+[![Geprüft: 2026-09-29](https://img.shields.io/badge/Gepr%C3%BCft-2026--09--29-blue?style=flat-square)](CHANGELOG.md)
 
 > [!NOTE]
 > **Abgrenzung / Disambiguation:** `file-bricks/ProSync` ist eine quelloffene Windows-Desktop- und Hintergrundanwendung auf Python-Basis (PySide6) für die lokale Datei- und Ordnersynchronisation mit automatischem SQLite-WAL-Datenbankschutz. Das Projekt steht in keiner Verbindung zu Enterprise-Datenbank-Replikationssoftware (wie z. B. Tibero ProSync) oder macOS-Synchronisationswerkzeugen Dritter.
 
-**Maschinenlesbarer Index:** Spezifikation verfügbar unter [`llms.txt`](llms.txt). Zuletzt geprüft: **2026-09-28**.
+**Maschinenlesbarer Index:** Spezifikation verfügbar unter [`llms.txt`](llms.txt). Zuletzt geprüft: **2026-09-29**.
 
 ---
 

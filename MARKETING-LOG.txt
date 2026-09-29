@@ -1,7 +1,7 @@
 ================================================================================
 PROSYNC SUITE — MARKETING, DISCOVERY & GOVERNANCE LOG
 ================================================================================
-Stand: 2026-09-28
+Stand: 2026-09-29
 Repository: file-bricks/ProSync
 Branch: master
 Version: 3.2.0
@@ -289,4 +289,45 @@ Prüfpunkte & Maßnahmen:
 8. Automatisierte Vertragstests (tests/test_metadata.py):
    - Contract-Tests für trilinguale sec-01..sec-18 Anker-Parität, Level 1 SBOM Invariant Matrix,
      § 521 BGB Rechtsbelehrung, aktualisierte Badges und Pytest --basetemp Härtung erweitert.
+================================================================================
+
+
+11. COMPREHENSIVE PATH A REPOSITORY LIFECYCLE & CI WORKFLOW HARDENING AUDIT
+--------------------------------------------------------------------------------
+Audit-Datum: 2026-09-29
+Status: Passed (100% Green)
+Durchgeführt von: Antigravity (Gemini) / GitHubBot Pfad A Routine
+Repository: file-bricks/ProSync
+Branch: master
+Version: 3.2.0 (strikte Einhaltung von T-20260920-167562623)
+
+Prüfpunkte & Maßnahmen:
+1. Version-Freeze Disziplin:
+   - Versionsnummer 3.2.0 in pyproject.toml, Quellcode und Manifesten strikt unverändert bewahrt.
+2. CI Lifecycle Workflows & Governance-Labels:
+   - .github/workflows/auto-assign.yml (actions/github-script@v7, timeout-minutes: 5,
+     cancel-in-progress: true, pull-requests: write, issues: write) neu provisioniert.
+   - .github/workflows/label-sync.yml (EndBug/label-sync@v2, timeout-minutes: 5,
+     cancel-in-progress: true, issues: write) neu provisioniert.
+   - .github/labels.yml mit 11 Standard-Governance-Labels gemäß GOVERNANCE.md §4.2 etabliert.
+3. Multi-Host Sync-, Lock- & Cache-Defense (.gitignore):
+   - Desktop.ini und erweiterte Multi-Host-Tokens (*_WORKSTATION*, *_WORKSTATION-LG*,
+     *-WORKSTATION.*, *-WORKSTATION-LG.*) sowie kanonische Lock-Dateien (LOCK.user.*,
+     LOCK.until.*, LOCK.condition.*) gehärtet.
+4. Level 1 SBOM Text-Companion & Lizenzaudit (THIRD_PARTY_LICENSES.txt & THIRD_PARTY_LICENSES.md):
+   - Re-Auditiert auf Stand 2026-09-29 mit Bestätigung der kanonischen NOTICE-Attribution,
+     unprivilegierter RunAsInvoker Non-Elevation Zertifizierung (INV-RUNAS-02),
+     Zero-Copyleft & 100% permissiven/LGPL-isolierten Laufzeitabhängigkeiten sowie
+     Verifikation aller 10 Governance-Invarianten INV-LOCAL-01 bis INV-SLA-10.
+5. PEP 621 Standardisierung & Paketierung (pyproject.toml):
+   - Level 1 SBOM URL in [project.urls] registriert; [tool.pytest.ini_options] norecursedirs
+     um .turbo und .nyc_output erweitert.
+6. Dokumentations-, Badge- & RAG-Kontext-Aktualisierung:
+   - Shields.io Badges für Verified: 2026-09-29 (Geprüft / Verificado) und verifizierte Tests
+     über alle drei Sprachfassungen (README.md, README_de.md, README.es.md) synchronisiert;
+     llms.txt auf Stand 2026-09-29 aktualisiert.
+7. Automatisierte Vertragstests (tests/test_metadata.py):
+   - Neue Contract-Tests für CI Lifecycle Workflows (auto-assign.yml, label-sync.yml,
+     .github/labels.yml), Level 1 SBOM Plaintext Companion Recency und Invarianten,
+     pyproject.toml URL-Registrierung und CHANGELOG [Unreleased] implementiert.
 ================================================================================

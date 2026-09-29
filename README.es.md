@@ -11,7 +11,7 @@
 [![Versión](https://img.shields.io/badge/Version-v3.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![Plataforma: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#10-installation--dependencies)
 [![Python: 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square)](pyproject.toml)
-[![Pruebas: 158 superadas](https://img.shields.io/badge/Pruebas-158%20superadas%20%7C%20100%25%20verde-brightgreen?style=flat-square)](#sec-16)
+[![Pruebas: 163 superadas](https://img.shields.io/badge/Pruebas-163%20superadas%20%7C%20100%25%20verde-brightgreen?style=flat-square)](#sec-16)
 [![Privacidad: 100% Local | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success?style=flat-square)](PRIVACY_POLICY.md)
 [![Seguridad: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-success?style=flat-square)](SECURITY.md)
 [![SLA de seguridad: 48h / 5d](https://img.shields.io/badge/Security%20SLA-48h%20Response%20%7C%205d%20Triage-blue?style=flat-square)](SECURITY.md)
@@ -20,12 +20,12 @@
 [![Ecosistema: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo?style=flat-square)](https://github.com/file-bricks)
 [![Organización: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-purple?style=flat-square)](https://github.com/open-bricks)
 [![Contexto: llms.txt](https://img.shields.io/badge/Context-llms.txt-teal?style=flat-square)](llms.txt)
-[![Verificado: 2026-09-28](https://img.shields.io/badge/Verificado-2026--09--28-blue?style=flat-square)](CHANGELOG.md)
+[![Verificado: 2026-09-29](https://img.shields.io/badge/Verificado-2026--09--29-blue?style=flat-square)](CHANGELOG.md)
 
 > [!NOTE]
 > **Aclaración y desambiguación:** `file-bricks/ProSync` es una aplicación de escritorio y segundo plano de código abierto basada en Python (PySide6) para la sincronización de archivos y carpetas locales con protección automatizada para bases de datos SQLite en modo WAL. Este proyecto no está asociado con software empresarial de replicación de bases de datos ni con utilidades homónimas de terceros para macOS.
 
-**Índice para modelos de lenguaje (LLM):** Especificación disponible en [`llms.txt`](llms.txt). Última revisión: **2026-09-28**.
+**Índice para modelos de lenguaje (LLM):** Especificación disponible en [`llms.txt`](llms.txt). Última revisión: **2026-09-29**.
 
 ---
 

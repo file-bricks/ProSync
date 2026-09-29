@@ -5,6 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Geändert / Changed (2026-09-29)
+- **Pfad A Repository-Hygiene, CI Lifecycle Workflows, Multi-Host Lock-Schutz, Level 1 SBOM Text-Companion & Vertragstest-Erweiterung:**
+  - **Version-Freeze Disziplin (`T-20260920-167562623`):** Versionsnummer `3.2.0` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert beibehalten.
+  - **CI Lifecycle Workflows & Governance-Labels:** `.github/workflows/auto-assign.yml` (actions/github-script@v7, timeout-minutes: 5, Concurrency cancel-in-progress: true, least-privilege permissions: pull-requests: write, issues: write) und `.github/workflows/label-sync.yml` (EndBug/label-sync@v2, timeout-minutes: 5, Concurrency cancel-in-progress: true, least-privilege permissions: issues: write) neu provisioniert; kanonische `.github/labels.yml` mit 11 Standard-Governance-Labels gemäß GOVERNANCE.md §4.2 etabliert.
+  - **Multi-Host Sync-, Lock- & Cache-Defense (`.gitignore`):** Schutzregeln für erweiterte Host-Tokens (`Desktop.ini`, `*_WORKSTATION*`, `*_WORKSTATION-LG*`, `*-WORKSTATION.*`, `*-WORKSTATION-LG.*`) und kanonische Lock-Dateien (`LOCK.user.*`, `LOCK.until.*`, `LOCK.condition.*`) gehärtet.
+  - **Level 1 SBOM Text-Companion & Lizenzaudit (`THIRD_PARTY_LICENSES.txt` & `THIRD_PARTY_LICENSES.md`):** Re-Auditiert auf Stand 2026-09-29 mit Bestätigung der kanonischen `NOTICE`-Attribution, unprivilegierter `RunAsInvoker` Non-Elevation Zertifizierung (`INV-RUNAS-02`), Zero-Copyleft & 100% permissiven/LGPL-isolierten Laufzeitabhängigkeiten sowie Verifikation aller 10 Governance-Invarianten `INV-LOCAL-01` bis `INV-SLA-10`.
+  - **PEP 621 Standardisierung & Paketierung (`pyproject.toml`):** `Level 1 SBOM` URL in `[project.urls]` registriert; `[tool.pytest.ini_options]` `norecursedirs` um `.turbo` und `.nyc_output` erweitert.
+  - **Dokumentations-, Badge- & RAG-Kontext-Aktualisierung:** Shields.io Badges für `Verified: 2026-09-29` (`Geprüft` / `Verificado`) und verifizierte Tests über alle drei Sprachfassungen (`README.md`, `README_de.md`, `README.es.md`) synchronisiert; `llms.txt` auf Stand 2026-09-29 aktualisiert.
+  - **Automatisierte Vertragstests (`tests/test_metadata.py`):** Neue Contract-Tests für CI Lifecycle Workflows (`auto-assign.yml`, `label-sync.yml`, `.github/labels.yml`), `Level 1 SBOM` Plaintext Companion Recency und Invarianten, `pyproject.toml` URL-Registrierung und CHANGELOG `[Unreleased]` implementiert.
+
 ### Geändert / Changed (2026-09-28)
 - **Pfad B Marketing, Discoverability, Visual Architecture & Trilinguale 18-Punkte-Navigationsparität:**
   - **Version-Freeze Disziplin (`T-20260920-167562623`):** Versionsnummer `3.2.0` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert beibehalten.

@@ -72,7 +72,7 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-09-28" in content, "llms.txt timestamp not updated to 2026-09-28"
+    assert "Last-checked: 2026-09-29" in content, "llms.txt timestamp not updated to 2026-09-29"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"
@@ -111,6 +111,7 @@ def test_pyproject_pep621_metadata() -> None:
     assert '"LLM Ready" =' in content or "LLM Ready =" in content, "LLM Ready URL missing in pyproject.toml"
     assert '"Marketing Log" =' in content or "Marketing Log =" in content, "Marketing Log URL missing in pyproject.toml"
     assert '"Third-Party Licenses (Text)" =' in content, "Third-Party Licenses (Text) URL missing in pyproject.toml"
+    assert '"Level 1 SBOM" =' in content, "Level 1 SBOM URL missing in pyproject.toml"
     assert "Notice =" in content, "Notice URL missing in pyproject.toml"
     assert "license-files =" in content, "license-files missing in pyproject.toml"
     assert 'addopts = "-ra -v --basetemp=.pytest_temp"' in content, "addopts with --basetemp=.pytest_temp missing in pyproject.toml"
@@ -136,6 +137,8 @@ def test_ci_concurrency_and_timeout_guardrails() -> None:
         "source-platform-smoke.yml": 15,
         "stale.yml": 10,
         "welcome.yml": 5,
+        "auto-assign.yml": 5,
+        "label-sync.yml": 5,
     }
 
     for wf_name, expected_timeout in workflows.items():
@@ -158,12 +161,17 @@ def test_gitignore_multihost_and_lock_defense() -> None:
     patterns = [
         "*conflicted copy*",
         "*-WORKSTATION*",
+        "*_WORKSTATION*",
         "*-ASUS*",
         "*-LAPTOP*",
         "*-Mac Studio*",
         "*-MacBook*",
         "*-IDEAPAD*",
+        "Desktop.ini",
         "LOCK",
+        "LOCK.user.*",
+        "LOCK.until.*",
+        "LOCK.condition.*",
         "*.lock",
         ".automation-lock",
         "uv.lock",
@@ -181,10 +189,10 @@ def test_marketing_log_recent_hygiene_entry() -> None:
     assert mktg_file.is_file(), "MARKETING-LOG.txt must exist"
     content = mktg_file.read_text(encoding="utf-8")
 
-    assert "2026-09-28" in content, "Recent audit date 2026-09-28 missing in MARKETING-LOG.txt"
+    assert "2026-09-29" in content, "Recent audit date 2026-09-29 missing in MARKETING-LOG.txt"
     assert "PROSYNC SUITE" in content
     assert "INV-LOCAL-01" in content and "INV-SLA-10" in content, "Governance pillars missing in MARKETING-LOG.txt"
-    assert "Pfad B" in content or "PFAD B" in content, "Pfad B audit section missing in MARKETING-LOG.txt"
+    assert "Pfad A" in content or "PFAD A" in content, "Pfad A audit section missing in MARKETING-LOG.txt"
 
 
 def test_web_companion_pwa_svg_parity() -> None:
@@ -337,10 +345,10 @@ def test_pyproject_saturated_keywords() -> None:
 
 
 def test_third_party_licenses_notice_cross_reference_and_recency() -> None:
-    """Verify THIRD_PARTY_LICENSES.md references NOTICE, text inventory, and is updated to 2026-09-28."""
+    """Verify THIRD_PARTY_LICENSES.md references NOTICE, text inventory, and is updated to 2026-09-29."""
     sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
     content = sbom_file.read_text(encoding="utf-8")
-    assert "Audit Date:** 2026-09-28" in content, "Audit Date not updated to 2026-09-28 in THIRD_PARTY_LICENSES.md"
+    assert "Audit Date:** 2026-09-29" in content, "Audit Date not updated to 2026-09-29 in THIRD_PARTY_LICENSES.md"
     assert "NOTICE" in content, "NOTICE cross-reference missing in THIRD_PARTY_LICENSES.md"
     assert "THIRD_PARTY_LICENSES.txt" in content, "THIRD_PARTY_LICENSES.txt reference missing"
 
@@ -350,6 +358,7 @@ def test_changelog_unreleased_entries() -> None:
     changelog_file = ROOT / "CHANGELOG.md"
     content = changelog_file.read_text(encoding="utf-8")
     assert "## [Unreleased]" in content
+    assert "2026-09-29" in content
     assert "Pfad B" in content
     assert "2026-09-28" in content
     assert "Pfad A" in content
@@ -410,6 +419,56 @@ def test_level_1_sbom_invariants_table() -> None:
     for inv in expected_invariants:
         assert inv in content, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.md"
     assert "VERIFIED" in content
+
+
+def test_github_labels_configuration() -> None:
+    """Verify canonical .github/labels.yml exists and contains standard governance labels."""
+    labels_file = ROOT / ".github" / "labels.yml"
+    assert labels_file.is_file(), ".github/labels.yml must exist"
+    content = labels_file.read_text(encoding="utf-8")
+
+    expected_labels = [
+        "bug",
+        "enhancement",
+        "good first issue",
+        "help wanted",
+        "documentation",
+        "duplicate",
+        "wontfix",
+        "priority: high",
+        "priority: low",
+        "needs-triage",
+        "stale",
+    ]
+    for label in expected_labels:
+        assert f"- name: {label}" in content or f"- name: '{label}'" in content, f"Label {label} missing in .github/labels.yml"
+
+
+def test_third_party_licenses_text_companion_and_sbom() -> None:
+    """Verify THIRD_PARTY_LICENSES.txt plaintext companion recency, attribution, and Level 1 SBOM invariants."""
+    txt_file = ROOT / "THIRD_PARTY_LICENSES.txt"
+    assert txt_file.is_file(), "THIRD_PARTY_LICENSES.txt must exist"
+    content = txt_file.read_text(encoding="utf-8")
+
+    assert "Audited: Stand: 2026-09-29" in content, "Stand: 2026-09-29 missing in THIRD_PARTY_LICENSES.txt"
+    assert "Last checked: 2026-09-29" in content, "Last checked date missing in THIRD_PARTY_LICENSES.txt"
+    assert "Lukas Geiger" in content, "Attribution to Lukas Geiger missing in THIRD_PARTY_LICENSES.txt"
+    assert "file-bricks" in content, "file-bricks mention missing in THIRD_PARTY_LICENSES.txt"
+    assert "RunAsInvoker" in content, "RunAsInvoker non-elevation missing in THIRD_PARTY_LICENSES.txt"
+    expected_invariants = [
+        "INV-LOCAL-01",
+        "INV-RUNAS-02",
+        "INV-WAL-03",
+        "INV-INTEG-04",
+        "INV-SCHED-05",
+        "INV-PWA-06",
+        "INV-PLAT-07",
+        "INV-STORE-08",
+        "INV-DOCS-09",
+        "INV-SLA-10",
+    ]
+    for inv in expected_invariants:
+        assert inv in content, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.txt"
 
 
 if __name__ == "__main__":
