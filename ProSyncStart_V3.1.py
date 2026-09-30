@@ -1634,11 +1634,27 @@ def _atomic_copy2(src, dst):
     Volume; bei Fehler wird die tmp-Datei aufgeraeumt."""
     tmp = f"{dst}.prosync_tmp"
     try:
+        if os.path.exists(tmp):
+            try:
+                os.chmod(tmp, stat.S_IWRITE | stat.S_IREAD)
+                os.remove(tmp)
+            except OSError:
+                pass
         shutil.copy2(src, tmp)
+        # Auf Windows: Wenn Ziel existiert und schreibgeschützt ist, schreibbar machen
+        if os.path.exists(dst):
+            try:
+                os.chmod(dst, stat.S_IWRITE | stat.S_IREAD)
+            except OSError:
+                pass
         os.replace(tmp, dst)
     except BaseException:
         try:
             if os.path.exists(tmp):
+                try:
+                    os.chmod(tmp, stat.S_IWRITE | stat.S_IREAD)
+                except OSError:
+                    pass
                 os.remove(tmp)
         except OSError:
             pass
@@ -1660,6 +1676,7 @@ class FileSyncWorker(QThread):
     status = Signal(str)
     finished = Signal()
     error = Signal(str)
+    sync_report = Signal(dict)
 
     def __init__(self, cfg):
         super().__init__()
@@ -1670,6 +1687,8 @@ class FileSyncWorker(QThread):
 
     def run(self):
         try:
+            _start_time = time.monotonic()
+            _started_at = datetime.now(timezone.utc).isoformat()
             source_file = self.cfg.get("source_file", "")
             target_file = self.cfg.get("target_file", "")
 
@@ -1682,8 +1701,26 @@ class FileSyncWorker(QThread):
                 self.error.emit(f"Quelldatei nicht gefunden: {source_file}")
                 return
 
+            if os.path.isdir(source_file):
+                self.error.emit(f"Quelldatei ist ein Verzeichnis, keine Datei: {source_file}")
+                return
+
+            if target_file.endswith(("/", "\\")) or (os.path.exists(target_file) and os.path.isdir(target_file)):
+                self.error.emit(f"Zieldatei darf kein Verzeichnis sein: {target_file}")
+                return
+
+            if os.path.normcase(os.path.abspath(source_file)) == os.path.normcase(os.path.abspath(target_file)):
+                self.error.emit(f"Quell- und Zieldatei dürfen nicht identisch sein: {source_file}")
+                return
+
             filename = os.path.basename(source_file)
             self.status.emit(f"[{self.cfg.get('name')}] Bereite Sync vor...")
+
+            while self.is_paused and not self.is_killed:
+                time.sleep(0.05)
+
+            if self.is_killed:
+                return
 
             # Step 1: WAL Checkpoint if needed
             if self.cfg.get("checkpoint_before_sync"):
@@ -1698,6 +1735,9 @@ class FileSyncWorker(QThread):
                     )
                     return
 
+            while self.is_paused and not self.is_killed:
+                time.sleep(0.05)
+
             if self.is_killed:
                 return
 
@@ -1706,6 +1746,12 @@ class FileSyncWorker(QThread):
             target_dir = os.path.dirname(target_file)
             if target_dir:
                 os.makedirs(target_dir, exist_ok=True)
+
+            while self.is_paused and not self.is_killed:
+                time.sleep(0.05)
+
+            if self.is_killed:
+                return
 
             # Step 3: Copy file
             self.progress.emit(PROGRESS_COPY, "copy")
@@ -1718,23 +1764,56 @@ class FileSyncWorker(QThread):
                 self.error.emit(f"Fehler beim Kopieren: {e}")
                 return
 
+            while self.is_paused and not self.is_killed:
+                time.sleep(0.05)
+
+            if self.is_killed:
+                return
+
             # Step 4: Verify
             self.progress.emit(PROGRESS_VERIFY, "verify")
 
-            if os.path.exists(target_file):
-                src_size = os.path.getsize(source_file)
-                tgt_size = os.path.getsize(target_file)
+            if not os.path.exists(target_file):
+                self.error.emit(f"Zieldatei nach dem Kopieren nicht gefunden: {target_file}")
+                return
 
-                if src_size == tgt_size:
-                    self.status.emit(f"✓ Verifizierung erfolgreich ({src_size:,} Bytes)")
-                else:
-                    self.error.emit(f"Größen stimmen nicht überein! ({src_size} vs {tgt_size})")
+            src_size = os.path.getsize(source_file)
+            tgt_size = os.path.getsize(target_file)
+
+            if src_size != tgt_size:
+                self.error.emit(f"Größen stimmen nicht überein! ({src_size} vs {tgt_size})")
+                return
+
+            self.status.emit(f"✓ Verifizierung erfolgreich ({src_size:,} Bytes)")
+
+            if self.cfg.get("verify_checksum"):
+                src_hash = sha256_file(source_file)
+                tgt_hash = sha256_file(target_file)
+                if src_hash != tgt_hash:
+                    self.error.emit(
+                        f"Prüfsummen stimmen nicht überein! ({src_hash[:8]} vs {tgt_hash[:8]})"
+                    )
                     return
+                self.status.emit("✓ Prüfsummen-Verifizierung (SHA-256) erfolgreich")
 
             if self.is_killed:
                 return
 
             # Done!
+            _duration = time.monotonic() - _start_time
+            report = {
+                "connection": self.cfg.get("name", ""),
+                "connection_id": self.conn_id,
+                "mode": self.cfg.get("mode", "one_way"),
+                "started_at": _started_at,
+                "duration_seconds": round(_duration, 2),
+                "files_copied": 1,
+                "files_deleted": 0,
+                "files_skipped": 0,
+                "bytes_copied": tgt_size,
+                "total_actions": 1,
+            }
+            self.sync_report.emit(report)
             self.progress.emit(PROGRESS_DONE, "done")
             self.status.emit(f"✓ Sync abgeschlossen: {filename}")
             self.finished.emit()
@@ -1903,6 +1982,10 @@ class FolderSyncWorker(QThread):
                     elif act == "DELETE_R":
                         self.status.emit(f"Lösche Ziel: {rel_path}")
                         if os.path.exists(t_abs):
+                            try:
+                                os.chmod(t_abs, stat.S_IWRITE | stat.S_IREAD)
+                            except OSError:
+                                pass
                             os.remove(t_abs)
                             _stats["deleted"] += 1
 
@@ -3857,7 +3940,7 @@ class MainWindow(QMainWindow):
         # V3.2 CHANGED: Error-Handler mit Notification
         self.worker.error.connect(self._handle_worker_error)
         # Sync-Report speichern
-        if isinstance(self.worker, (FolderSyncWorker, SftpTargetSyncWorker)):
+        if hasattr(self.worker, "sync_report"):
             self.worker.sync_report.connect(self._save_sync_report)
         self.worker.start()
 
@@ -4479,7 +4562,7 @@ def run_headless_connection(conn, quiet=False):
     worker.status.connect(on_status)
     worker.error.connect(on_error)
     worker.finished.connect(on_finished)
-    if isinstance(worker, (FolderSyncWorker, SftpTargetSyncWorker)):
+    if hasattr(worker, "sync_report"):
         worker.sync_report.connect(on_report)
 
     if not quiet:

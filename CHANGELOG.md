@@ -5,6 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-09-30)
+- **FileSyncWorker, _atomic_copy2 & FolderSyncWorker Resilienz (Bugsweep 2026-09-30):**
+  - **Zieldatei-Verifizierung in `FileSyncWorker`:** Stille Falsch-Positiv-Meldung behoben: Fehlende Zieldateien nach dem Kopiervorgang (`if not os.path.exists(target_file)`) lösen nun einen sauberen Fehler aus (`error.emit`), statt die Prüfung zu überspringen und fälschlicherweise Erfolg zu melden.
+  - **Sync-Report Signal & Integration:** `sync_report = Signal(dict)` in `FileSyncWorker` ergänzt, sodass Einzeldatei-Synchronisationen vollständige Laufstatistiken (`connection`, `connection_id`, `mode`, `duration_seconds`, `files_copied`, `bytes_copied`) emittieren; Speicherung in `sync_log.json` via `MainWindow` und CLI `run_headless_connection` angebunden.
+  - **Pause-Unterstützung (`is_paused`):** `FileSyncWorker.run()` respektiert nun `self.is_paused` vor Checkpoint-, Kopiervorgangs- und Verifizierungsphasen, anstatt Pause-Signale der Benutzeroberfläche zu ignorieren.
+  - **Defensive Pfadvalidierung:** Abweisung von Verzeichnissen als `source_file` oder `target_file` sowie Erkennung und Abweisung identischer Quell- und Zieldateien (`os.path.normcase(os.path.abspath(...))`) vor dem Kopiervorgang.
+  - **Windows Read-Only Resilienz in `_atomic_copy2`:** `_atomic_copy2` entfernt Schreibschutz-Attribute (`S_IREAD`) auf existierenden Zieldateien vor `os.replace` (verhindert Windows `PermissionError [WinError 5]`) und stellt sicher, dass temporäre `.prosync_tmp`-Dateien auch bei schreibgeschützter Quelldatei im Fehlerfall restlos aufgeräumt werden.
+  - **Windows Read-Only Resilienz in `FolderSyncWorker` (`DELETE_R`):** Schreibgeschützte Zieldateien werden im Mirror-Modus vor dem Löschen schreibbar gemacht, wodurch `os.remove` nicht mehr mit `PermissionError` abbricht.
+  - **8 neue hermetische Regressionstests:** In `tests/test_bugsweep_file_sync_and_atomic_copy_resilience_20260930.py` implementiert (100% grün).
+
 ### Geändert / Changed (2026-09-29)
 - **Pfad A Repository-Hygiene, CI Lifecycle Workflows, Multi-Host Lock-Schutz, Level 1 SBOM Text-Companion & Vertragstest-Erweiterung:**
   - **Version-Freeze Disziplin (`T-20260920-167562623`):** Versionsnummer `3.2.0` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert beibehalten.
