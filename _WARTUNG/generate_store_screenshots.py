@@ -94,7 +94,6 @@ def _assert_font_rendering(app: QApplication) -> None:
 
 
 def ensure_app():
-    _force_native_platform()
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
@@ -254,6 +253,7 @@ def generate_store_assets(output_dir: Path | None = None) -> list[Path]:
 
 
 def generate_store_screenshots(output_dir: Path | None = None) -> list[Path]:
+    _force_native_platform()
     app = ensure_app()
     _assert_font_rendering(app)
     output_dir = output_dir or SCREENSHOT_DIR
@@ -304,6 +304,7 @@ def generate_store_screenshots(output_dir: Path | None = None) -> list[Path]:
 
 
 def main() -> int:
+    _force_native_platform()
     asset_targets = generate_store_assets()
     screenshot_targets = generate_store_screenshots()
     for target in [*asset_targets, *screenshot_targets]:
