@@ -6,6 +6,7 @@ import json
 import uuid
 import hashlib
 import shutil
+import tempfile
 import threading
 import sqlite3
 import time
@@ -1706,36 +1707,76 @@ class SyncWalker:
 
 
 def _atomic_copy2(src, dst):
-    """Bugsweep 26 BUG-copy (KRITISCH): atomar kopieren — tmp + os.replace statt direktem
-    shutil.copy2. Ein Absturz/kill mitten in copy2 hinterliess sonst eine HALBE Zieldatei (fuer
-    SQLite-DBs — dem Haupt-Use-Case — fatal: korrupter Header). os.replace ist atomar auf gleichem
-    Volume; bei Fehler wird die tmp-Datei aufgeraeumt."""
-    tmp = f"{dst}.prosync_tmp"
+    """Kopiert mit Copy2-Metadaten über eine eigene Stage im Zielverzeichnis.
+
+    Quelle und bestehendes Ziel bleiben bei Kopierfehlern erhalten. Ein reguläres,
+    einfach verlinktes Readonly-Ziel darf ersetzt werden; bei einem Fehler wird
+    sein Modus wiederhergestellt, sofern es noch dieselbe Datei ist. Externe
+    Dateiaustausche und gleichzeitig veränderte Quellen sind keine Snapshots.
+    """
+    def checked_destination():
+        source_stat = os.stat(src)
+        try:
+            destination_stat = os.stat(dst)
+        except FileNotFoundError:
+            return None
+        if os.path.samestat(source_stat, destination_stat):
+            raise shutil.SameFileError(f"Quelle und Ziel sind identisch: {src!r}")
+        return destination_stat
+
+    def cleanup_warning(message, error):
+        # Die ursprüngliche Exception darf auch bei einem Loggerfehler bestehen bleiben.
+        try:
+            log_warning(f"{message}: {error}")
+        except Exception:
+            pass
+
+    checked_destination()
+    tmp = None
+    fd = None
+    original_target = None
     try:
-        if os.path.exists(tmp):
-            try:
-                os.chmod(tmp, stat.S_IWRITE | stat.S_IREAD)
-                os.remove(tmp)
-            except OSError:
-                pass
+        fd, tmp = tempfile.mkstemp(prefix=".prosync-", suffix=".tmp",
+                                   dir=os.path.dirname(os.path.abspath(dst)))
+        os.close(fd)
+        fd = None
         shutil.copy2(src, tmp)
-        # Auf Windows: Wenn Ziel existiert und schreibgeschützt ist, schreibbar machen
-        if os.path.exists(dst):
-            try:
-                os.chmod(dst, stat.S_IWRITE | stat.S_IREAD)
-            except OSError:
-                pass
+        target_stat = checked_destination()
+        if os.name == "nt" and target_stat is not None and not target_stat.st_mode & stat.S_IWRITE:
+            target_link_stat = os.lstat(dst)
+            reparse = getattr(target_link_stat, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+            if (not stat.S_ISREG(target_link_stat.st_mode) or reparse
+                    or target_stat.st_nlink != 1
+                    or not os.path.samestat(target_stat, target_link_stat)):
+                raise PermissionError("Schreibgeschütztes Ziel besitzt einen Dateialias")
+            original_target = target_stat
+            os.chmod(dst, target_stat.st_mode | stat.S_IWRITE)
         os.replace(tmp, dst)
     except BaseException:
-        try:
-            if os.path.exists(tmp):
+        if fd is not None:
+            try:
+                os.close(fd)
+            except OSError as error:
+                cleanup_warning("Stage-Handle konnte nicht geschlossen werden", error)
+        if original_target is not None:
+            try:
+                current = os.lstat(dst)
+                if os.path.samestat(original_target, current):
+                    os.chmod(dst, original_target.st_mode)
+            except OSError as error:
+                cleanup_warning("Zielmodus konnte nicht wiederhergestellt werden", error)
+        if tmp is not None:
+            try:
+                # Copy2 kann Readonly übertragen: ausschließlich die eigene Stage ändern.
                 try:
+                    os.remove(tmp)
+                except PermissionError:
                     os.chmod(tmp, stat.S_IWRITE | stat.S_IREAD)
-                except OSError:
-                    pass
-                os.remove(tmp)
-        except OSError:
-            pass
+                    os.remove(tmp)
+            except FileNotFoundError:
+                pass
+            except OSError as error:
+                cleanup_warning("Eigene Stage konnte nicht entfernt werden", error)
         raise
 
 
