@@ -10,10 +10,14 @@ import argparse
 import hashlib
 import json
 import re
-import tomllib
 import zipfile
 from pathlib import Path
 from typing import Sequence
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 
 REQUIRED_DOCUMENTS = (

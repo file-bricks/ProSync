@@ -58,6 +58,40 @@ def test_generate_store_assets_creates_expected_sizes(tmp_path):
         assert image.height() == height
 
 
+def test_headless_assets_keep_platform_and_screenshots_still_require_native(tmp_path):
+    # A fresh process must not depend on a QApplication from earlier tests.
+    script = """
+import importlib.util
+import os
+from pathlib import Path
+import sys
+from PySide6.QtWidgets import QApplication
+spec = importlib.util.spec_from_file_location('store_generator', sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+destination = Path(sys.argv[2])
+generated = module.generate_store_assets(destination / 'assets')
+assert len(generated) == len(module.STORE_ASSETS)
+assert all(path.is_file() and path.stat().st_size > 0 for path in generated)
+assert os.environ['QT_QPA_PLATFORM'] == 'offscreen'
+assert QApplication.platformName() == 'offscreen'
+try:
+    module.generate_store_screenshots(destination / 'screenshots')
+except RuntimeError as error:
+    assert 'offscreen' in str(error)
+else:
+    raise AssertionError('Offscreen screenshots must remain rejected')
+assert not (destination / 'screenshots').exists()
+print('HEADLESS ASSETS OK; SCREENSHOT GUARD OK')
+"""
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    result = subprocess.run([sys.executable, "-c", script, str(MODULE_PATH), str(tmp_path)],
+                            cwd=ROOT, env=env, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "HEADLESS ASSETS OK; SCREENSHOT GUARD OK" in result.stdout
+
+
 def test_store_package_has_complete_non_placeholder_metadata() -> None:
     config = json.loads((ROOT / "store_package.json").read_text(encoding="utf-8"))
 
