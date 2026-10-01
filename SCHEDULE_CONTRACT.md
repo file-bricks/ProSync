@@ -1,13 +1,15 @@
 # ProSync schedule contract
 
-Status: Phase 2 for TW-PS-09
+Status: Phase 3 for TW-PS-09 (Weekday scheduling & XDG cross-platform integration completed)
 
 ## Scope
 
-ProSync supports interval schedules and an optional daily local-time schedule.
+ProSync supports interval schedules, daily local-time schedules, and optional
+weekday-restricted schedules (e.g. Monday-Friday).
 Phase 1 defines the daylight-saving-safe calculation; Phase 2 persists the
 daily schema, exposes it from the connection context menu, and arms a one-shot
-`QTimer` for the next valid occurrence.
+`QTimer` for the next valid occurrence; Phase 3 introduces weekday filtering,
+alias parsing (`workdays`, `weekend`, `all`), and profile export parity.
 
 ## Daily local-time rules
 
@@ -16,7 +18,7 @@ daily schema, exposes it from the connection context menu, and arms a one-shot
 - The calculated instant is always strictly later than the supplied current
   instant.
 - If today's wall-clock time has passed, the next run is on the following
-  local calendar date.
+  matching local calendar date.
 - During the spring daylight-saving jump, a nonexistent time is shifted
   forward by the transition gap. In Berlin, `02:30` therefore becomes `03:30`.
 - During the repeated autumn hour, the first occurrence (`fold=0`) is used.
@@ -27,11 +29,23 @@ daily schema, exposes it from the connection context menu, and arms a one-shot
 - The runtime dependency `tzdata` supplies the IANA database on Windows when
   the operating system does not expose it to Python.
 
+## Weekday filtering rules (Phase 3)
+
+- Schedules can optionally specify `weekdays`: an iterable or string specifying
+  active days (Python standard 0=Monday .. 6=Sunday).
+- Canonical aliases are supported: `workdays` / `werktage` / `mon-fri` ({0, 1, 2, 3, 4}),
+  `weekend` / `wochenende` ({5, 6}), `all` / `täglich` ({0..6}), or comma-separated
+  day names (`mon,wed,fri`).
+- When a run passes on Friday in a workday schedule, the next run advances directly
+  to Monday, skipping Saturday and Sunday.
+- Calculations search a rolling window of up to 14 days, correctly accommodating
+  infrequent single-day schedules (e.g. Sundays only) across DST boundaries.
+
 ## Daily schedule schema and runtime
 
 - A daily connection stores `autosync.mode = "daily"`, `daily_time` in
-  canonical `HH:MM` form, and an explicit IANA `timezone`.
-- The context-menu action **Tägliche Uhrzeit festlegen…** validates both values
+  canonical `HH:MM` form, an explicit IANA `timezone`, and optional `weekdays`.
+- The context-menu action **Tägliche Uhrzeit festlegen…** validates values
   before saving them to the local configuration. Existing interval schedules
   remain unchanged until a user selects this mode.
 - The scheduler uses a single-shot timer. After a trigger it calculates and
@@ -40,7 +54,7 @@ daily schema, exposes it from the connection context menu, and arms a one-shot
 - Resume does not invent a missed synchronization. It only schedules the next
   valid local occurrence, so a suspended device cannot silently run multiple
   catch-up copies.
+- Redacted portable profile export (`prosync-profile-v1.json`) preserves
+  daily configuration and weekday filters without exposing local runtime state.
 
 The implementation lives in `schedule_time.py` and `ProSyncStart_V3.1.py`.
-Weekday schedules, migration of existing interval profiles, and an end-to-end
-smoke against a controlled sync target remain Phase 3.

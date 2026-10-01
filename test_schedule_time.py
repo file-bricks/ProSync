@@ -7,7 +7,13 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from schedule_time import next_daily_run, parse_daily_time, resolve_iana_timezone
+from schedule_time import (
+    WEEKDAY_ALIASES,
+    next_daily_run,
+    parse_daily_time,
+    parse_weekdays,
+    resolve_iana_timezone,
+)
 
 
 BERLIN = ZoneInfo("Europe/Berlin")
@@ -100,6 +106,72 @@ def test_resolve_iana_timezone_rejects_unknown_values():
 
     with pytest.raises(ValueError, match="unknown IANA timezone"):
         resolve_iana_timezone("Mars/Olympus")
+
+
+def test_parse_weekdays_standard_aliases():
+    assert parse_weekdays("workdays") == {0, 1, 2, 3, 4}
+    assert parse_weekdays("werktage") == {0, 1, 2, 3, 4}
+    assert parse_weekdays("mon-fri") == {0, 1, 2, 3, 4}
+    assert parse_weekdays("mo-fr") == {0, 1, 2, 3, 4}
+    assert parse_weekdays("weekend") == {5, 6}
+    assert parse_weekdays("wochenende") == {5, 6}
+    assert parse_weekdays("all") == {0, 1, 2, 3, 4, 5, 6}
+    assert parse_weekdays("täglich") == {0, 1, 2, 3, 4, 5, 6}
+    assert parse_weekdays(None) is None
+    assert parse_weekdays("") is None
+
+
+def test_parse_weekdays_comma_separated_and_iterables():
+    assert parse_weekdays("mon,wed,fri") == {0, 2, 4}
+    assert parse_weekdays("mo; mi; fr") == {0, 2, 4}
+    assert parse_weekdays("0, 2, 4") == {0, 2, 4}
+    assert parse_weekdays([0, 1, 4]) == {0, 1, 4}
+    assert parse_weekdays({"Mo", "Di"}) == {0, 1}
+
+
+def test_parse_weekdays_error_cases():
+    with pytest.raises(ValueError, match="unknown weekday"):
+        parse_weekdays("invalid_day")
+
+    with pytest.raises(ValueError, match="between 0.*and 6"):
+        parse_weekdays([7])
+
+    with pytest.raises(ValueError, match="between 0.*and 6"):
+        parse_weekdays([-1])
+
+    with pytest.raises(ValueError, match="empty"):
+        parse_weekdays([])
+
+    with pytest.raises(TypeError, match="must be a string"):
+        parse_weekdays(12345)
+
+
+def test_next_daily_run_weekdays_skips_weekend():
+    # Friday 2026-01-16 at 19:00, target 18:00 on workdays (Mon-Fri)
+    # Today's run has passed, Sat/Sun are excluded -> jumps to Monday 2026-01-19
+    now = datetime(2026, 1, 16, 19, 0, tzinfo=BERLIN)
+    result = next_daily_run(now, time(18, 0), BERLIN, weekdays="workdays")
+
+    assert result == datetime(2026, 1, 19, 18, 0, tzinfo=BERLIN)
+    assert result.weekday() == 0  # Monday
+
+
+def test_next_daily_run_weekdays_same_day_if_future():
+    # Friday 2026-01-16 at 10:00, target 18:00 on workdays -> runs today at 18:00
+    now = datetime(2026, 1, 16, 10, 0, tzinfo=BERLIN)
+    result = next_daily_run(now, time(18, 0), BERLIN, weekdays={0, 1, 2, 3, 4})
+
+    assert result == datetime(2026, 1, 16, 18, 0, tzinfo=BERLIN)
+    assert result.weekday() == 4  # Friday
+
+
+def test_next_daily_run_single_day_filter():
+    # Tuesday 2026-01-20 at 12:00, target 10:00 on Sundays only
+    now = datetime(2026, 1, 20, 12, 0, tzinfo=BERLIN)
+    result = next_daily_run(now, time(10, 0), BERLIN, weekdays={6})
+
+    assert result == datetime(2026, 1, 25, 10, 0, tzinfo=BERLIN)
+    assert result.weekday() == 6  # Sunday
 
 
 if __name__ == "__main__":

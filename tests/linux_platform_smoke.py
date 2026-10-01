@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Reproduzierbarer Linux-Plattform-Smoke für ProSync V3.1 / V3.2.
 
-Der Smoke deckt die geplante Linux-Source-Linie ab (8-Punkte-Standard):
+Der Smoke deckt die geplante Linux-Source-Linie ab (9-Punkte-Standard):
 1. Linux Datei- und Ordner-Öffner ('xdg-open' via prosync_utils)
 2. Headless/Offscreen PySide6 MainWindow & Tray-Lifecycle (QT_QPA_PLATFORM=offscreen)
 3. POSIX/Linux XDG App-Pfade & Reports-Persistenz (~/.config/ProSync)
@@ -11,6 +11,7 @@ Der Smoke deckt die geplante Linux-Source-Linie ab (8-Punkte-Standard):
 6. Cross-OS Konfliktregeln (cross_os_rules.py) für case-sensitive/insensitive Linux-Dateisysteme
 7. Übersetzungssystem & Sprachkatalog-Parität auf Linux
 8. SQLite-Datenbank-Sicherheit, WAL-Modus-Erkennung & Checkpointing
+9. XDG Autostart-Manager (~/.config/autostart/prosync.desktop) & Desktop Entry Packaging
 """
 
 from __future__ import annotations
@@ -316,6 +317,52 @@ def test_linux_sqlite_safety_and_wal_checkpoint() -> None:
     print("  PASS: SQLite WAL-Erkennung, Checkpoint und Safe Settings auf Linux validiert\n")
 
 
+def test_linux_autostart_and_desktop_entry() -> None:
+    """Check 9: Linux XDG Autostart und .desktop-Entry Packaging."""
+    print("Test 9: Linux XDG Autostart und .desktop-Entry Packaging")
+    prosync = _load_prosync_module()
+    AutostartManager = prosync.AutostartManager
+
+    with tempfile.TemporaryDirectory(prefix="prosync-linux-autostart-") as tmp_dir:
+        tmp = Path(tmp_dir)
+        fake_config = tmp / ".config"
+
+        with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": str(fake_config)}), mock.patch.object(
+            sys, "platform", "linux"
+        ):
+            # 1. Initially disabled
+            assert AutostartManager.is_autostart_enabled() is False
+
+            # 2. Enable autostart
+            ok = AutostartManager.set_autostart(True)
+            assert ok is True
+            assert AutostartManager.is_autostart_enabled() is True
+
+            desktop_file = fake_config / "autostart" / "prosync.desktop"
+            assert desktop_file.exists() is True
+            content = desktop_file.read_text(encoding="utf-8")
+            assert "[Desktop Entry]" in content
+            assert "Type=Application" in content
+            assert "Name=ProSync" in content
+            assert "StartupWMClass=ProSync" in content
+            assert "X-GNOME-Autostart-enabled=true" in content
+
+            # 3. Disable autostart
+            ok_disable = AutostartManager.set_autostart(False)
+            assert ok_disable is True
+            assert desktop_file.exists() is False
+            assert AutostartManager.is_autostart_enabled() is False
+
+    # 4. Packaging desktop entry verification
+    pkg_desktop = PROJECT_ROOT / "packaging" / "linux" / "prosync.desktop"
+    assert pkg_desktop.exists() is True
+    pkg_content = pkg_desktop.read_text(encoding="utf-8")
+    assert "[Desktop Entry]" in pkg_content
+    assert "Categories=Utility;FileTools;Qt;" in pkg_content
+
+    print("  PASS: Linux XDG Autostart und .desktop-Entry Spezifikation validiert\n")
+
+
 def main() -> int:
     print("=== ProSync Linux Platform Smoke-Suite ===\n")
     try:
@@ -327,8 +374,9 @@ def main() -> int:
         test_linux_cross_os_conflict_rules()
         test_linux_translation_parity()
         test_linux_sqlite_safety_and_wal_checkpoint()
+        test_linux_autostart_and_desktop_entry()
 
-        print("=== ALL 8 LINUX PLATFORM SMOKE CHECKS PASSED ===")
+        print("=== ALL 9 LINUX PLATFORM SMOKE CHECKS PASSED ===")
         return EXIT_SUCCESS
     except AssertionError as exc:
         print(f"\nTEST FAILED: {exc}")

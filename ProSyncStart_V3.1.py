@@ -755,65 +755,140 @@ def validate_sftp_connection(conn):
 # ---------------- AUTOSTART MANAGER ----------------
 class AutostartManager:
     """
-    Verwaltet den Windows-Autostart für ProSync über die Registry.
+    Verwaltet den plattformübergreifenden Autostart für ProSync.
 
-    Nutzt den Run-Schlüssel in HKEY_CURRENT_USER um die Anwendung
-    beim Windows-Start automatisch zu starten. Windows-spezifisch (winreg).
+    Unter Windows wird der Run-Schlüssel in HKEY_CURRENT_USER genutzt.
+    Unter Linux / POSIX wird die XDG Autostart-Spezifikation genutzt
+    (~/.config/autostart/prosync.desktop).
     """
 
     APP_NAME = "ProSync"
 
     @staticmethod
+    def _linux_autostart_path():
+        """Gibt den Pfad zur XDG Autostart .desktop-Datei zurück."""
+        config_home = os.environ.get("XDG_CONFIG_HOME")
+        if not config_home or not config_home.strip():
+            config_home = os.path.expanduser("~/.config")
+        return os.path.join(config_home, "autostart", f"{AutostartManager.APP_NAME.lower()}.desktop")
+
+    @staticmethod
+    def _get_exec_command():
+        """Ermittelt den Ausführungsbefehl für den Autostart."""
+        if getattr(sys, "frozen", False):
+            return f'"{sys.executable}"'
+        script_path = os.path.abspath(__file__)
+        return f'"{sys.executable}" "{script_path}"'
+
+    @staticmethod
     def set_autostart(enable=True):
         """
-        Aktiviert oder deaktiviert den Windows-Autostart für ProSync.
+        Aktiviert oder deaktiviert den Autostart für ProSync.
+
+        Unter Windows via winreg Registry, unter Linux via XDG Desktop-Entry.
 
         Args:
             enable: True = Autostart aktivieren, False = deaktivieren
 
         Returns:
-            True bei Erfolg, False bei Fehler oder fehlender winreg-Unterstützung
+            True bei Erfolg, False bei Fehler
         """
-        if not HAS_WINREG: return False
-        try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                 r"Software\Microsoft\Windows\CurrentVersion\Run",
-                                 0, winreg.KEY_SET_VALUE)
-            if enable:
-                if getattr(sys, 'frozen', False):
-                    exe_path = f'"{sys.executable}"'
+        if sys.platform.startswith("win"):
+            if not HAS_WINREG:
+                return False
+            try:
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Run",
+                    0,
+                    winreg.KEY_SET_VALUE,
+                )
+                if enable:
+                    exe_path = AutostartManager._get_exec_command()
+                    winreg.SetValueEx(key, AutostartManager.APP_NAME, 0, winreg.REG_SZ, exe_path)
                 else:
-                    script_path = os.path.abspath(__file__)
-                    exe_path = f'"{sys.executable}" "{script_path}"'
-                winreg.SetValueEx(key, AutostartManager.APP_NAME, 0, winreg.REG_SZ, exe_path)
-            else:
-                try:
-                    winreg.DeleteValue(key, AutostartManager.APP_NAME)
-                except FileNotFoundError: pass
-            winreg.CloseKey(key)
-            return True
-        except Exception as e:
-            log_error(f"Registry Fehler: {e}")
-            return False
+                    try:
+                        winreg.DeleteValue(key, AutostartManager.APP_NAME)
+                    except FileNotFoundError:
+                        pass
+                winreg.CloseKey(key)
+                return True
+            except Exception as e:
+                log_error(f"Registry Fehler: {e}")
+                return False
+        elif sys.platform.startswith("linux"):
+            try:
+                desktop_file = AutostartManager._linux_autostart_path()
+                if enable:
+                    os.makedirs(os.path.dirname(desktop_file), exist_ok=True)
+                    content = (
+                        "[Desktop Entry]\n"
+                        "Type=Application\n"
+                        "Version=1.0\n"
+                        f"Name={AutostartManager.APP_NAME}\n"
+                        "GenericName=File and Database Synchronization\n"
+                        "Comment=Lokale Datei- und Datenbank-Synchronisation\n"
+                        f"Exec={AutostartManager._get_exec_command()}\n"
+                        "Icon=prosync\n"
+                        "Terminal=false\n"
+                        "Categories=Utility;FileTools;Qt;\n"
+                        f"StartupWMClass={AutostartManager.APP_NAME}\n"
+                        "X-GNOME-Autostart-enabled=true\n"
+                    )
+                    tmp_file = f"{desktop_file}.tmp_{os.getpid()}"
+                    with open(tmp_file, "w", encoding="utf-8") as f:
+                        f.write(content)
+                        f.flush()
+                        os.fsync(f.fileno())
+                    os.replace(tmp_file, desktop_file)
+                else:
+                    if os.path.exists(desktop_file):
+                        try:
+                            os.remove(desktop_file)
+                        except FileNotFoundError:
+                            pass
+                return True
+            except Exception as e:
+                log_error(f"Linux Autostart Fehler: {e}")
+                return False
+        return False
 
     @staticmethod
     def is_autostart_enabled():
         """
-        Prüft ob ProSync im Windows-Autostart eingetragen ist.
+        Prüft ob ProSync im Autostart eingetragen ist (Windows Registry oder Linux XDG).
 
         Returns:
             True wenn Autostart aktiv, False sonst
         """
-        if not HAS_WINREG: return False
-        try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                 r"Software\Microsoft\Windows\CurrentVersion\Run",
-                                 0, winreg.KEY_READ)
-            winreg.QueryValueEx(key, AutostartManager.APP_NAME)
-            winreg.CloseKey(key)
-            return True
-        except (FileNotFoundError, OSError):
-            return False
+        if sys.platform.startswith("win"):
+            if not HAS_WINREG:
+                return False
+            try:
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Run",
+                    0,
+                    winreg.KEY_READ,
+                )
+                winreg.QueryValueEx(key, AutostartManager.APP_NAME)
+                winreg.CloseKey(key)
+                return True
+            except (FileNotFoundError, OSError):
+                return False
+        elif sys.platform.startswith("linux"):
+            desktop_file = AutostartManager._linux_autostart_path()
+            if not os.path.exists(desktop_file):
+                return False
+            try:
+                with open(desktop_file, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+                if "X-GNOME-Autostart-enabled=false" in content:
+                    return False
+                return True
+            except Exception:
+                return False
+        return False
 
 # ---------------- CONFIG ----------------
 class ConfigLoadError(RuntimeError):
@@ -1057,6 +1132,9 @@ class ConfigManager:
             result["mode"] = "daily"
             result["daily_time"] = str(autosync.get("daily_time", DEFAULT_DAILY_TIME))
             result["timezone"] = str(autosync.get("timezone", DEFAULT_DAILY_TIMEZONE))
+            if autosync.get("weekdays") is not None:
+                wd = autosync["weekdays"]
+                result["weekdays"] = sorted(list(wd)) if isinstance(wd, (list, set, tuple)) else str(wd)
         else:
             result["mode"] = "interval"
             result["interval_minutes"] = max(1, interval)
@@ -2473,7 +2551,8 @@ class ConnectionScheduler(QObject):
                 autosync.get("timezone", DEFAULT_DAILY_TIMEZONE)
             )
             now = self._now_provider(tz)
-            next_run = next_daily_run(now, run_at, tz)
+            weekdays = autosync.get("weekdays")
+            next_run = next_daily_run(now, run_at, tz, weekdays=weekdays)
         except (TypeError, ValueError) as exc:
             log_warning(
                 f"Täglicher Zeitplan für {conn.get('name', conn.get('id', '?'))} "

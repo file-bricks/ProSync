@@ -19,7 +19,7 @@ def test_macos_platform_smoke_suite() -> None:
 
 
 def test_linux_platform_smoke_suite() -> None:
-    """Run full suite of 8 Linux platform smoke checks."""
+    """Run full suite of 9 Linux platform smoke checks."""
     linux_smoke.test_linux_open_dispatch()
     linux_smoke.test_linux_offscreen_window_lifecycle()
     linux_smoke.test_linux_app_paths_and_reports()
@@ -28,3 +28,4 @@ def test_linux_platform_smoke_suite() -> None:
     linux_smoke.test_linux_cross_os_conflict_rules()
     linux_smoke.test_linux_translation_parity()
     linux_smoke.test_linux_sqlite_safety_and_wal_checkpoint()
+    linux_smoke.test_linux_autostart_and_desktop_entry()

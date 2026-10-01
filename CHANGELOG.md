@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-10-01)
+- **Linux XDG Desktop-Integration, Autostart-Manager & Phase 3 Wochentags-Zeitpläne (TW-PS-09 / Platform P2):**
+  - **Plattformübergreifender `AutostartManager`:** Unterstützung der XDG Autostart-Spezifikation unter Linux (`$XDG_CONFIG_HOME/autostart/prosync.desktop` bzw. `~/.config/autostart/prosync.desktop`); atomares Schreiben mit `fsync` und `os.replace`, defensives Auslesen (`X-GNOME-Autostart-enabled`) und transparente Windows-Registry-Parität.
+  - **Linux Desktop Packaging:** Standardisierte XDG `.desktop`-Datei unter `packaging/linux/prosync.desktop` sowie Installationsdokumentation `packaging/linux/README.md` für systemweite und benutzerweite Desktop-Integration (GNOME, KDE Plasma, XFCE).
+  - **Erweiterte 9-Punkte Linux-Platform-Smoke-Suite:** `tests/linux_platform_smoke.py` um Check 9 (`test_linux_autostart_and_desktop_entry`) erweitert; in Standalone-Runner und `tests/test_platform_smoke_contract.py` integriert (9/9 Checks bestanden).
+  - **Wochentags-Zeitpläne (Phase 3 `SCHEDULE_CONTRACT.md`):** `schedule_time.py` um `parse_weekdays()` und flexible Wochentagsfilterung in `next_daily_run()` erweitert (Aliase: `workdays`/`werktage`, `weekend`/`wochenende`, `all`/`täglich`, Wochentagsnamen DE/EN sowie kommagetrennte Token/Zahlen); automatischer Wochenend-Übersprung und daylight-saving-sichere Berechnung über bis zu 14 Tage Suchfenster.
+  - **Scheduler- & Profil-Integration:** `ConnectionScheduler._start_daily_timer` übergibt konfigurierte `weekdays` an `next_daily_run()`; `_portable_autosync()` erhält Wochentage im redigierten Export-Format `prosync-profile-v1.json`.
+  - **12 neue automatisierte Tests:** 6 Tests in `tests/test_autostart_cross_platform.py` und 6 neue Testfälle in `test_schedule_time.py`; Vollsuite 183/183 passed (100% grün).
+
 ### Behoben / Fixed (2026-09-30)
 - **FileSyncWorker, _atomic_copy2 & FolderSyncWorker Resilienz (Bugsweep 2026-09-30):**
   - **Zieldatei-Verifizierung in `FileSyncWorker`:** Stille Falsch-Positiv-Meldung behoben: Fehlende Zieldateien nach dem Kopiervorgang (`if not os.path.exists(target_file)`) lösen nun einen sauberen Fehler aus (`error.emit`), statt die Prüfung zu überspringen und fälschlicherweise Erfolg zu melden.

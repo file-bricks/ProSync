@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProSync
+GenericName=File and Database Synchronization
+GenericName[de]=Datei- und Datenbank-Synchronisation
+Comment=Reliable local file and database synchronization with SQLite and Access safety
+Comment[de]=Zuverlässige lokale Datei- und Datenbank-Synchronisation mit SQLite- und Access-Schutz
+Exec=prosync
+Icon=prosync
+Terminal=false
+Categories=Utility;FileTools;Qt;
+StartupWMClass=ProSync
+Keywords=sync;synchronization;backup;database;sqlite;access;mirror;
+Keywords[de]=Sync;Synchronisation;Backup;Sicherung;Datenbank;SQLite;Access;Spiegelung;
+MimeType=application/json;
