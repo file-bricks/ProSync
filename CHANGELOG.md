@@ -5,6 +5,20 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-10-02)
+- **Cross-OS Pfadregeln, Normalisierung & Kalender-Zeitplanung Resilienz (Bugsweep 2026-10-02):**
+  - **Falsch-positive "redundant-segments"-Erkennung in `cross_os_rules.py` behoben:** `describe_path_normalization` nutzte `_SEPARATOR_RE.search(...)` mit `r"/+"`, wodurch ausnahmslos jeder POSIX-Pfad mit regulärem Schrägstrich (z. B. `"docs/readme.txt"`) fälschlich als pfadverändernd mit `"redundant-segments"` deklariert wurde. Behoben durch gezielte Erkennung echter Redundanzen (mehrfache Slashes `/{2,}`, trailing Slashes auf Nicht-Root-Dateipfaden, Whitespace oder relative Segmente wie `./`).
+  - **Reine Case-Konflikte in `find_cross_os_path_conflicts` bereinigt:** Bei Pfadkollisionen, die sich nur in Groß-/Kleinschreibung unterscheiden (z. B. `["folder/A", "folder/a"]`), wird nun präzise `('case', 'case-insensitive-key')` statt fälschlichem `"redundant-segments"` gemeldet.
+  - **Empty-Path & Dot-Kollisionsschutz in `portable_path_key`:** `portable_path_key("")` und `portable_path_key(None)` liefern jetzt einen leeren String `""` statt `"."` (verhindert irrtümliche Kollision leerer Pfade mit dem aktuellen Verzeichnis `"."`).
+  - **Vollständige englische 2-Letter-Wochentagscodes in `schedule_time.py`:** `WEEKDAY_ALIASES` um die fehlenden englischen Standardkürzel `"tu"` (Dienstag), `"we"` (Mittwoch), `"th"` (Donnerstag) und `"su"` (Sonntag) ergänzt.
+  - **Spanische Wochentage und Gruppen-Aliase in `schedule_time.py`:** Vollständige Unterstützung der spanischen Wochentage (`"lunes"`, `"martes"`, `"miercoles"`, `"miércoles"`, `"jueves"`, `"viernes"`, `"sabado"`, `"sábado"`, `"domingo"`, Kürzel `"lu"`, `"ma"`, `"ju"`, `"vi"`) sowie Gruppen-Aliase (`"laborables"`, `"dias laborables"`, `"fin de semana"`, `"diario"`, `"todos"`).
+  - **Wochentags-Bereichssyntax (Range Parsing):** Unterstützung von Bereichstokens wie `"mon-wed"`, `"mo-mi"`, `"1-4"`, `"0..2"` sowie Wochenend-Wrap-Arounds (`"fri-mon"`) in `parse_weekdays()`.
+  - **Kombinierte Wochentagstokens:** Gruppen-Aliase können nun nahtlos mit Einzeltagen kombiniert werden (z. B. `"workdays,sat"`, `"mon-fri,sun"` oder als Liste `["workdays", "sun"]`).
+  - **Strikter Typenschutz gegen Booleans:** `parse_weekdays()` weist `bool` (die in Python Subtypen von `int` sind) explizit mit `TypeError` ab, statt sie stumm als Wochentage 0 (Montag) oder 1 (Dienstag) zu interpretieren.
+  - **Mixed-Type Sortierresilienz in `ConfigManager._portable_autosync`:** `weekdays`-Listen mit gemischten Typen (`int` und `str`) werden sortiersicher serialisiert ohne `TypeError`.
+  - **RuntimeError-Abfang in `ConnectionScheduler._start_daily_timer`:** Abfang von `(TypeError, ValueError, RuntimeError)` verhindert unhandled Scheduler-Abstürze bei unauflösbaren Zeitplänen.
+  - **11 neue hermetische Regressionstests:** In `tests/test_bugsweep_cross_os_and_schedule_resilience_20261002.py` verankert (Gesamtsuite: 194/194 passed).
+
 ### Hinzugefügt / Added (2026-10-01)
 - **Linux XDG Desktop-Integration, Autostart-Manager & Phase 3 Wochentags-Zeitpläne (TW-PS-09 / Platform P2):**
   - **Plattformübergreifender `AutostartManager`:** Unterstützung der XDG Autostart-Spezifikation unter Linux (`$XDG_CONFIG_HOME/autostart/prosync.desktop` bzw. `~/.config/autostart/prosync.desktop`); atomares Schreiben mit `fsync` und `os.replace`, defensives Auslesen (`X-GNOME-Autostart-enabled`) und transparente Windows-Registry-Parität.

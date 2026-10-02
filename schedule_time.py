@@ -10,6 +10,7 @@ from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 WEEKDAY_ALIASES: dict[str, int] = {
+    # German & English full/common
     "mo": 0,
     "mon": 0,
     "monday": 0,
@@ -38,6 +39,49 @@ WEEKDAY_ALIASES: dict[str, int] = {
     "sun": 6,
     "sunday": 6,
     "sonntag": 6,
+    # English short 2-letter codes
+    "tu": 1,
+    "we": 2,
+    "th": 3,
+    "su": 6,
+    # Spanish (Tier-2 supported locale)
+    "lu": 0,
+    "lunes": 0,
+    "ma": 1,
+    "martes": 1,
+    "miercoles": 2,
+    "miércoles": 2,
+    "ju": 3,
+    "jueves": 3,
+    "vi": 4,
+    "viernes": 4,
+    "sabado": 5,
+    "sábado": 5,
+    "domingo": 6,
+}
+
+WEEKDAY_GROUPS: dict[str, set[int]] = {
+    "all": {0, 1, 2, 3, 4, 5, 6},
+    "daily": {0, 1, 2, 3, 4, 5, 6},
+    "taeglich": {0, 1, 2, 3, 4, 5, 6},
+    "täglich": {0, 1, 2, 3, 4, 5, 6},
+    "todos": {0, 1, 2, 3, 4, 5, 6},
+    "diario": {0, 1, 2, 3, 4, 5, 6},
+    "*": {0, 1, 2, 3, 4, 5, 6},
+    "workdays": {0, 1, 2, 3, 4},
+    "werktage": {0, 1, 2, 3, 4},
+    "laborables": {0, 1, 2, 3, 4},
+    "dias laborables": {0, 1, 2, 3, 4},
+    "días laborables": {0, 1, 2, 3, 4},
+    "mon-fri": {0, 1, 2, 3, 4},
+    "mo-fr": {0, 1, 2, 3, 4},
+    "lu-vi": {0, 1, 2, 3, 4},
+    "weekend": {5, 6},
+    "wochenende": {5, 6},
+    "fin de semana": {5, 6},
+    "sat-sun": {5, 6},
+    "sa-so": {5, 6},
+    "sa-do": {5, 6},
 }
 
 
@@ -83,21 +127,20 @@ def parse_weekdays(
     Raises:
         ValueError: If weekdays cannot be parsed, contains invalid numbers/tokens,
             or resolves to an empty set.
-        TypeError: If value is of unsupported type.
+        TypeError: If value is of unsupported type or contains booleans.
     """
     if value is None:
         return None
+
+    if isinstance(value, bool):
+        raise TypeError("weekdays cannot be a boolean")
 
     if isinstance(value, str):
         cleaned = value.strip().lower()
         if not cleaned:
             return None
-        if cleaned in {"all", "daily", "taeglich", "täglich", "*"}:
-            return {0, 1, 2, 3, 4, 5, 6}
-        if cleaned in {"workdays", "werktage", "mon-fri", "mo-fr"}:
-            return {0, 1, 2, 3, 4}
-        if cleaned in {"weekend", "wochenende", "sat-sun", "sa-so"}:
-            return {5, 6}
+        if cleaned in WEEKDAY_GROUPS:
+            return set(WEEKDAY_GROUPS[cleaned])
         parts = [p.strip() for p in cleaned.replace(";", ",").split(",") if p.strip()]
         if not parts:
             raise ValueError("weekdays string cannot be empty")
@@ -111,6 +154,8 @@ def parse_weekdays(
 
     parsed: set[int] = set()
     for item in raw_items:
+        if isinstance(item, bool):
+            raise TypeError("weekday item cannot be a boolean")
         if isinstance(item, int):
             if 0 <= item <= 6:
                 parsed.add(item)
@@ -120,7 +165,11 @@ def parse_weekdays(
                 )
         elif isinstance(item, str):
             token = item.strip().lower()
-            if token.isdigit():
+            if not token:
+                continue
+            if token in WEEKDAY_GROUPS:
+                parsed.update(WEEKDAY_GROUPS[token])
+            elif token.isdigit():
                 num = int(token)
                 if 0 <= num <= 6:
                     parsed.add(num)
@@ -128,6 +177,36 @@ def parse_weekdays(
                     raise ValueError(f"invalid weekday number {num}: must be between 0 and 6")
             elif token in WEEKDAY_ALIASES:
                 parsed.add(WEEKDAY_ALIASES[token])
+            elif "-" in token or ".." in token:
+                sep = "-" if "-" in token else ".."
+                subparts = [sp.strip() for sp in token.split(sep, 1)]
+                if len(subparts) == 2 and subparts[0] and subparts[1]:
+                    start_str, end_str = subparts
+                    start_day = (
+                        int(start_str)
+                        if start_str.isdigit()
+                        else WEEKDAY_ALIASES.get(start_str)
+                    )
+                    end_day = (
+                        int(end_str)
+                        if end_str.isdigit()
+                        else WEEKDAY_ALIASES.get(end_str)
+                    )
+                    if (
+                        start_day is not None
+                        and end_day is not None
+                        and 0 <= start_day <= 6
+                        and 0 <= end_day <= 6
+                    ):
+                        if start_day <= end_day:
+                            parsed.update(range(start_day, end_day + 1))
+                        else:
+                            parsed.update(range(start_day, 7))
+                            parsed.update(range(0, end_day + 1))
+                    else:
+                        raise ValueError(f"unknown weekday range: {item!r}")
+                else:
+                    raise ValueError(f"unknown weekday name or token: {item!r}")
             else:
                 raise ValueError(f"unknown weekday name or token: {item!r}")
         else:
@@ -197,6 +276,7 @@ def next_daily_run(
 
 __all__ = [
     "WEEKDAY_ALIASES",
+    "WEEKDAY_GROUPS",
     "next_daily_run",
     "parse_daily_time",
     "parse_weekdays",

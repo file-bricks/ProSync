@@ -10,6 +10,7 @@ import unicodedata
 
 
 _SEPARATOR_RE = re.compile(r"/+")
+_REDUNDANT_SEP_RE = re.compile(r"/{2,}")
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,8 @@ def portable_path_key(path: str, *, case_sensitive: bool = False) -> str:
     if path is None:
         path = ""
     value = unicodedata.normalize("NFC", str(path).strip())
+    if not value:
+        return ""
     value = value.replace("\\", "/")
     value = _SEPARATOR_RE.sub("/", value)
     value = str(PurePosixPath(value))
@@ -58,8 +61,17 @@ def describe_path_normalization(path: str) -> tuple[str, ...]:
         reasons.append("unicode-nfc")
     if original.casefold() != original:
         reasons.append("case")
-    if original.strip() != original or _SEPARATOR_RE.search(original.replace("\\", "/")):
+
+    clean_slashes = original.strip().replace("\\", "/")
+    has_redundant_segments = (
+        original.strip() != original
+        or _REDUNDANT_SEP_RE.search(clean_slashes) is not None
+        or (clean_slashes.endswith("/") and clean_slashes != "/")
+        or (clean_slashes != "" and str(PurePosixPath(clean_slashes)) != clean_slashes.rstrip("/"))
+    )
+    if has_redundant_segments:
         reasons.append("redundant-segments")
+
     if normalized_key != portable_path_key(original, case_sensitive=True):
         reasons.append("case-insensitive-key")
 

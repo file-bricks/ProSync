@@ -1135,7 +1135,12 @@ class ConfigManager:
             result["timezone"] = str(autosync.get("timezone", DEFAULT_DAILY_TIMEZONE))
             if autosync.get("weekdays") is not None:
                 wd = autosync["weekdays"]
-                result["weekdays"] = sorted(list(wd)) if isinstance(wd, (list, set, tuple)) else str(wd)
+                if isinstance(wd, (list, set, tuple)):
+                    def _wd_key(v):
+                        return (0, v) if isinstance(v, int) and not isinstance(v, bool) else (1, str(v))
+                    result["weekdays"] = sorted(list(wd), key=_wd_key)
+                else:
+                    result["weekdays"] = str(wd)
         else:
             result["mode"] = "interval"
             result["interval_minutes"] = max(1, interval)
@@ -2594,7 +2599,7 @@ class ConnectionScheduler(QObject):
             now = self._now_provider(tz)
             weekdays = autosync.get("weekdays")
             next_run = next_daily_run(now, run_at, tz, weekdays=weekdays)
-        except (TypeError, ValueError) as exc:
+        except (TypeError, ValueError, RuntimeError) as exc:
             log_warning(
                 f"Täglicher Zeitplan für {conn.get('name', conn.get('id', '?'))} "
                 f"ist ungültig: {exc}"
