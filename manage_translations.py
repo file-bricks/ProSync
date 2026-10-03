@@ -13,6 +13,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from prosync_utils import atomic_write_json
 
 SUPPORTED_LANGUAGES = ("de", "en", "es", "zh", "ja", "ru")
 TRANSLATION_FILE = "locales/translations.json"
@@ -133,11 +134,7 @@ def manage_translations(source_dir: str = ".") -> None:
             translations[s] = {lang: (s if lang == "de" else "") for lang in SUPPORTED_LANGUAGES}
             added.append(s)
 
-    os.makedirs(os.path.dirname(trans_file), exist_ok=True)
-    tmp_file = trans_file + ".tmp"
-    with open(tmp_file, "w", encoding="utf-8") as f:
-        json.dump(translations, f, indent=2, ensure_ascii=False)
-    os.replace(tmp_file, trans_file)
+    atomic_write_json(trans_file, translations, indent=2, ensure_ascii=False)
 
     if added:
         print(f"[+] {len(added)} neue Einträge hinzugefügt:")

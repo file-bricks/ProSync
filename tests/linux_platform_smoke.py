@@ -120,34 +120,34 @@ def test_linux_app_paths_and_reports() -> None:
         fake_home = tmp / "home" / "linuxuser"
         fake_home.mkdir(parents=True, exist_ok=True)
 
-        os.environ["APPDATA"] = str(fake_home / ".config")
-        base_dir = tmp / "REL-PUB_ProSync"
-        base_dir.mkdir(parents=True, exist_ok=True)
+        with mock.patch.dict(os.environ, {"APPDATA": str(fake_home / ".config")}):
+            base_dir = tmp / "REL-PUB_ProSync"
+            base_dir.mkdir(parents=True, exist_ok=True)
 
-        reports_dir = Path(os.environ["APPDATA"]) / "ProSync" / "reports"
-        reports_dir.mkdir(parents=True, exist_ok=True)
-        report_file = reports_dir / "sync_log.json"
+            reports_dir = Path(os.environ["APPDATA"]) / "ProSync" / "reports"
+            reports_dir.mkdir(parents=True, exist_ok=True)
+            report_file = reports_dir / "sync_log.json"
 
-        test_reports = [
-            {
-                "connection": "Linux Sync Archiv",
-                "connection_id": "conn-linux-1",
-                "mode": "mirror",
-                "started_at": "2026-08-21T14:00:00+00:00",
-                "duration_seconds": 2.10,
-                "files_copied": 8,
-                "files_deleted": 0,
-                "files_skipped": 1,
-                "bytes_copied": 163840,
-                "total_actions": 8,
-            }
-        ]
-        report_file.write_text(json.dumps(test_reports, ensure_ascii=False, indent=2), encoding="utf-8")
+            test_reports = [
+                {
+                    "connection": "Linux Sync Archiv",
+                    "connection_id": "conn-linux-1",
+                    "mode": "mirror",
+                    "started_at": "2026-08-21T14:00:00+00:00",
+                    "duration_seconds": 2.10,
+                    "files_copied": 8,
+                    "files_deleted": 0,
+                    "files_skipped": 1,
+                    "bytes_copied": 163840,
+                    "total_actions": 8,
+                }
+            ]
+            report_file.write_text(json.dumps(test_reports, ensure_ascii=False, indent=2), encoding="utf-8")
 
-        read_data = json.loads(report_file.read_text(encoding="utf-8"))
-        assert len(read_data) == 1
-        assert read_data[0]["connection"] == "Linux Sync Archiv"
-        assert read_data[0]["bytes_copied"] == 163840
+            read_data = json.loads(report_file.read_text(encoding="utf-8"))
+            assert len(read_data) == 1
+            assert read_data[0]["connection"] == "Linux Sync Archiv"
+            assert read_data[0]["bytes_copied"] == 163840
 
     print("  PASS: Linux Report-Pfade und UTF-8 JSON-Persistenz validiert\n")
 

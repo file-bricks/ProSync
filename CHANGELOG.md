@@ -5,6 +5,20 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-10-04)
+- **Atomare Writer-Eigentümerschaft, Kollisionsschutz & Test-Umgebungs-Isolierung (Software-Entwicklung):**
+  - **Kollisionsfreie atomare Writer in `prosync_utils.py`:** `atomic_write_json()` und `atomic_write_text()` implementiert. Erzeugung exklusiver temporärer Dateien via `tempfile.mkstemp(prefix=f".{basename}-", suffix=".tmp")` (`O_CREAT | O_EXCL`) im selben Zielverzeichnis garantiert strikte Eigentümerschaft, schützt vor festen `.tmp`-Dateinamen-Kollisionen zwischen parallelen Prozessen/Threads und verhindert das Überschreiben fremder Stage-Dateien. Sauberes Schließen von Dateideskriptoren vor `os.replace` (Windows WinError 32 Absicherung) und automatisches Unlink im Fehlerfall.
+  - **Migration aller Konfigurations- und Report-Schreiber:**
+    - `MainWindow._save_sync_report`: Ersetzt `str(log_file) + ".tmp"` durch `atomic_write_json()`.
+    - `ConfigManager.save`: Ersetzt `f"{self.path}.tmp"` durch `atomic_write_json()`.
+    - `ConfigManager.export_portable_profile`: Ersetzt `export_path + ".tmp"` durch `atomic_write_json()`.
+    - `AutostartManager._set_linux_autostart`: Ersetzt `f"{desktop_file}.tmp_{pid}"` durch `atomic_write_text()`.
+    - `ProSyncReader.DBManager.save`: Ersetzt `f"{CONFIG_PATH}.tmp"` durch `atomic_write_json()`.
+    - `TranslationSystem._save_translations`: Ersetzt `.suffix + ".tmp"` durch `atomic_write_json()`.
+    - `manage_translations.py`: Ersetzt `trans_file + ".tmp"` durch `atomic_write_json()`.
+  - **Isolierung von Umgebungsvariablen in Plattform-Smokes:** `test_linux_app_paths_and_reports` und `test_macos_app_paths_and_reports` nutzen nun `with mock.patch.dict(os.environ, {"APPDATA": ...}):`, wodurch das dauerhafte Überschreiben von `%APPDATA%` während des Testlaufs verhindert wird (behob `ModuleNotFoundError: PySide6` in nachfolgenden isolierten Subprozessen auf Windows).
+  - **Vertragstests & Verifikation:** 10 neue Regressionstests in `tests/test_atomic_writer_ownership.py` (Atomarität, Rollback, Kollisionsschutz gegen fremde `.tmp`-Dateien, Integration mit Config/Reader/Translator). `tests/test_platform_smoke_contract.py` um Umgebungs-Konsistenzprüfung erweitert. Vollsuite auf 231/231 Pytest-Tests gesteigert (100% grün).
+
 ### Behoben / Fixed (2026-10-02)
 - **Cross-OS Pfadregeln, Normalisierung & Kalender-Zeitplanung Resilienz (Bugsweep 2026-10-02):**
   - **Falsch-positive "redundant-segments"-Erkennung in `cross_os_rules.py` behoben:** `describe_path_normalization` nutzte `_SEPARATOR_RE.search(...)` mit `r"/+"`, wodurch ausnahmslos jeder POSIX-Pfad mit regulärem Schrägstrich (z. B. `"docs/readme.txt"`) fälschlich als pfadverändernd mit `"redundant-segments"` deklariert wurde. Behoben durch gezielte Erkennung echter Redundanzen (mehrfache Slashes `/{2,}`, trailing Slashes auf Nicht-Root-Dateipfaden, Whitespace oder relative Segmente wie `./`).

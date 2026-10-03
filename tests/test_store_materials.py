@@ -86,6 +86,7 @@ print('HEADLESS ASSETS OK; SCREENSHOT GUARD OK')
 """
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
+    env["PYTHONPATH"] = os.pathsep.join([str(ROOT)] + sys.path)
     result = subprocess.run([sys.executable, "-c", script, str(MODULE_PATH), str(tmp_path)],
                             cwd=ROOT, env=env, capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr

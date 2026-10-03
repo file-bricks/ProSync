@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QTextEdit, QLabel, QSplitter, QMenu
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
-from prosync_utils import open_file_cross_platform, open_folder_cross_platform
+from prosync_utils import open_file_cross_platform, open_folder_cross_platform, atomic_write_json
 from logger import log_error
 
 # Optional libraries for preview
@@ -69,12 +69,9 @@ class DBManager:
         Speichert die aktuelle Datenbank-Liste in search_config.json.
 
         Schreibt JSON mit indent=2 für bessere Lesbarkeit.
-        Atomar via tmp + os.replace (BUG-U4: keine korrupte config bei Crash mid-write).
+        Atomar und sicher mit exklusiver Tempdatei via atomic_write_json.
         """
-        tmp = f"{CONFIG_PATH}.tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump({"databases": self.dbs}, f, indent=2)
-        os.replace(tmp, CONFIG_PATH)
+        atomic_write_json(CONFIG_PATH, {"databases": self.dbs}, indent=2)
 
     def add_db(self, path):
         """

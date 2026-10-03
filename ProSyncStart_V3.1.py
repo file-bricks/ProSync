@@ -31,6 +31,7 @@ from PySide6.QtGui import QAction, QActionGroup, QIcon, QShortcut, QKeySequence
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
 from schedule_time import next_daily_run, parse_daily_time, resolve_iana_timezone
+from prosync_utils import atomic_write_json, atomic_write_text
 
 
 def _configure_windows_utf8_streams() -> None:
@@ -239,10 +240,7 @@ def save_sync_report(report):
         all_reports.append(report)
         all_reports = all_reports[-100:]
 
-        tmp_path = str(log_file) + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as fh:
-            json.dump(all_reports, fh, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, log_file)
+        atomic_write_json(str(log_file), all_reports, indent=2, ensure_ascii=False)
 
         log_info(
             f"Sync-Report gespeichert: {report['files_copied']} kopiert, "
@@ -836,12 +834,7 @@ class AutostartManager:
                         f"StartupWMClass={AutostartManager.APP_NAME}\n"
                         "X-GNOME-Autostart-enabled=true\n"
                     )
-                    tmp_file = f"{desktop_file}.tmp_{os.getpid()}"
-                    with open(tmp_file, "w", encoding="utf-8") as f:
-                        f.write(content)
-                        f.flush()
-                        os.fsync(f.fileno())
-                    os.replace(tmp_file, desktop_file)
+                    atomic_write_text(desktop_file, content, encoding="utf-8")
                 else:
                     if os.path.exists(desktop_file):
                         try:
@@ -980,13 +973,7 @@ class ConfigManager:
 
         Erstellt das Verzeichnis falls es nicht existiert.
         """
-        os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
-        # Bugsweep 26 BUG-A3: atomar schreiben (tmp + os.replace), sonst korrupte config.json bei
-        # Absturz/OneDrive-Lock mitten im json.dump.
-        tmp = f"{self.path}.tmp"
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
-        os.replace(tmp, self.path)
+        atomic_write_json(self.path, self.data, indent=2, ensure_ascii=False)
 
     def list_connections(self):
         """
@@ -1210,12 +1197,7 @@ class ConfigManager:
             "reports": self._portable_report_snapshot(),
         }
 
-        os.makedirs(os.path.dirname(export_path) or ".", exist_ok=True)
-        # BUG-U4: atomar (tmp + os.replace) — kein korruptes Export-Profil bei Absturz mid-write
-        tmp_path = export_path + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as fh:
-            json.dump(payload, fh, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, export_path)
+        atomic_write_json(export_path, payload, indent=2, ensure_ascii=False)
         return payload
 
     def _portable_to_local_connection(self, portable_conn, existing_ids):

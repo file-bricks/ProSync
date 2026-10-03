@@ -30,6 +30,7 @@ import os
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+from prosync_utils import atomic_write_json
 
 
 class TranslationSystem:
@@ -108,12 +109,7 @@ class TranslationSystem:
             self.translations = {}
 
     def _save_translations(self) -> None:
-        self.translations_file.parent.mkdir(parents=True, exist_ok=True)
-        # Atomarer Schreibvorgang (tmp + replace)
-        tmp = self.translations_file.with_suffix(self.translations_file.suffix + ".tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self.translations, f, indent=2, ensure_ascii=False)
-        tmp.replace(self.translations_file)
+        atomic_write_json(str(self.translations_file), self.translations, indent=2, ensure_ascii=False)
 
     def t(self, key: str, **kwargs) -> str:
         """

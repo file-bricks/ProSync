@@ -84,7 +84,9 @@ def test_static_conn_finally():
 
 
 def test_static_config_atomic():
-    assert has('tmp = f"{self.path}.tmp"') and has("os.replace(tmp, self.path)"), "config atomar fehlt"
+    assert has("atomic_write_json(self.path, self.data") or (
+        has('tmp = f"{self.path}.tmp"') and has("os.replace(tmp, self.path)")
+    ), "config atomar fehlt"
 
 
 def test_static_connectiondb_rlock():

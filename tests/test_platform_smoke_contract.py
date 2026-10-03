@@ -29,3 +29,12 @@ def test_linux_platform_smoke_suite() -> None:
     linux_smoke.test_linux_translation_parity()
     linux_smoke.test_linux_sqlite_safety_and_wal_checkpoint()
     linux_smoke.test_linux_autostart_and_desktop_entry()
+
+
+def test_platform_smokes_preserve_environment() -> None:
+    """Ensure that running smoke suites does not pollute or corrupt os.environ (e.g. APPDATA)."""
+    import os
+    appdata_before = os.environ.get("APPDATA")
+    test_macos_platform_smoke_suite()
+    test_linux_platform_smoke_suite()
+    assert os.environ.get("APPDATA") == appdata_before
