@@ -5,6 +5,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-10-08)
+- **Pfad B Repository-Marketing, Discoverability, Visuelle 4-Sichten-Topologie & Level 1 SBOM Re-Audit:**
+  - **Strikte Version-Freeze-Disziplin (`T-20260920-167562623`):** Versionsnummer `3.2.0` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert bewahrt.
+  - **ASCII Vier-Sichten-Architekturprojektion:** Section 2 in `README.md`, `README_de.md` und `README.es.md` auf die standardisierte Flotten-Topologie gehärtet (`[VIEW 1: CALLER RUNTIMES & USER INTERFACES]`, `[VIEW 2: SCHEDULER, BATCH ORCHESTRATION & DISPATCH CORE]`, `[VIEW 3: DATA INTEGRITY & SYNC WORKER ENGINE]`, `[VIEW 4: AIR-GAP DEFENSE, RUNASINVOKER ISOLATION & STORAGE TIERS]` bzw. deutsche und spanische Paritätsfassungen).
+  - **Bilinguale Beitragsrichtlinien (`CONTRIBUTING.md`):** Umfassende Spezifikation der 10 Invarianten (`INV-LOCAL-01` bis `INV-SLA-10`), des unprivilegierten `RunAsInvoker` Non-Elevation Betriebsmodus, des Plan D Local Development Workflows (`C:\_Local_DEV\repos\ProSync` als kanonische Source of Truth), gesetzlichem Haftungsausschluss (§ 521 BGB Gefälligkeitsrecht) und verbindlicher 48h Security Response SLA.
+  - **PEP 621 Standardisierung (`pyproject.toml`):** `Contributing` und `Plain-Text License` URLs unter `[project.urls]` ergänzt; `CONTRIBUTING.md` in `license-files` Whitelist aufgenommen.
+  - **Level 1 SBOM Text-Companion & Lizenzaudit (`THIRD_PARTY_LICENSES.txt` & `THIRD_PARTY_LICENSES.md`):** Re-Auditiert auf Stand 2026-10-08 mit unprivilegierter `RunAsInvoker` Non-Elevation Zertifizierung, Zero-Copyleft & Zero-Egress Garantie, Verweis auf `CONTRIBUTING.md`, `NOTICE` und `LICENSE`.
+  - **Dokumentations- & Badge-Parität:** Shields.io Badges für Tests (231 passed | 100% green / bestanden / superadas), Geprüft / Verified / Verificado Stand 2026-10-08, Contributing Guidelines; `llms.txt` Stand 2026-10-08 aktualisiert.
+  - **Marketing- & Governance-Log (`MARKETING-LOG.txt`):** Header auf Stand 2026-10-08 aktualisiert; Section 12 mit umfassendem Pfad B Auditbericht und 3 handlungsorientierten nicht-automatisierten Empfehlungen hinzugefügt.
+  - **Automatisierte Vertragstests (`tests/test_metadata.py`):** Contract-Tests für ASCII Vier-Sichten-Topologie Parität in allen 3 Sprachen, bilinguale `CONTRIBUTING.md` Parität, PEP 621 URLs, Level 1 SBOM Recency Stand 2026-10-08 und Marketing-Log Section 12 erweitert.
+
 ### Behoben / Fixed (2026-10-04)
 - **Atomare Writer-Eigentümerschaft, Kollisionsschutz & Test-Umgebungs-Isolierung (Software-Entwicklung):**
   - **Kollisionsfreie atomare Writer in `prosync_utils.py`:** `atomic_write_json()` und `atomic_write_text()` implementiert. Erzeugung exklusiver temporärer Dateien via `tempfile.mkstemp(prefix=f".{basename}-", suffix=".tmp")` (`O_CREAT | O_EXCL`) im selben Zielverzeichnis garantiert strikte Eigentümerschaft, schützt vor festen `.tmp`-Dateinamen-Kollisionen zwischen parallelen Prozessen/Threads und verhindert das Überschreiben fremder Stage-Dateien. Sauberes Schließen von Dateideskriptoren vor `os.replace` (Windows WinError 32 Absicherung) und automatisches Unlink im Fehlerfall.

@@ -1,18 +1,19 @@
 # Third-Party Licenses & Level 1 SBOM
 
-Last checked: 2026-09-29 against PyPI metadata and local runtime environment.
-Audited: Stand: 2026-09-29 against Level 1 SBOM and runtime invariants.
+Last checked: 2026-10-08 against PyPI metadata and local runtime environment.
+Audited: Stand: 2026-10-08 against Level 1 SBOM and runtime invariants.
 
 Scope: direct dependencies declared in `pyproject.toml` as well as standard
 library, packaging, and development packages. This inventory is a direct dependency
 review and Level 1 SBOM affirmation, complementing the markdown review in
-`THIRD_PARTY_LICENSES.md`.
+`THIRD_PARTY_LICENSES.md` and `CONTRIBUTING.md`.
 
 ## Project License & Attribution
 
 ProSync is licensed under the MIT License.
 Canonical copyright attribution is maintained in `NOTICE`:
 Copyright (c) 2026 Lukas Geiger / file-bricks under open-bricks umbrella.
+Contributing guidelines: CONTRIBUTING.md
 
 ## Architecture & Security Invariants
 

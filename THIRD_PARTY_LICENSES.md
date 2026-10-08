@@ -1,8 +1,8 @@
 # Third-Party Licenses & Software Inventory
 
 **Project:** `ProSync` (Intelligent Local Backup Synchronization & SQLite WAL Database Protection)<br>
-**License:** [MIT License](LICENSE) · [Attribution Notice](NOTICE) · [Text Inventory](THIRD_PARTY_LICENSES.txt)<br>
-**Audit Date:** 2026-09-29 (v3.2.0)<br>
+**License:** [MIT License](LICENSE) · [Attribution Notice](NOTICE) · [Text Inventory](THIRD_PARTY_LICENSES.txt) · [Contributing Guidelines](CONTRIBUTING.md)<br>
+**Audit Date:** 2026-10-08 (v3.2.0)<br>
 **Repository:** [file-bricks/ProSync](https://github.com/file-bricks/ProSync)<br>
 **Organization:** [file-bricks](https://github.com/file-bricks)<br>
 **Umbrella Collective:** [open-bricks](https://github.com/open-bricks)

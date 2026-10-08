@@ -1,6 +1,6 @@
 # ProSync
 
-> Last-checked: 2026-09-29 (165+ tests passing: 165+ pytest unit & contract tests + 29 node companion tests | 100% green)
+> Last-checked: 2026-10-08 (231+ tests passing: 231+ pytest unit & contract tests + 29 node companion tests | 100% green)
 
 Canonical repository: https://github.com/file-bricks/ProSync
 Organization: file-bricks
@@ -8,6 +8,7 @@ Primary language: Python
 UI stack: PySide6 desktop system-tray application
 License: MIT
 Attribution Notice: NOTICE
+Contributing Guidelines: CONTRIBUTING.md
 Security Policy: SECURITY.md (Local-First, Zero-Egress, SQLite WAL Invariants, § 521 BGB Gefälligkeitsrecht, 48h SLA)
 Marketing & Governance Log: MARKETING-LOG.txt
 Third-Party Licenses: THIRD_PARTY_LICENSES.md & THIRD_PARTY_LICENSES.txt (SPDX audited, Level 1 SBOM INV-LOCAL-01..INV-SLA-10, unprivileged RunAsInvoker)
@@ -28,6 +29,7 @@ Core behavior:
 - Automated repository contract and metadata parity suite (`tests/test_metadata.py`).
 - Comprehensive marketing, discovery, and governance log (`MARKETING-LOG.txt`) with competitive matrix and 10 runtime invariant pillars.
 - Trilingual 18-point quick navigation parity across `README.md`, `README_de.md`, and `README.es.md` with reciprocal dual HTML anchors `sec-01`..`sec-18`.
+- Standardized ASCII Four-View Architectural Topology in Section 2 across all three languages.
 - Hardened CI lifecycle automation: `.github/workflows/auto-assign.yml`, `label-sync.yml`, and canonical `.github/labels.yml` with 11 standard labels.
 
 Privacy boundary:
@@ -39,8 +41,8 @@ Privacy boundary:
 Local verification:
 
 ```bash
-python -m pytest -ra -v       # 158 Python tests
-cd web_companion && npm test  # 29 Node PWA companion tests (187 total tests)
+python -m pytest -ra -v       # 231 Python tests (100% green)
+cd web_companion && npm test  # 29 Node PWA companion tests (260 total tests)
 python scripts/check_store_readiness.py # Windows Store readiness auditor
 python run_tests.py           # 21 test suites locally
 python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py

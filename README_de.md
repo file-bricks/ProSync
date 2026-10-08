@@ -8,10 +8,11 @@
 
 [![Lizenz: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Attribution: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue?style=flat-square)](NOTICE)
+[![Mitwirken: Leitfaden](https://img.shields.io/badge/Mitwirken-Leitfaden-blue?style=flat-square)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/Version-v3.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![Plattform: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#10-installation--abhaengigkeiten)
 [![Python: 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square)](pyproject.toml)
-[![Tests: 163 bestanden](https://img.shields.io/badge/Tests-163%20bestanden%20%7C%20100%25%20gr%C3%BCn-brightgreen?style=flat-square)](#sec-16)
+[![Tests: 231 bestanden](https://img.shields.io/badge/Tests-231%20bestanden%20%7C%20100%25%20gr%C3%BCn-brightgreen?style=flat-square)](#sec-16)
 [![Datenschutz: 100% Lokal | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success?style=flat-square)](PRIVACY_POLICY.md)
 [![Sicherheit: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-success?style=flat-square)](SECURITY.md)
 [![Sicherheits-SLA: 48h / 5d](https://img.shields.io/badge/Security%20SLA-48h%20Response%20%7C%205d%20Triage-blue?style=flat-square)](SECURITY.md)
@@ -20,12 +21,12 @@
 [![Ökosystem: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo?style=flat-square)](https://github.com/file-bricks)
 [![Dach: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-purple?style=flat-square)](https://github.com/open-bricks)
 [![Kontext: llms.txt](https://img.shields.io/badge/Context-llms.txt-teal?style=flat-square)](llms.txt)
-[![Geprüft: 2026-09-29](https://img.shields.io/badge/Gepr%C3%BCft-2026--09--29-blue?style=flat-square)](CHANGELOG.md)
+[![Geprüft: 2026-10-08](https://img.shields.io/badge/Gepr%C3%BCft-2026--10--08-blue?style=flat-square)](CHANGELOG.md)
 
 > [!NOTE]
 > **Abgrenzung / Disambiguation:** `file-bricks/ProSync` ist eine quelloffene Windows-Desktop- und Hintergrundanwendung auf Python-Basis (PySide6) für die lokale Datei- und Ordnersynchronisation mit automatischem SQLite-WAL-Datenbankschutz. Das Projekt steht in keiner Verbindung zu Enterprise-Datenbank-Replikationssoftware (wie z. B. Tibero ProSync) oder macOS-Synchronisationswerkzeugen Dritter.
 
-**Maschinenlesbarer Index:** Spezifikation verfügbar unter [`llms.txt`](llms.txt). Zuletzt geprüft: **2026-09-29**.
+**Maschinenlesbarer Index:** Spezifikation verfügbar unter [`llms.txt`](llms.txt). Zuletzt geprüft: **2026-10-08**.
 
 ---
 
@@ -85,42 +86,59 @@
 <a id="architektur--datenfluss"></a>
 ## 2. Systemarchitektur & Datenfluss
 
-ProSync trennt Benutzeroberfläche, Ablaufplanung, Datenbankintegritätsprüfung und Speicheradapter in saubere, entkoppelte Schichten:
+ProSync trennt Benutzeroberfläche, Ablaufplanung, Datenbankintegritätsprüfung und Speicheradapter in saubere, entkoppelte Schichten gemäß der ASCII-Vier-Sichten-Architekturtopologie:
 
 ```
-+---------------------------------------------------------------------------------+
-|                                BENUTZEROBERFLÄCHE                               |
-|   +------------------------------------+   +--------------------------------+   |
-|   | PySide6 Desktop GUI (Hauptfenster) |   | System-Tray Hintergrundwächter |   |
-|   +------------------------------------+   +--------------------------------+   |
-|   +------------------------------------+   +--------------------------------+   |
-|   | Headless CLI (--run / --all)       |   | ProSyncReader Such-Begleiter   |   |
-|   +------------------------------------+   +--------------------------------+   |
-+---------------------------------------------------------------------------------+
-                                         |
-                                         v
-+---------------------------------------------------------------------------------+
-|                       SCHEDULER & BATCH-WARTESCHLANGE                           |
-|   ├── IANA-Zeitzonen-Auswertung (DST-sicher) ├── Sequentielle Batch-Queue       |
-|   └── Konfigurationsverwaltung               └── Instanz-Lock-Koordination      |
-+---------------------------------------------------------------------------------+
-                                         |
-                                         v
-+---------------------------------------------------------------------------------+
-|                     SYNC- & INTEGRITÄTS-ENGINE (KERN)                           |
-|   ├── SQLite WAL-Checkpoint Guard (PRAGMA wal_checkpoint(TRUNCATE))             |
-|   ├── Sperrkonflikt-Wächter (SQLITE_BUSY Fail-Closed Abbruch)                   |
-|   ├── Atomare Bereitstellung & Zwischendateien (.tmp Safe Replace)              |
-|   └── Modus-Logik: mirror | update | two_way | one_way | index_only             |
-+---------------------------------------------------------------------------------+
-                                         |
-                                         v
-+---------------------------------------------------------------------------------+
-|                                 SPEICHERZIELE                                   |
-|   ├── Lokale Laufwerke (NTFS, exFAT, APFS, Ext4)                                |
-|   ├── Netzlaufwerke & Freigaben (NAS / SMB / CIFS UNC-Pfade)                    |
-|   └── SFTP-Remote-Endpunkte (Gehärtetes Paramiko mit Host-Key-TOFU)             |
-+---------------------------------------------------------------------------------+
++===================================================================================================+
+|                                  PROSYNC ARCHITEKTUR-TOPOLOGIE                                    |
+|                            4-SICHTEN DETERMINISTISCHES SYNC- & SPEICHER-GATE                      |
++===================================================================================================+
+| [SICHT 1: AUFRUFER-LAUFZEITEN & BENUTZEROBERFLÄCHEN]                                              |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  | PySide6 Desktop GUI (Hauptfenster) |  | System-Tray Hintergrundwächter  |  | Headless CLI    |  |
+|  | - Verbindungsverwaltung & Fortschr.|  | - Nativer Autostart & Tray-Menü |  | - --run / --all |  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  +------------------------------------+  +---------------------------------+                       |
+|  | ProSyncReader Such-Begleiter       |  | Offline Web/PWA-Begleiter       |                       |
+|  | - Schnelle Volltext- & ProFiler-Br.|  | - Redagiertes prosync-profile-v1|                       |
+|  +------------------------------------+  +---------------------------------+                       |
++===================================================================================================+
+                                                  |
+                                                  v (Aufrufe, Timer, Trigger)
++===================================================================================================+
+| [SICHT 2: SCHEDULER, BATCH-ORCHESTRIERUNG & DISPATCH-KERN]                                        |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | ConnectionScheduler & IANA-Zeitzonen-Engine (DST-sichere Uhrzeit, Wochentags-Filterung)      |  |
+|  | Batch-Sync-Warteschlange (Sequentielle Ausführung, granulare Worker-Signale)                 |  |
+|  | Instanz-Lock-Koordination (Einzelinstanz-Mutex, sichere Prozess-PID-Wächter)                |  |
+|  | ConfigManager (Atomare JSON-Schreiber, dynamisches Neuladen, Profil-Export)                 |  |
+|  +---------------------------------------------------------------------------------------------+  |
++===================================================================================================+
+                                                  |
+                                                  v (Batch-Dispatch & Sync-Signale)
++===================================================================================================+
+| [SICHT 3: DATENINTEGRITÄT & SYNC-WORKER-ENGINE]                                                   |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  | SQLite WAL Checkpoint Guard        |  | Sperrkonflikt-Wächter           |  | Atomares Staging|  |
+|  | - PRAGMA wal_checkpoint(TRUNCATE)  |  | - SQLITE_BUSY Fail-Closed Abbruch|  | - .tmp Isolier. |  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | 5 Synchronisationsmodi: Spiegel | Update | Zwei-Wege | Ein-Weg | Nur-Index                  |  |
+|  | Atomarer Dateikopierer (_atomic_copy2, Rechte-Resilienz, Schreibschutz-Zieldatei-Handling)   |  |
+|  | Kollisionsfreie atomare Schreiber (prosync_utils.atomic_write_json / atomic_write_text)     |  |
+|  +---------------------------------------------------------------------------------------------+  |
++===================================================================================================+
+                                                  |
+                                                  v (Verifizierte atomare Übergaben)
++===================================================================================================+
+| [SICHT 4: AIR-GAP-SCHUTZ, RUNASINVOKER-ISOLATION & SPEICHERZIELE]                                 |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  | Zero-Egress Air-Gap Perimeter      |  | Unprivilegierter RunAsInvoker   |  | Speicherziele   |  |
+|  | - 100% Offline, Zero Telemetrie    |  | - Keine UAC-Elevation gefordert |  | - Lokale Platten|  |
+|  | - Keine externen Analyse-Broker    |  | - Benutzerprofil-Isolation      |  | - NAS / SMB UNC |  |
+|  | - INV-LOCAL-01 Garantiert          |  | - INV-RUNAS-02 Zertifiziert     |  | - Gehärtet SFTP |  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
++===================================================================================================+
 ```
 
 ---

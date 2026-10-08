@@ -8,10 +8,11 @@
 
 [![Licencia: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Atribución: NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue?style=flat-square)](NOTICE)
+[![Contribuir: Guía](https://img.shields.io/badge/Contribuir-Gu%C3%ADa-blue?style=flat-square)](CONTRIBUTING.md)
 [![Versión](https://img.shields.io/badge/Version-v3.2.0-blue?style=flat-square)](CHANGELOG.md)
 [![Plataforma: Windows | Linux | macOS](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue?style=flat-square)](#10-installation--dependencies)
 [![Python: 3.10 | 3.11 | 3.12 | 3.13](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?style=flat-square)](pyproject.toml)
-[![Pruebas: 163 superadas](https://img.shields.io/badge/Pruebas-163%20superadas%20%7C%20100%25%20verde-brightgreen?style=flat-square)](#sec-16)
+[![Pruebas: 231 superadas](https://img.shields.io/badge/Pruebas-231%20superadas%20%7C%20100%25%20verde-brightgreen?style=flat-square)](#sec-16)
 [![Privacidad: 100% Local | Zero-Egress](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero--Egress-success?style=flat-square)](PRIVACY_POLICY.md)
 [![Seguridad: RunAsInvoker](https://img.shields.io/badge/Security-RunAsInvoker%20%7C%20Non--Elevation-success?style=flat-square)](SECURITY.md)
 [![SLA de seguridad: 48h / 5d](https://img.shields.io/badge/Security%20SLA-48h%20Response%20%7C%205d%20Triage-blue?style=flat-square)](SECURITY.md)
@@ -20,12 +21,12 @@
 [![Ecosistema: file-bricks](https://img.shields.io/badge/Ecosystem-file--bricks-indigo?style=flat-square)](https://github.com/file-bricks)
 [![Organización: open-bricks](https://img.shields.io/badge/Umbrella-open--bricks-purple?style=flat-square)](https://github.com/open-bricks)
 [![Contexto: llms.txt](https://img.shields.io/badge/Context-llms.txt-teal?style=flat-square)](llms.txt)
-[![Verificado: 2026-09-29](https://img.shields.io/badge/Verificado-2026--09--29-blue?style=flat-square)](CHANGELOG.md)
+[![Verificado: 2026-10-08](https://img.shields.io/badge/Verificado-2026--10--08-blue?style=flat-square)](CHANGELOG.md)
 
 > [!NOTE]
 > **Aclaración y desambiguación:** `file-bricks/ProSync` es una aplicación de escritorio y segundo plano de código abierto basada en Python (PySide6) para la sincronización de archivos y carpetas locales con protección automatizada para bases de datos SQLite en modo WAL. Este proyecto no está asociado con software empresarial de replicación de bases de datos ni con utilidades homónimas de terceros para macOS.
 
-**Índice para modelos de lenguaje (LLM):** Especificación disponible en [`llms.txt`](llms.txt). Última revisión: **2026-09-29**.
+**Índice para modelos de lenguaje (LLM):** Especificación disponible en [`llms.txt`](llms.txt). Última revisión: **2026-10-08**.
 
 ---
 
@@ -85,42 +86,59 @@
 <a id="arquitectura--flujo-de-datos"></a>
 ## 2. System Architecture & Data Flow
 
-ProSync estructura la interacción del usuario, la programación de tareas, la verificación de integridad y el almacenamiento en capas modulares y desacopladas:
+ProSync estructura la interacción del usuario, la programación de tareas, la verificación de integridad y el almacenamiento en capas modulares y desacopladas mediante la topología arquitectónica de cuatro vistas ASCII:
 
 ```
-+---------------------------------------------------------------------------------+
-|                                 USER INTERFACE                                  |
-|   +------------------------------------+   +--------------------------------+   |
-|   | PySide6 Desktop GUI (Main Window)  |   | System Tray Background Monitor |   |
-|   +------------------------------------+   +--------------------------------+   |
-|   +------------------------------------+   +--------------------------------+   |
-|   | Headless CLI (--run / --all)       |   | ProSyncReader Search Companion |   |
-|   +------------------------------------+   +--------------------------------+   |
-+---------------------------------------------------------------------------------+
-                                         |
-                                         v
-+---------------------------------------------------------------------------------+
-|                           SCHEDULER & BATCH ENGINE                              |
-|   ├── IANA Timezone Evaluator (DST Safe)   ├── Batch Sync Execution Queue       |
-|   └── Configuration Manager                └── Instance Lock Coordinator        |
-+---------------------------------------------------------------------------------+
-                                         |
-                                         v
-+---------------------------------------------------------------------------------+
-|                        SYNC & INTEGRITY ENGINE (CORE)                           |
-|   ├── SQLite WAL Checkpoint Guard (PRAGMA wal_checkpoint(TRUNCATE))             |
-|   ├── Lock Contention Sentinel (SQLITE_BUSY Fail-Closed Abort)                  |
-|   ├── Atomic Staging & Temporary File Copier (.tmp Safe Replace)                |
-|   └── Mode Logic: mirror | update | two_way | one_way | index_only              |
-+---------------------------------------------------------------------------------+
-                                         |
-                                         v
-+---------------------------------------------------------------------------------+
-|                              STORAGE DESTINATIONS                               |
-|   ├── Local Drives (NTFS, exFAT, APFS, Ext4)                                    |
-|   ├── Network Attached Storage (NAS / SMB / CIFS UNC paths)                     |
-|   └── SFTP Remote Endpoints (Hardened Paramiko with Host Key TOFU)              |
-+---------------------------------------------------------------------------------+
++===================================================================================================+
+|                                  TOPOLOGÍA ARQUITECTÓNICA DE PROSYNC                              |
+|                             COMPUERTA DETERMINISTA DE SINCRONIZACIÓN Y GUARDADO                   |
++===================================================================================================+
+| [VISTA 1: ENTORNOS DE EJECUCIÓN & INTERFACES DE USUARIO]                                          |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  | Interfaz gráfica PySide6 (Ppal)    |  | Monitor de bandeja del sistema  |  | CLI Headless    |  |
+|  | - Gestor de conexiones y progreso  |  | - Inicio automático y menú tray |  | - --run / --all |  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  +------------------------------------+  +---------------------------------+                       |
+|  | Buscador ProSyncReader (Acompañante)|  | Acompañante Web/PWA desconectado|                       |
+|  | - Búsqueda rápida y puente ProFiler|  | - prosync-profile-v1 redigido   |                       |
+|  +------------------------------------+  +---------------------------------+                       |
++===================================================================================================+
+                                                  |
+                                                  v (Invocaciones, temporizadores, disparadores)
++===================================================================================================+
+| [VISTA 2: PLANIFICADOR, ORQUESTACIÓN POR LOTES & NÚCLEO DE DESPACHO]                               |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | ConnectionScheduler y motor de zona horaria IANA (Hora real segura frente a DST)             |  |
+|  | Cola de sincronización por lotes (Ejecución secuencial múltiple, señales de workers)        |  |
+|  | Coordinador de bloqueo de instancia (Mutex de instancia única, guardas seguras de PID)      |  |
+|  | ConfigManager (Escritores atómicos de JSON, recarga dinámica, exportación de perfil)        |  |
+|  +---------------------------------------------------------------------------------------------+  |
++===================================================================================================+
+                                                  |
+                                                  v (Despacho por lotes y señales de sincronización)
++===================================================================================================+
+| [VISTA 3: INTEGRIDAD DE DATOS & MOTOR DE SINCRONIZACIÓN]                                          |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  | Guarda de punto de control SQLite   |  | Centinela de contención de lock |  | Staging atómico |  |
+|  | - PRAGMA wal_checkpoint(TRUNCATE)  |  | - Aborto fail-closed SQLITE_BUSY|  | - Aislamiento   |  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  +---------------------------------------------------------------------------------------------+  |
+|  | 5 modos de sincronización: Espejo | Actualización | Bidireccional | Unidireccional | Índice     |  |
+|  | Copiador atómico de archivos (_atomic_copy2, resiliencia de permisos, archivos protegidos)   |  |
+|  | Escritores atómicos sin colisiones (prosync_utils.atomic_write_json / atomic_write_text)     |  |
+|  +---------------------------------------------------------------------------------------------+  |
++===================================================================================================+
+                                                  |
+                                                  v (Confirmaciones atómicas verificadas)
++===================================================================================================+
+| [VISTA 4: DEFENSA AIR-GAP, AISLAMIENTO RUNASINVOKER & NIVELES DE ALMACENAMIENTO]                  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
+|  | Perímetro Air-Gap Zero-Egress      |  | Modo no privilegiado RunAsInvoker|  | Destinos        |  |
+|  | - 100% Desconectado, cero telemetría|  | - Sin solicitud de elevación UAC|  | - Discos locales|  |
+|  | - Sin intermediarios de analítica  |  | - Aislamiento de perfil usuario |  | - NAS / SMB UNC |  |
+|  | - INV-LOCAL-01 Garantizado         |  | - INV-RUNAS-02 Certificado      |  | - SFTP robusto  |  |
+|  +------------------------------------+  +---------------------------------+  +-----------------+  |
++===================================================================================================+
 ```
 
 ---

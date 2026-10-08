@@ -1,7 +1,7 @@
 ================================================================================
 PROSYNC SUITE — MARKETING, DISCOVERY & GOVERNANCE LOG
 ================================================================================
-Stand: 2026-09-29
+Stand: 2026-10-08
 Repository: file-bricks/ProSync
 Branch: master
 Version: 3.2.0
@@ -330,4 +330,48 @@ Prüfpunkte & Maßnahmen:
    - Neue Contract-Tests für CI Lifecycle Workflows (auto-assign.yml, label-sync.yml,
      .github/labels.yml), Level 1 SBOM Plaintext Companion Recency und Invarianten,
      pyproject.toml URL-Registrierung und CHANGELOG [Unreleased] implementiert.
+================================================================================
+
+
+12. COMPREHENSIVE PATH B MARKETING, DISCOVERABILITY & VISUAL ARCHITECTURE AUDIT
+--------------------------------------------------------------------------------
+Audit-Datum: 2026-10-08
+Status: Passed (100% Green)
+Durchgeführt von: Antigravity (Gemini) / GitHubBot Pfad B Routine
+Repository: file-bricks/ProSync
+Branch: master
+Version: 3.2.0 (strikte Einhaltung von T-20260920-167562623)
+
+Prüfpunkte & Maßnahmen:
+1. Version-Freeze Disziplin:
+   - Versionsnummer 3.2.0 in pyproject.toml, Quellcode und Manifesten strikt unberührt belassen.
+2. Trilinguale ASCII Vier-Sichten-Architekturprojektion:
+   - Section 2 in README.md, README_de.md und README.es.md auf die standardisierte Flotten-Topologie
+     ([VIEW 1: CALLER RUNTIMES & USER INTERFACES], [VIEW 2: SCHEDULER, BATCH ORCHESTRATION & DISPATCH CORE],
+      [VIEW 3: DATA INTEGRITY & SYNC WORKER ENGINE], [VIEW 4: AIR-GAP DEFENSE, RUNASINVOKER ISOLATION & STORAGE TIERS]
+      bzw. deutsche und spanische Paritätsfassungen) aktualisiert; alle 18 bilateralen HTML-Anker sec-01..sec-18 erhalten.
+3. Bilinguale CONTRIBUTING.md Guidelines (EN/DE):
+   - Vollständige Entwicklerrichtlinien mit Spezifikation aller 10 Governance-Invarianten (INV-LOCAL-01..INV-SLA-10),
+     unprivilegiertem RunAsInvoker Modus (INV-RUNAS-02), Plan D Local Dev Workflow (C:\_Local_DEV\repos\ProSync),
+     Haftungsausschluss nach § 521 BGB Gefälligkeitsrecht und verbindlicher 48h Security Response SLA.
+4. PEP 621 Standardisierung (pyproject.toml):
+   - Contributing und Plain-Text License URLs unter [project.urls] registriert; CONTRIBUTING.md in license-files aufgenommen.
+5. Level 1 SBOM Re-Audit Stand 2026-10-08 (THIRD_PARTY_LICENSES.md & THIRD_PARTY_LICENSES.txt):
+   - Re-auditiert mit Bestätigung aller 10 Invarianten, unprivilegierter RunAsInvoker Non-Elevation, Zero-Copyleft
+     und Zero-Egress Garantie sowie Verweis auf CONTRIBUTING.md, NOTICE und LICENSE.
+6. Dokumentations- & Badge-Parität:
+   - Shields.io Badges für Tests (231 passed | 100% green / bestanden / superadas), Geprüft / Verified / Verificado Stand 2026-10-08,
+     Contributing Guidelines; llms.txt Stand 2026-10-08 und 231 verifizierte Tests Baseline aktualisiert.
+7. Automatisierte Vertragstests (tests/test_metadata.py):
+   - Neue Contract-Tests für ASCII 4-View Topologie in allen drei Sprachen, bilinguale CONTRIBUTING.md Parität,
+     PEP 621 URLs, Level 1 SBOM Recency Stand 2026-10-08 und Section 12 Revisionsbericht hinzugefügt.
+
+Nicht-automatisierte Handlungsempfehlungen für das Repository:
+- REC-20261008-01: Windows Tray Notification Sound / Balloon Tooltip Customization:
+  Möglichkeit schaffen, optionale dezente akustische Rückmeldungen oder native Windows-11-Toasts bei
+  abgeschlossenem Batch-Durchlauf zu konfigurieren (unter Wahrung der unprivilegierten Qt-Signal-Struktur).
+- REC-20261008-02: Terminalizer / VHS Terminal-GIF Demonstration für Headless-CLI:
+  Erstellung einer kurzen Vektoranimation für README.md, die `prosync --list` und `prosync --run <id>` im Terminal visualisiert.
+- REC-20261008-03: WinGet Community Re-Verification Submission:
+  Nach Bereitstellung des MSIX-Pakets die Aktualisierung des WinGet Manifests in microsoft/winget-pkgs evaluieren.
 ================================================================================

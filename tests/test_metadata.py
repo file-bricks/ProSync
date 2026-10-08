@@ -72,11 +72,12 @@ def test_llms_txt_integrity() -> None:
     assert llms_file.is_file(), "llms.txt must exist"
     content = llms_file.read_text(encoding="utf-8")
 
-    assert "Last-checked: 2026-09-29" in content, "llms.txt timestamp not updated to 2026-09-29"
+    assert "Last-checked: 2026-10-08" in content, "llms.txt timestamp not updated to 2026-10-08"
     assert "https://github.com/file-bricks/ProSync" in content, "Canonical repo link missing in llms.txt"
     assert "SQLite" in content and "WAL" in content, "SQLite WAL keywords missing in llms.txt"
     assert "SECURITY.md" in content, "SECURITY.md reference missing in llms.txt"
     assert "MARKETING-LOG.txt" in content, "MARKETING-LOG.txt reference missing in llms.txt"
+    assert "CONTRIBUTING.md" in content, "CONTRIBUTING.md reference missing in llms.txt"
     assert "NOTICE" in content, "NOTICE reference missing in llms.txt"
 
 
@@ -189,7 +190,7 @@ def test_marketing_log_recent_hygiene_entry() -> None:
     assert mktg_file.is_file(), "MARKETING-LOG.txt must exist"
     content = mktg_file.read_text(encoding="utf-8")
 
-    assert "2026-09-29" in content, "Recent audit date 2026-09-29 missing in MARKETING-LOG.txt"
+    assert "2026-10-08" in content, "Current audit date 2026-10-08 missing in MARKETING-LOG.txt"
     assert "PROSYNC SUITE" in content
     assert "INV-LOCAL-01" in content and "INV-SLA-10" in content, "Governance pillars missing in MARKETING-LOG.txt"
     assert "Pfad A" in content or "PFAD A" in content, "Pfad A audit section missing in MARKETING-LOG.txt"
@@ -345,10 +346,10 @@ def test_pyproject_saturated_keywords() -> None:
 
 
 def test_third_party_licenses_notice_cross_reference_and_recency() -> None:
-    """Verify THIRD_PARTY_LICENSES.md references NOTICE, text inventory, and is updated to 2026-09-29."""
+    """Verify THIRD_PARTY_LICENSES.md references NOTICE, text inventory, and is updated to 2026-10-08."""
     sbom_file = ROOT / "THIRD_PARTY_LICENSES.md"
     content = sbom_file.read_text(encoding="utf-8")
-    assert "Audit Date:** 2026-09-29" in content, "Audit Date not updated to 2026-09-29 in THIRD_PARTY_LICENSES.md"
+    assert "Audit Date:** 2026-10-08" in content, "Audit Date not updated to 2026-10-08 in THIRD_PARTY_LICENSES.md"
     assert "NOTICE" in content, "NOTICE cross-reference missing in THIRD_PARTY_LICENSES.md"
     assert "THIRD_PARTY_LICENSES.txt" in content, "THIRD_PARTY_LICENSES.txt reference missing"
 
@@ -358,8 +359,9 @@ def test_changelog_unreleased_entries() -> None:
     changelog_file = ROOT / "CHANGELOG.md"
     content = changelog_file.read_text(encoding="utf-8")
     assert "## [Unreleased]" in content
-    assert "2026-09-29" in content
+    assert "2026-10-08" in content
     assert "Pfad B" in content
+    assert "2026-09-29" in content
     assert "2026-09-28" in content
     assert "Pfad A" in content
     assert "2026-09-26" in content
@@ -450,8 +452,8 @@ def test_third_party_licenses_text_companion_and_sbom() -> None:
     assert txt_file.is_file(), "THIRD_PARTY_LICENSES.txt must exist"
     content = txt_file.read_text(encoding="utf-8")
 
-    assert "Audited: Stand: 2026-09-29" in content, "Stand: 2026-09-29 missing in THIRD_PARTY_LICENSES.txt"
-    assert "Last checked: 2026-09-29" in content, "Last checked date missing in THIRD_PARTY_LICENSES.txt"
+    assert "Audited: Stand: 2026-10-08" in content, "Stand: 2026-10-08 missing in THIRD_PARTY_LICENSES.txt"
+    assert "Last checked: 2026-10-08" in content, "Last checked date missing in THIRD_PARTY_LICENSES.txt"
     assert "Lukas Geiger" in content, "Attribution to Lukas Geiger missing in THIRD_PARTY_LICENSES.txt"
     assert "file-bricks" in content, "file-bricks mention missing in THIRD_PARTY_LICENSES.txt"
     assert "RunAsInvoker" in content, "RunAsInvoker non-elevation missing in THIRD_PARTY_LICENSES.txt"
@@ -469,6 +471,69 @@ def test_third_party_licenses_text_companion_and_sbom() -> None:
     ]
     for inv in expected_invariants:
         assert inv in content, f"Invariant {inv} missing in THIRD_PARTY_LICENSES.txt"
+
+
+def test_ascii_four_view_topology_trilingual_parity() -> None:
+    """Verify Section 2 ASCII Four-View Architectural Topology is present across EN, DE, and ES READMEs."""
+    readme_en = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (ROOT / "README_de.md").read_text(encoding="utf-8")
+    readme_es = (ROOT / "README.es.md").read_text(encoding="utf-8")
+
+    # EN views
+    assert "[VIEW 1: CALLER RUNTIMES & USER INTERFACES]" in readme_en
+    assert "[VIEW 2: SCHEDULER, BATCH ORCHESTRATION & DISPATCH CORE]" in readme_en
+    assert "[VIEW 3: DATA INTEGRITY & SYNC WORKER ENGINE]" in readme_en
+    assert "[VIEW 4: AIR-GAP DEFENSE, RUNASINVOKER ISOLATION & STORAGE TIERS]" in readme_en
+
+    # DE views
+    assert "[SICHT 1: AUFRUFER-LAUFZEITEN & BENUTZEROBERFLÄCHEN]" in readme_de
+    assert "[SICHT 2: SCHEDULER, BATCH-ORCHESTRIERUNG & DISPATCH-KERN]" in readme_de
+    assert "[SICHT 3: DATENINTEGRITÄT & SYNC-WORKER-ENGINE]" in readme_de
+    assert "[SICHT 4: AIR-GAP-SCHUTZ, RUNASINVOKER-ISOLATION & SPEICHERZIELE]" in readme_de
+
+    # ES views
+    assert "[VISTA 1: ENTORNOS DE EJECUCIÓN & INTERFACES DE USUARIO]" in readme_es
+    assert "[VISTA 2: PLANIFICADOR, ORQUESTACIÓN POR LOTES & NÚCLEO DE DESPACHO]" in readme_es
+    assert "[VISTA 3: INTEGRIDAD DE DATOS & MOTOR DE SINCRONIZACIÓN]" in readme_es
+    assert "[VISTA 4: DEFENSA AIR-GAP, AISLAMIENTO RUNASINVOKER & NIVELES DE ALMACENAMIENTO]" in readme_es
+
+
+def test_contributing_bilingual_contract() -> None:
+    """Verify CONTRIBUTING.md exists with German & English sections, 10 invariants, RunAsInvoker, and 48h SLA."""
+    contrib_file = ROOT / "CONTRIBUTING.md"
+    assert contrib_file.is_file(), "CONTRIBUTING.md must exist"
+    content = contrib_file.read_text(encoding="utf-8")
+
+    assert "## Deutsch" in content
+    assert "## English" in content
+    assert "INV-LOCAL-01" in content and "INV-SLA-10" in content
+    assert "RunAsInvoker" in content
+    assert "Plan D" in content
+    assert "521 BGB" in content
+    assert "48" in content and "SLA" in content
+    assert "3.2.0" in content
+
+
+def test_pep_621_contributing_and_plain_license_urls() -> None:
+    """Verify pyproject.toml registers Contributing and Plain-Text License in project.urls and license-files."""
+    pyproject_file = ROOT / "pyproject.toml"
+    content = pyproject_file.read_text(encoding="utf-8")
+
+    assert 'Contributing = "https://github.com/file-bricks/ProSync/blob/master/CONTRIBUTING.md"' in content
+    assert '"Plain-Text License" = "https://github.com/file-bricks/ProSync/blob/master/LICENSE"' in content
+    assert '"CONTRIBUTING.md"' in content
+
+
+def test_marketing_log_section_12_pfad_b() -> None:
+    """Verify MARKETING-LOG.txt documents Section 12 Path B audit with recommendations."""
+    mktg_file = ROOT / "MARKETING-LOG.txt"
+    content = mktg_file.read_text(encoding="utf-8")
+
+    assert "12. COMPREHENSIVE PATH B MARKETING, DISCOVERABILITY & VISUAL ARCHITECTURE AUDIT" in content
+    assert "2026-10-08" in content
+    assert "REC-20261008-01" in content
+    assert "REC-20261008-02" in content
+    assert "REC-20261008-03" in content
 
 
 if __name__ == "__main__":
