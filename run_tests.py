@@ -40,7 +40,7 @@ def main() -> int:
     env.setdefault("PYTHONIOENCODING", "utf-8")
     env.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-    failed: list[str] = []
+    failed: list[tuple[str, int]] = []
     for test_file in TEST_FILES:
         print(f"\n=== {test_file} ===", flush=True)
         result = subprocess.run(
@@ -51,10 +51,14 @@ def main() -> int:
             timeout=120,
         )
         if result.returncode != 0:
-            failed.append(test_file)
+            failed.append((test_file, result.returncode))
 
     if failed:
-        print("\nFAILED:", ", ".join(failed), flush=True)
+        failures = ", ".join(
+            f"{test_file} (return code {returncode})"
+            for test_file, returncode in failed
+        )
+        print("\nFAILED:", failures, flush=True)
         return 1
 
     print("\nAll smoke tests passed.", flush=True)
