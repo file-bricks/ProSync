@@ -80,3 +80,15 @@ jobs:
           exit_code=$?
           echo "Full pytest process return code: ${exit_code}"
           exit "${exit_code}"
+
+      - name: Isolate SFTP tests under pytest (Python 3.10)
+        if: ${{ !cancelled() && matrix.python-version == '3.10' }}
+        env:
+          PYTHONFAULTHANDLER: "1"
+        shell: bash
+        run: |
+          set +e
+          python -m pytest -ra -v test_sftp_target.py
+          exit_code=$?
+          echo "SFTP-only pytest process return code: ${exit_code}"
+          exit "${exit_code}"
