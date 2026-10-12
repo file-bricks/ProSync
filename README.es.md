@@ -590,6 +590,7 @@ ProSync es mantenido por **file-bricks** bajo la iniciativa de software libre **
 | **[CloudLockFixer](https://github.com/file-bricks/CloudLockFixer)** | `file-bricks` | Desbloqueador de bloqueos en la nube y verificador de caché local | Higiene de sincronización en la nube |
 | **[ProFiler](https://github.com/file-bricks/ProFiler)** | `file-bricks` | Indexación profunda de archivos, etiquetado y asistente de búsqueda | Indexación y búsqueda de archivos |
 | **[NoteSpaceLLM](https://github.com/file-bricks/NoteSpaceLLM)** | `file-bricks` | Espacio local de notas de escritorio aumentado con IA | Notas y conocimiento local |
+| **[llm-note](https://github.com/doc-bricks/llm-note)** | `doc-bricks` | Cuaderno local de SQLite y texto plano para notas personales o de agentes | Notas y conocimiento local |
 | **[WinStorePackager](https://github.com/file-bricks/WinStorePackager)** | `file-bricks` | Flujo automatizado de empaquetado MSIX para Windows Store | Publicación en tiendas de apps |
 | **[UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber)** | `doc-bricks` | Captura universal de documentos, OCR y visor PWA higienizado | Procesamiento de documentos |
 | **[MediaBrain](https://github.com/doc-bricks/MediaBrain)** | `doc-bricks` | Catalogación inteligente de archivos multimedia e indexación | Gestión de medios |
