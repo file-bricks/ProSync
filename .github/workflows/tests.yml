@@ -92,3 +92,36 @@ jobs:
           exit_code=$?
           echo "SFTP-only pytest process return code: ${exit_code}"
           exit "${exit_code}"
+
+      - name: Capture native SFTP SIGABRT backtrace (Python 3.10)
+        if: ${{ !cancelled() && matrix.python-version == '3.10' }}
+        shell: bash
+        run: |
+          if ! command -v gdb >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y gdb
+          fi
+          gdb --version | head -n 1
+
+          commands_file="$(mktemp)"
+          trap 'rm -f "$commands_file"' EXIT
+          cat >"$commands_file" <<'GDB'
+          set pagination off
+          set debuginfod enabled off
+          set print frame-arguments none
+          handle SIGABRT nostop noprint pass
+          tcatch signal SIGABRT
+          commands
+            silent
+            printf "\n--- SIGABRT native backtrace (all threads) ---\n"
+            thread apply all bt
+            continue
+          end
+          run
+          GDB
+
+          set +e
+          gdb --batch --quiet --nx --return-child-result -x "$commands_file" --args python test_sftp_target.py
+          exit_code=$?
+          echo "GDB-wrapped standalone SFTP process return code: ${exit_code}"
+          exit "${exit_code}"
