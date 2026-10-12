@@ -12,26 +12,11 @@ from pathlib import Path
 from PySide6.QtCore import QCoreApplication
 
 
-_PROSYNC_MODULE_NAME = "prosync_sftp"
-
-
 def load_prosync_module():
     module_path = Path(__file__).with_name("ProSyncStart_V3.1.py")
-    cached_module = sys.modules.get(_PROSYNC_MODULE_NAME)
-    if cached_module is not None:
-        return cached_module
-
-    spec = importlib.util.spec_from_file_location(_PROSYNC_MODULE_NAME, module_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Could not load ProSync module from {module_path}")
+    spec = importlib.util.spec_from_file_location("prosync_sftp", module_path)
     module = importlib.util.module_from_spec(spec)
-    sys.modules[_PROSYNC_MODULE_NAME] = module
-    try:
-        spec.loader.exec_module(module)
-    except BaseException:
-        if sys.modules.get(_PROSYNC_MODULE_NAME) is module:
-            del sys.modules[_PROSYNC_MODULE_NAME]
-        raise
+    spec.loader.exec_module(module)
     return module
 
 
