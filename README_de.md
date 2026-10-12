@@ -612,6 +612,7 @@ ProSync wird von **file-bricks** im Rahmen der **open-bricks** Initiative gepfle
 | **[CloudLockFixer](https://github.com/file-bricks/CloudLockFixer)** | `file-bricks` | Löst Cloud-Sperren und repariert Offline-Caches | Cloud-Sync-Hygiene |
 | **[ProFiler](https://github.com/file-bricks/ProFiler)** | `file-bricks` | Tiefenindexierung und Metadaten-Katalogisierung | Dateiindexierung & Suche |
 | **[NoteSpaceLLM](https://github.com/file-bricks/NoteSpaceLLM)** | `file-bricks` | Lokale Notizverwaltung mit KI-Erweiterung | Wissensmanagement |
+| **[llm-note](https://github.com/doc-bricks/llm-note)** | `doc-bricks` | Lokales SQLite- und Klartext-Notizbuch für persönliche Notizen oder Agentennotizen | Lokale Notizen & Wissen |
 | **[WinStorePackager](https://github.com/file-bricks/WinStorePackager)** | `file-bricks` | Werkzeugkette für Windows Store MSIX-Pakete | Store-Packaging |
 | **[UniversalDocsGrabber](https://github.com/doc-bricks/UniversalDocsGrabber)** | `doc-bricks` | Dokumentenerfassung, OCR und redigierter Reader | Dokumentenverarbeitung |
 | **[MediaBrain](https://github.com/doc-bricks/MediaBrain)** | `doc-bricks` | Medienkatalogisierung und Asset-Indexierung | Medienverwaltung |

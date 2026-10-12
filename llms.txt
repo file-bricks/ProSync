@@ -68,4 +68,8 @@ python -m compileall -q ProSyncStart_V3.1.py ProSyncReader.py prosync_utils.py
 - SQLite WAL safe copy python backup
 - Windows Store MSIX local backup sync utility
 
+## Related Tools
+
+- [llm-note](https://github.com/doc-bricks/llm-note): Local SQLite and plain-text notebook for personal or agent notes.
+
 ## Last-checked: 2026-09-28
