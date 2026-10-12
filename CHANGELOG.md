@@ -5,6 +5,18 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-10-12)
+- **Temporäre PySide6-Kompatibilitätsgrenze:** `requirements.txt`, `pyproject.toml` und
+  beide CI-Installationswege begrenzen PySide6 auf `>=6.5.0,<6.12`. Ein kontrollierter
+  Linux/Python-3.10-A/B-Lauf mit identischen Nicht-Qt-Paketen bestand mit
+  PySide6/Shiboken6 6.11.2: Standalone-SFTP mit Exit 0 und pytest mit 9/9. Mit 6.12.0
+  brach derselbe Standalone-Prozess nach seiner Erfolgsmeldung mit Exit -6 ab; pytest
+  bestand weiterhin mit 9/9. Das belegt die Kompatibilitätsgrenze für den gemessenen
+  SFTP-Pfad, aber nicht die Ursache der Speicherbeschädigung. Die Grenze wird erst neu
+  bewertet, wenn ein neuerer Qt-Stand den unveränderten Standalone-Smoke, den regulären
+  Smoke-Runner und die vollständigen vorhandenen CI-Matrizen besteht. Die Release-Version
+  3.2.0 bleibt unverändert.
+
 ### Hinzugefügt / Added (2026-10-08)
 - **Pfad B Repository-Marketing, Discoverability, Visuelle 4-Sichten-Topologie & Level 1 SBOM Re-Audit:**
   - **Strikte Version-Freeze-Disziplin (`T-20260920-167562623`):** Versionsnummer `3.2.0` in `pyproject.toml`, Quellcode und Manifesten strikt unverändert bewahrt.

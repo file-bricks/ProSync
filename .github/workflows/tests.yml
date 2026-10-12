@@ -66,7 +66,17 @@ jobs:
         run: python -m compileall -q .
 
       - name: Run smoke tests
+        env:
+          PYTHONFAULTHANDLER: "1"
         run: python run_tests.py
 
       - name: Run full pytest suite
-        run: python -m pytest -ra -v
+        env:
+          PYTHONFAULTHANDLER: "1"
+        shell: bash
+        run: |
+          set +e
+          python -m pytest -ra -v
+          exit_code=$?
+          echo "Full pytest process return code: ${exit_code}"
+          exit "${exit_code}"
