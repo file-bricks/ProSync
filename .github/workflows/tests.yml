@@ -125,3 +125,17 @@ jobs:
           exit_code=$?
           echo "GDB-wrapped standalone SFTP process return code: ${exit_code}"
           exit "${exit_code}"
+
+      - name: Check standalone SFTP with Python allocator diagnostics (Python 3.10)
+        if: ${{ !cancelled() && matrix.python-version == '3.10' }}
+        env:
+          PYTHONFAULTHANDLER: "1"
+          PYTHONMALLOC: "debug"
+          PYTHONTRACEMALLOC: "5"
+        shell: bash
+        run: |
+          set +e
+          python test_sftp_target.py
+          exit_code=$?
+          echo "Debug-allocator standalone SFTP process shell exit status: ${exit_code}"
+          exit "${exit_code}"
