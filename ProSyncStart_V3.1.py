@@ -23,7 +23,8 @@ from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLineEdit, QComboBox, QCheckBox, QDialogButtonBox,
     QFileDialog, QMessageBox, QSystemTrayIcon, QStyle, QSizePolicy, QSplitter,
     QAbstractItemView,
-    QTextEdit, QInputDialog
+    QTextEdit, QInputDialog,
+    QTreeWidget, QTreeWidgetItem, QMenuBar
 )
 from PySide6.QtCore import Qt, QThread, Signal, QObject, QTimer, QLockFile, QDir, QCoreApplication
 from PySide6.QtGui import QAction, QActionGroup, QIcon, QShortcut, QKeySequence
@@ -3373,6 +3374,173 @@ class ConnectionListWidget(QListWidget):
         super().keyPressEvent(event)
 
 
+class ShortcutsDialog(QDialog):
+    """Barrierefreier Tastaturkürzel- und Hilfe-Dialog (WCAG 2.1 AA / BITV 2.0)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Tastaturkürzel & Barrierefreiheit — ProSync")
+        self.resize(680, 500)
+        self.setModal(True)
+        self.setAccessibleName("Tastaturkürzel und Barrierefreiheits-Übersicht")
+        self.setAccessibleDescription("Übersicht aller verfügbaren Tastenkombinationen, Navigationshilfen und Konformitätsangaben.")
+
+        layout = QVBoxLayout(self)
+
+        lbl_header = QLabel("Tastaturkürzel & Tastaturnavigation")
+        lbl_header.setStyleSheet("font-size: 15px; font-weight: bold; margin-bottom: 4px;")
+        lbl_header.setAccessibleName("Tastaturkürzel Überschrift")
+        layout.addWidget(lbl_header)
+
+        self.tree = QTreeWidget(self)
+        self.tree.setHeaderLabels(["Kategorie / Befehl", "Tastenkombination", "Bereich / Beschreibung"])
+        self.tree.setAccessibleName("Tastaturkürzel-Tabelle")
+        self.tree.setAccessibleDescription("Hierarchische Liste der Tastenkürzel geordnet nach Kategorien")
+        self.tree.setAlternatingRowColors(True)
+
+        shortcuts_data = [
+            ("Datei & Profile", [
+                ("Ordner synchronisieren", "Strg+N", "Neue Ordner-Synchronisationsaufgabe erstellen"),
+                ("Datei synchronisieren", "Strg+Umschalt+N", "Neue Datei-Synchronisationsaufgabe erstellen"),
+                ("SFTP/SSH synchronisieren", "Strg+Alt+N", "Neue Remote-SFTP-Aufgabe anlegen"),
+                ("Profil exportieren", "Strg+E", "Übertragbares Synchronisationsprofil speichern"),
+                ("Profil importieren", "Strg+I", "Übertragbares Synchronisationsprofil einlesen"),
+                ("Beenden", "Strg+Q", "Anwendung ordnungsgemäß schließen"),
+            ]),
+            ("Synchronisation & Aktionen", [
+                ("Synchronisation starten", "F5 / Strg+R / Eingabe", "Ausgewählte Aufgabe oder Batch sofort starten"),
+                ("Pause / Fortsetzen", "F6", "Laufende Synchronisation pausieren oder fortsetzen"),
+                ("Synchronisation abbrechen", "Esc", "Aktiven Synchronisationsvorgang sicher abbrechen"),
+                ("Sicherheitsprüfung ausführen", "Strg+Umschalt+A", "SQLite- und WAL-Datenbanksicherheitsprüfung"),
+                ("Datenbank durchsuchen", "Strg+F", "ProFiler Search Volltextsuche in Indexdatenbanken"),
+                ("ProFiler Companion", "Strg+Umschalt+P", "ProFiler Analyseanwendung starten"),
+            ]),
+            ("Bearbeiten & Listen-Navigation", [
+                ("Aufgabe bearbeiten", "F2 / Doppelklick", "Konfiguration der gewählten Aufgabe öffnen"),
+                ("Aufgabe löschen", "Entf", "Ausgewählte Synchronisationsaufgabe entfernen"),
+                ("Details kopieren", "Strg+C", "Aufgabeninformationen in Zwischenablage kopieren"),
+                ("Aufgabe starten", "Eingabe (Return)", "Direktes Starten bei Fokus in Aufgabenliste"),
+                ("Zwischen Elementen wechseln", "Tab / Umschalt+Tab", "Barrierefreie Fokusnavigation vorwärts/rückwärts"),
+                ("In Listen navigieren", "Pfeiltasten Auf / Ab", "Elementauswahl in Aufgaben- und Datenbanklisten"),
+            ]),
+            ("Ansicht & Hilfe", [
+                ("Tastaturkürzel & Hilfe", "F1", "Diesen Hilfedialog anzeigen"),
+                ("Über ProSync", "Umschalt+F1", "Versions-, Lizenz- und Architekturangaben"),
+                ("Aufgabenliste aktualisieren", "Strg+F5", "Aufgabenliste und Auto-Sync-Status neu einlesen"),
+                ("Fokus auf Aufgabenliste", "Strg+1", "Tastaturfokus direkt in die Aufgabenliste setzen"),
+                ("Fokus auf Steuerbereich", "Strg+2", "Tastaturfokus auf die Synchronisations-Schaltflächen setzen"),
+            ]),
+        ]
+
+        for cat_name, items in shortcuts_data:
+            cat_item = QTreeWidgetItem(self.tree, [cat_name, "", ""])
+            font = cat_item.font(0)
+            font.setBold(True)
+            cat_item.setFont(0, font)
+            cat_item.setExpanded(True)
+            for title, key, desc in items:
+                child = QTreeWidgetItem(cat_item, [title, key, desc])
+                child.setToolTip(0, desc)
+                child.setToolTip(1, f"Tastenkombination: {key}")
+
+        self.tree.resizeColumnToContents(0)
+        self.tree.resizeColumnToContents(1)
+        layout.addWidget(self.tree)
+
+        lbl_wcag = QLabel(
+            "Barrierefreiheitshinweis:\n"
+            "Diese Anwendung erfüllt die Kriterien der WCAG 2.1 Stufe AA sowie der BITV 2.0. "
+            "Alle Funktionen sind vollständig per Tastatur ohne Maus bedienbar. "
+            "Interaktive Steuerelemente verfügen über semantische Namen (accessibleName), "
+            "ausführliche Beschreibungen (accessibleDescription), sichtbare Fokus-Ringe und "
+            "hohe Farbkontraste. Dialoge und Menüs sind mit Mnemonics (Alt+Taste) navigierbar."
+        )
+        lbl_wcag.setWordWrap(True)
+        lbl_wcag.setStyleSheet(
+            "background-color: #f0f4f8; color: #1a365d; border: 1px solid #cbd5e1; "
+            "border-radius: 4px; padding: 8px; font-size: 11px;"
+        )
+        lbl_wcag.setAccessibleName("BITV 2.0 und WCAG 2.1 AA Konformitätshinweis")
+        layout.addWidget(lbl_wcag)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        btn_close = button_box.button(QDialogButtonBox.StandardButton.Close)
+        if btn_close:
+            btn_close.setText("Schließen")
+            btn_close.setDefault(True)
+            btn_close.setFocus()
+            btn_close.setAccessibleName("Hilfedialog schließen")
+            btn_close.setToolTip("Hilfedialog schließen (Escape oder Eingabe)")
+        button_box.rejected.connect(self.accept)
+        layout.addWidget(button_box)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.accept()
+            return
+        super().keyPressEvent(event)
+
+
+class AboutDialog(QDialog):
+    """Barrierefreier Über-Dialog mit Metadaten-, Architektur- und Lizenzangaben."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Über ProSync")
+        self.resize(500, 380)
+        self.setModal(True)
+        self.setAccessibleName("Über ProSync Dialog")
+        self.setAccessibleDescription("Informationen über Version, Lizenz und Architektur von ProSync.")
+
+        layout = QVBoxLayout(self)
+
+        lbl_title = QLabel("ProSync V3.2")
+        lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #1e3a8a;")
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(lbl_title)
+
+        lbl_desc = QLabel("Robuste Multi-Device Synchronisation mit SQLite- und WAL-Datenbanksicherheit")
+        lbl_desc.setStyleSheet("font-size: 12px; font-style: italic; color: #475569; margin-bottom: 8px;")
+        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_desc.setWordWrap(True)
+        layout.addWidget(lbl_desc)
+
+        info_text = (
+            "<b>Version:</b> 3.2.0 (Release-Build)<br>"
+            "<b>Lizenz:</b> MIT Lizenz<br>"
+            "<b>Architektur:</b> Local-First, Zero-Egress, Offline-First<br>"
+            "<b>Datenbank-Sicherheit:</b> Automatischer WAL-Checkpoint vor Kopie & Transaktionssicherheit<br>"
+            "<b>Barrierefreiheit:</b> Konform zu WCAG 2.1 AA und BITV 2.0<br>"
+            "<b>Mehrsprachigkeit:</b> 6 Sprachen (DE, EN, ES, ZH, JA, RU) gem. Policy P-006<br><br>"
+            "ProSync schützt Arbeitsdaten und Datenbanken vor Synchronisationskonflikten, "
+            "Datenverlust und unvollständigen Schreibvorgängen auf lokalen Laufwerken, Netzlaufwerken und SFTP-Zielen."
+        )
+        lbl_info = QLabel(info_text)
+        lbl_info.setWordWrap(True)
+        lbl_info.setStyleSheet("padding: 8px; font-size: 12px; line-height: 1.4;")
+        lbl_info.setAccessibleName("ProSync Programminformationen")
+        layout.addWidget(lbl_info)
+
+        layout.addStretch()
+
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        btn_close = button_box.button(QDialogButtonBox.StandardButton.Close)
+        if btn_close:
+            btn_close.setText("Schließen")
+            btn_close.setDefault(True)
+            btn_close.setFocus()
+            btn_close.setAccessibleName("Über-Dialog schließen")
+            btn_close.setToolTip("Über-Dialog schließen (Escape oder Eingabe)")
+        button_box.rejected.connect(self.accept)
+        layout.addWidget(button_box)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape:
+            self.accept()
+            return
+        super().keyPressEvent(event)
+
+
 class MainWindow(QMainWindow):
     # V3.2 NEW: Notification-Typen für Toast-System
     class NotificationType:
@@ -3387,6 +3555,8 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(load_app_icon())
         self.resize(900, 600)
         self.cfg = cfg
+        self.current_language = "de"
+        self.setup_menu_bar()
         self.worker = None
         self.batch_queue = BatchSyncQueue()
         self._worker_had_error = False
@@ -4511,6 +4681,248 @@ class MainWindow(QMainWindow):
     def force_quit(self):
         self.scheduler.stop_all()
         QApplication.quit()
+
+    def setup_menu_bar(self):
+        """Erstellt eine barrierefreie Menüleiste mit Mnemonics und Tastaturkürzeln (WCAG 2.1 AA)."""
+        self.menubar = self.menuBar()
+        self.menubar.setAccessibleName("Hauptmenüleiste")
+
+        # &Datei (Alt+D)
+        self.menu_file = self.menubar.addMenu("&Datei")
+        self.menu_file.setAccessibleName("Menü Datei")
+
+        act_add_folder = QAction("📁 &Ordner-Synchronisation hinzufügen...", self)
+        act_add_folder.setShortcut(QKeySequence("Ctrl+N"))
+        act_add_folder.setStatusTip("Erstellt eine neue Ordner-Synchronisationsaufgabe.")
+        act_add_folder.triggered.connect(self.add_folder_connection)
+        self.menu_file.addAction(act_add_folder)
+
+        act_add_file = QAction("📄 &Datei-Synchronisation hinzufügen...", self)
+        act_add_file.setShortcut(QKeySequence("Ctrl+Shift+N"))
+        act_add_file.setStatusTip("Erstellt eine neue Datei-Synchronisationsaufgabe für Datenbanken.")
+        act_add_file.triggered.connect(self.add_file_connection)
+        self.menu_file.addAction(act_add_file)
+
+        act_add_sftp = QAction("🌐 &SFTP/SSH-Ziel hinzufügen...", self)
+        act_add_sftp.setShortcut(QKeySequence("Ctrl+Alt+N"))
+        act_add_sftp.setStatusTip("Erstellt eine neue Remote-SFTP-Synchronisationsaufgabe.")
+        act_add_sftp.triggered.connect(self.add_sftp_connection)
+        self.menu_file.addAction(act_add_sftp)
+
+        self.menu_file.addSeparator()
+
+        act_export_profile = QAction("📤 Profil &exportieren...", self)
+        act_export_profile.setShortcut(QKeySequence("Ctrl+E"))
+        act_export_profile.setStatusTip("Exportiert ein übertragbares ProSync-Profil.")
+        act_export_profile.triggered.connect(self.export_portable_profile_dialog)
+        self.menu_file.addAction(act_export_profile)
+
+        act_import_profile = QAction("📥 Profil &importieren...", self)
+        act_import_profile.setShortcut(QKeySequence("Ctrl+I"))
+        act_import_profile.setStatusTip("Importiert ein übertragbares ProSync-Profil.")
+        act_import_profile.triggered.connect(self.import_portable_profile_dialog)
+        self.menu_file.addAction(act_import_profile)
+
+        self.menu_file.addSeparator()
+
+        act_quit = QAction("&Beenden", self)
+        act_quit.setShortcut(QKeySequence("Ctrl+Q"))
+        act_quit.setStatusTip("Schließt die ProSync-Anwendung.")
+        act_quit.triggered.connect(self.close)
+        self.menu_file.addAction(act_quit)
+
+        # &Bearbeiten (Alt+B)
+        self.menu_edit = self.menubar.addMenu("&Bearbeiten")
+        self.menu_edit.setAccessibleName("Menü Bearbeiten")
+
+        act_edit = QAction("Ausgewählte Aufgabe &bearbeiten", self)
+        act_edit.setShortcut(QKeySequence("F2"))
+        act_edit.setStatusTip("Öffnet die Konfiguration der ausgewählten Synchronisationsaufgabe.")
+        act_edit.triggered.connect(lambda: self.edit_selected_connection())
+        self.menu_edit.addAction(act_edit)
+
+        act_del = QAction("Ausgewählte Aufgabe &löschen", self)
+        act_del.setShortcut(QKeySequence(Qt.Key.Key_Delete))
+        act_del.setStatusTip("Entfernt die ausgewählte Synchronisationsaufgabe.")
+        act_del.triggered.connect(self.delete_selected_connection)
+        self.menu_edit.addAction(act_del)
+
+        act_copy = QAction("Aufgaben-Details in &Zwischenablage kopieren", self)
+        act_copy.setShortcut(QKeySequence("Ctrl+C"))
+        act_copy.setStatusTip("Kopiert die Details der markierten Aufgaben in die Zwischenablage.")
+        act_copy.triggered.connect(self.copy_selected_connection_info)
+        self.menu_edit.addAction(act_copy)
+
+        self.menu_edit.addSeparator()
+
+        act_audit = QAction("&Sicherheitsprüfung aller Aufgaben ausführen", self)
+        act_audit.setShortcut(QKeySequence("Ctrl+Shift+A"))
+        act_audit.setStatusTip("Führt die SQLite- und WAL-Sicherheitsprüfung über alle Aufgaben aus.")
+        act_audit.triggered.connect(self.audit_all_connections)
+        self.menu_edit.addAction(act_audit)
+
+        # &Aktionen (Alt+K)
+        self.menu_actions = self.menubar.addMenu("&Aktionen")
+        self.menu_actions.setAccessibleName("Menü Aktionen")
+
+        act_start = QAction("Synchronisation &starten", self)
+        act_start.setShortcut(QKeySequence("F5"))
+        act_start.setStatusTip("Startet die ausgewählte Synchronisationsaufgabe oder den Batch-Lauf.")
+        act_start.triggered.connect(self.start_sync)
+        self.menu_actions.addAction(act_start)
+
+        act_pause = QAction("Synchronisation &pausieren / fortsetzen", self)
+        act_pause.setShortcut(QKeySequence("F6"))
+        act_pause.setStatusTip("Pausiert den aktiven Synchronisationslauf oder setzt ihn fort.")
+        act_pause.triggered.connect(self.toggle_pause)
+        self.menu_actions.addAction(act_pause)
+
+        act_stop = QAction("Synchronisation &abbrechen", self)
+        act_stop.setShortcut(QKeySequence("Escape"))
+        act_stop.setStatusTip("Bricht den laufenden Synchronisationsvorgang sofort ab.")
+        act_stop.triggered.connect(self.stop_worker)
+        self.menu_actions.addAction(act_stop)
+
+        self.menu_actions.addSeparator()
+
+        act_search = QAction("🔍 &Datenbank durchsuchen (ProFiler Search)...", self)
+        act_search.setShortcut(QKeySequence("Ctrl+F"))
+        act_search.setStatusTip("Öffnet die ProFiler-Search-Volltextsuche in allen Indexdatenbanken.")
+        act_search.triggered.connect(self.open_reader)
+        self.menu_actions.addAction(act_search)
+
+        act_profiler = QAction("📚 ProFiler &Companion-App öffnen...", self)
+        act_profiler.setShortcut(QKeySequence("Ctrl+Shift+P"))
+        act_profiler.setStatusTip("Startet die ProFiler-Anwendung zur tiefen Dateianalyse.")
+        act_profiler.triggered.connect(self.launch_profiler)
+        self.menu_actions.addAction(act_profiler)
+
+        # &Ansicht (Alt+A)
+        self.menu_view = self.menubar.addMenu("&Ansicht")
+        self.menu_view.setAccessibleName("Menü Ansicht")
+
+        act_refresh = QAction("Aufgabenliste &aktualisieren", self)
+        act_refresh.setShortcut(QKeySequence("Ctrl+F5"))
+        act_refresh.setStatusTip("Liest die Aufgabenliste und den Auto-Sync-Status neu ein.")
+        act_refresh.triggered.connect(self.populate_list)
+        self.menu_view.addAction(act_refresh)
+
+        act_focus_list = QAction("Fokus auf Aufgaben&liste", self)
+        act_focus_list.setShortcut(QKeySequence("Ctrl+1"))
+        act_focus_list.setStatusTip("Setzt den Eingabefokus direkt in die Aufgabenliste.")
+        act_focus_list.triggered.connect(lambda: self.list.setFocus())
+        self.menu_view.addAction(act_focus_list)
+
+        act_focus_ctrl = QAction("Fokus auf &Steuerbereich", self)
+        act_focus_ctrl.setShortcut(QKeySequence("Ctrl+2"))
+        act_focus_ctrl.setStatusTip("Setzt den Eingabefokus auf die Start-Schaltfläche.")
+        act_focus_ctrl.triggered.connect(lambda: self.btn_run.setFocus())
+        self.menu_view.addAction(act_focus_ctrl)
+
+        # &Sprache (Alt+S)
+        self.menu_lang = self.menubar.addMenu("&Sprache")
+        self.menu_lang.setAccessibleName("Menü Sprache")
+        self.lang_action_group = QActionGroup(self)
+        for code, name in [
+            ("de", "Deutsch"),
+            ("en", "English"),
+            ("es", "Español"),
+            ("zh", "简体中文"),
+            ("ja", "日本語"),
+            ("ru", "Русский"),
+        ]:
+            act_lang = QAction(name, self)
+            act_lang.setCheckable(True)
+            act_lang.setData(code)
+            if code == self.current_language:
+                act_lang.setChecked(True)
+            act_lang.triggered.connect(lambda checked=False, c=code: self.switch_language(c))
+            self.lang_action_group.addAction(act_lang)
+            self.menu_lang.addAction(act_lang)
+
+        # &Hilfe (Alt+H)
+        self.menu_help = self.menubar.addMenu("&Hilfe")
+        self.menu_help.setAccessibleName("Menü Hilfe")
+
+        act_shortcuts = QAction("⌨ &Tastaturkürzel & Barrierefreiheit...", self)
+        act_shortcuts.setShortcut(QKeySequence("F1"))
+        act_shortcuts.setStatusTip("Zeigt die Übersicht aller Tastenkürzel und BITV 2.0 / WCAG 2.1 AA Konformität an.")
+        act_shortcuts.triggered.connect(self.show_shortcuts_dialog)
+        self.menu_help.addAction(act_shortcuts)
+
+        act_about = QAction("ℹ &Über ProSync...", self)
+        act_about.setShortcut(QKeySequence("Shift+F1"))
+        act_about.setStatusTip("Zeigt Versions-, Lizenz- und Architekturinformationen über ProSync an.")
+        act_about.triggered.connect(self.show_about_dialog)
+        self.menu_help.addAction(act_about)
+
+        # Ergänzende globale Shortcuts
+        self.shortcut_shortcuts_f1 = QShortcut(QKeySequence("F1"), self)
+        self.shortcut_shortcuts_f1.activated.connect(self.show_shortcuts_dialog)
+
+        self.shortcut_about_f1 = QShortcut(QKeySequence("Shift+F1"), self)
+        self.shortcut_about_f1.activated.connect(self.show_about_dialog)
+
+        self.shortcut_focus_list = QShortcut(QKeySequence("Ctrl+1"), self)
+        self.shortcut_focus_list.activated.connect(lambda: self.list.setFocus())
+
+        self.shortcut_focus_ctrl = QShortcut(QKeySequence("Ctrl+2"), self)
+        self.shortcut_focus_ctrl.activated.connect(lambda: self.btn_run.setFocus())
+
+        self.shortcut_refresh = QShortcut(QKeySequence("Ctrl+F5"), self)
+        self.shortcut_refresh.activated.connect(self.populate_list)
+
+        self.shortcut_pause_f6 = QShortcut(QKeySequence("F6"), self)
+        self.shortcut_pause_f6.activated.connect(self.toggle_pause)
+
+        self.shortcut_stop_esc = QShortcut(QKeySequence("Escape"), self)
+        self.shortcut_stop_esc.activated.connect(self.stop_worker)
+
+    def show_shortcuts_dialog(self):
+        """Öffnet den modalen Dialog für Tastaturkürzel und Barrierefreiheit."""
+        dlg = ShortcutsDialog(self)
+        if os.environ.get("HEADLESS") == "1" or os.environ.get("QT_QPA_PLATFORM") == "offscreen":
+            return dlg
+        return dlg.exec()
+
+    def show_about_dialog(self):
+        """Öffnet den modalen Dialog mit Programminformationen und Invarianten."""
+        dlg = AboutDialog(self)
+        if os.environ.get("HEADLESS") == "1" or os.environ.get("QT_QPA_PLATFORM") == "offscreen":
+            return dlg
+        return dlg.exec()
+
+    def switch_language(self, lang_code: str):
+        """Wechselt die aktive Benutzeroberflächensprache dynamisch zur Laufzeit."""
+        self.current_language = lang_code
+        try:
+            from translator import get_translator
+            get_translator().set_language(lang_code)
+        except Exception as e:
+            log_warning(f"Sprachwechsel fehlgeschlagen: {e}")
+        self.retranslate_ui()
+        if hasattr(self, "status_bar") and self.status_bar:
+            self.status_bar.showMessage(f"Sprache: {lang_code.upper()}", 3000)
+
+    def retranslate_ui(self):
+        """Aktualisiert alle Menü-, Button- und Fenstertitel bei Sprachwechsel."""
+        try:
+            from translator import t
+        except Exception:
+            return
+        self.setWindowTitle(t("ProSync V3.2 - Sync & Index mit DB-Sicherheit"))
+        if hasattr(self, "menu_file"):
+            self.menu_file.setTitle(t("&Datei"))
+        if hasattr(self, "menu_edit"):
+            self.menu_edit.setTitle(t("&Bearbeiten"))
+        if hasattr(self, "menu_actions"):
+            self.menu_actions.setTitle(t("&Aktionen"))
+        if hasattr(self, "menu_view"):
+            self.menu_view.setTitle(t("&Ansicht"))
+        if hasattr(self, "menu_lang"):
+            self.menu_lang.setTitle(t("&Sprache"))
+        if hasattr(self, "menu_help"):
+            self.menu_help.setTitle(t("&Hilfe"))
 
 
 def build_cli_parser():

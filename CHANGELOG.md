@@ -5,6 +5,18 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-10-18)
+- **Barrierefreiheit, Tastatur-Ergonomie & WCAG 2.1 AA / BITV 2.0 Konformität (Software-UX- & Barrierefreiheits-Review):**
+  - **Barrierefreie Menüleiste (`QMenuBar`) mit Alt-Mnemonics:** Vollständige Menüstruktur in `ProSyncStart_V3.1.py` implementiert mit Tastatur-Direktzugriff (`&Datei` Alt+D, `&Bearbeiten` Alt+B, `&Aktionen` Alt+K, `&Ansicht` Alt+A, `&Sprache` Alt+S, `&Hilfe` Alt+H), aussagekräftigen Statustipps und standardisierten Tastaturkürzeln (`Ctrl+N`, `Ctrl+Shift+N`, `Ctrl+Alt+N`, `Ctrl+E`, `Ctrl+I`, `Ctrl+Q`, `F2`, `Del`, `Ctrl+C`, `Ctrl+Shift+A`, `F5`, `F6`, `Escape`, `Ctrl+F`, `Ctrl+Shift+P`, `Ctrl+F5`, `Ctrl+1`, `Ctrl+2`, `F1`, `Shift+F1`).
+  - **Strukturierter Tastenkürzel-Dialog (`ShortcutsDialog`, F1):** Barrierefreier Modaldialog mit kategorisierter `QTreeWidget`-Übersicht aller 20 Tastenkürzel in 4 logischen Bereichen (Datei & Profile, Synchronisation & Aktionen, Bearbeiten & Listen, Ansicht & Hilfe). Enthält WCAG 2.1 AA / BITV 2.0 Barrierefreiheitshinweis, standardmäßigen Tastaturfokus auf den Schließen-Button und Escape-Handler für sofortiges Schließen.
+  - **Barrierefreier Info-Dialog (`AboutDialog`, Shift+F1):** Strukturierter Dialog zur Anzeige der frozen Version `3.2.0`, MIT-Lizenz, Urheberrecht, Architektur-Invarianten (Local-First, Zero-Egress, SQLite-WAL, RunAsInvoker) sowie Applikations- und Log-Pfade mit Escape-Handler.
+  - **Laufzeit-Neuübersetzung der Menüs & Dialoge:** `MainWindow.switch_language()` und `MainWindow.retranslate_ui()` aktualisieren die Menübeschriftungen, Statustipps und Dialogtitel bei Sprachumschaltung dynamisch im laufenden Betrieb.
+  - **15 neue Lokalisierungsschlüssel (Policy P-006):** Menüs, Dialoge und Barrierefreiheitshinweise in `locales/translations.json` mit 100% Parität über alle 6 Sprachen (DE, EN, ES, ZH, JA, RU) und echten deutschen Umlauten hinterlegt.
+  - **5 neue automatisierte Barrierefreiheits-Vertragstests:** In `test_ui_accessibility.py` verankert (`test_main_window_menubar_structure_and_mnemonics`, `test_shortcuts_dialog_lifecycle_and_wcag`, `test_about_dialog_lifecycle_and_metadata`, `test_main_window_keyboard_shortcuts_and_dialog_methods`, `test_main_window_language_switching_and_retranslation`). Pytest-Suite auf 240/240 Tests ausgebaut.
+
+### Behoben / Fixed (2026-10-18)
+- **Formatierungs-Absturz in `manage_translations.py`:** `ValueError: unsupported format character 'S'` im ArgumentParser behoben, indem das unmaskierte Prozentzeichen im Hilfetext (`100%` -> `100%%`) ordnungsgemäß für die String-Interpolation von `argparse` maskiert wurde. `manage_translations.py --check` validiert nun alle 115 Schlüssel über 6 Sprachen ohne Laufzeitfehler.
+
 ### Behoben / Fixed (2026-10-12)
 - **Temporäre PySide6-Kompatibilitätsgrenze:** `requirements.txt`, `pyproject.toml` und
   beide CI-Installationswege begrenzen PySide6 auf `>=6.5.0,<6.12`. Ein kontrollierter

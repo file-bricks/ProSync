@@ -810,5 +810,125 @@
     "zh": "关闭",
     "ja": "閉じる",
     "ru": "Закрыть"
+  },
+  "&Datei": {
+    "de": "&Datei",
+    "en": "&File",
+    "es": "&Archivo",
+    "zh": "文件(&F)",
+    "ja": "ファイル(&F)",
+    "ru": "&Файл"
+  },
+  "&Bearbeiten": {
+    "de": "&Bearbeiten",
+    "en": "&Edit",
+    "es": "&Editar",
+    "zh": "编辑(&E)",
+    "ja": "編集(&E)",
+    "ru": "&Правка"
+  },
+  "&Aktionen": {
+    "de": "&Aktionen",
+    "en": "&Actions",
+    "es": "&Acciones",
+    "zh": "操作(&A)",
+    "ja": "アクション(&A)",
+    "ru": "&Действия"
+  },
+  "&Ansicht": {
+    "de": "&Ansicht",
+    "en": "&View",
+    "es": "&Ver",
+    "zh": "查看(&V)",
+    "ja": "表示(&V)",
+    "ru": "&Вид"
+  },
+  "&Sprache": {
+    "de": "&Sprache",
+    "en": "&Language",
+    "es": "&Idioma",
+    "zh": "语言(&L)",
+    "ja": "言語(&L)",
+    "ru": "&Язык"
+  },
+  "&Hilfe": {
+    "de": "&Hilfe",
+    "en": "&Help",
+    "es": "&Ayuda",
+    "zh": "帮助(&H)",
+    "ja": "ヘルプ(&H)",
+    "ru": "&Справка"
+  },
+  "Tastaturkürzel & Barrierefreiheit — ProSync": {
+    "de": "Tastaturkürzel & Barrierefreiheit — ProSync",
+    "en": "Keyboard Shortcuts & Accessibility — ProSync",
+    "es": "Atajos de teclado y accesibilidad — ProSync",
+    "zh": "键盘快捷键与无障碍功能 — ProSync",
+    "ja": "キーボードショートカットとアクセシビリティ — ProSync",
+    "ru": "Сочетания клавиш и специальные возможности — ProSync"
+  },
+  "Tastaturkürzel & Tastaturnavigation": {
+    "de": "Tastaturkürzel & Tastaturnavigation",
+    "en": "Keyboard Shortcuts & Keyboard Navigation",
+    "es": "Atajos de teclado y navegación por teclado",
+    "zh": "键盘快捷键与键盘导航",
+    "ja": "キーボードショートカットとキーボードナビゲーション",
+    "ru": "Сочетания клавиш и навигация с клавиатуры"
+  },
+  "Kategorie / Befehl": {
+    "de": "Kategorie / Befehl",
+    "en": "Category / Command",
+    "es": "Categoría / Comando",
+    "zh": "类别 / 命令",
+    "ja": "カテゴリー / コマンド",
+    "ru": "Категория / Команда"
+  },
+  "Tastenkombination": {
+    "de": "Tastenkombination",
+    "en": "Key Combination",
+    "es": "Combinación de teclas",
+    "zh": "组合键",
+    "ja": "キーの組み合わせ",
+    "ru": "Сочетание клавиш"
+  },
+  "Bereich / Beschreibung": {
+    "de": "Bereich / Beschreibung",
+    "en": "Scope / Description",
+    "es": "Área / Descripción",
+    "zh": "范围 / 说明",
+    "ja": "スコープ / 説明",
+    "ru": "Область / Описание"
+  },
+  "Datei & Profile": {
+    "de": "Datei & Profile",
+    "en": "File & Profiles",
+    "es": "Archivo y perfiles",
+    "zh": "文件与配置文件",
+    "ja": "ファイルとプロファイル",
+    "ru": "Файл и профили"
+  },
+  "Synchronisation & Aktionen": {
+    "de": "Synchronisation & Aktionen",
+    "en": "Synchronization & Actions",
+    "es": "Sincronización y acciones",
+    "zh": "同步与操作",
+    "ja": "同期とアクション",
+    "ru": "Синхронизация и действия"
+  },
+  "Bearbeiten & Listen-Navigation": {
+    "de": "Bearbeiten & Listen-Navigation",
+    "en": "Edit & List Navigation",
+    "es": "Edición y navegación por listas",
+    "zh": "编辑与列表导航",
+    "ja": "編集とリストナビゲーション",
+    "ru": "Редактирование и навигация по списку"
+  },
+  "Ansicht & Hilfe": {
+    "de": "Ansicht & Hilfe",
+    "en": "View & Help",
+    "es": "Vista y ayuda",
+    "zh": "查看与帮助",
+    "ja": "表示とヘルプ",
+    "ru": "Вид и справка"
   }
 }

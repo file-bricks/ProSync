@@ -151,7 +151,7 @@ def manage_translations(source_dir: str = ".") -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="ProSync Translation Manager (Policy P-006 Tier-2)")
-    parser.add_argument("--check", action="store_true", help="Validiert 100% Sprachabdeckung aller 6 Zielsprachen")
+    parser.add_argument("--check", action="store_true", help="Validiert 100%% Sprachabdeckung aller 6 Zielsprachen")
     parser.add_argument("--dir", default=".", help="Wurzelverzeichnis des Projekts")
     args, _ = parser.parse_known_args()
 
