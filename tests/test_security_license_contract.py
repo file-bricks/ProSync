@@ -40,9 +40,18 @@ def test_dependency_vulnerability_floors() -> None:
     assert "ruff>=0.9.0" in pyproject_text, "pyproject.toml dev dependencies must require ruff>=0.9.0"
     assert "pyinstaller>=6.10.0" in pyproject_text, "pyproject.toml dev dependencies must require pyinstaller>=6.10.0"
     assert "altgraph>=0.17.4" in pyproject_text, "pyproject.toml dev dependencies must require altgraph>=0.17.4"
+    assert "packaging>=24.0" in pyproject_text, "pyproject.toml dev dependencies must require packaging>=24.0"
+    assert 'minversion = "9.1.1"' in pyproject_text, "pyproject.toml pytest minversion must be >= 9.1.1"
 
     # Check author contact email
     assert "support@lukasgeiger.com" in pyproject_text, "pyproject.toml must use official support email"
+
+    # Toolchain requirements-dev.txt check
+    req_dev = ROOT / "requirements-dev.txt"
+    assert req_dev.is_file(), "requirements-dev.txt must exist"
+    req_dev_text = req_dev.read_text(encoding="utf-8")
+    assert "pytest>=9.1.1" in req_dev_text, "requirements-dev.txt must require pytest>=9.1.1"
+    assert "pyinstaller>=6.10.0" in req_dev_text, "requirements-dev.txt must require pyinstaller>=6.10.0"
 
 
 def test_third_party_licenses_complete_and_accurate() -> None:
@@ -69,10 +78,13 @@ def test_third_party_licenses_complete_and_accurate() -> None:
         ("pluggy", "MIT"),
         ("iniconfig", "MIT"),
         ("ruff", "MIT OR Apache-2.0"),
+        ("pip-licenses", "MIT"),
+        ("Pillow", "HPND-sell-variant"),
     ]
 
+    assert "Package:" in content, "Package: field missing in THIRD_PARTY_LICENSES.txt"
     for pkg, spdx in required_packages:
-        assert pkg in content, f"Package {pkg} missing from THIRD_PARTY_LICENSES.txt"
+        assert f"Package: {pkg}" in content, f"Package {pkg} missing standard 'Package:' entry in THIRD_PARTY_LICENSES.txt"
         assert spdx in content, f"SPDX identifier {spdx} for {pkg} missing from THIRD_PARTY_LICENSES.txt"
 
     # Ensure structured schema fields exist
@@ -89,8 +101,12 @@ def test_gitignore_security_and_multi_host_hardening() -> None:
     content = gitignore_file.read_text(encoding="utf-8")
 
     # Secrets and certificate protection
-    for pat in ["credentials.json", "*.pfx", "*.cer", "*.crt", "*.pem", "*.key", "keyring/", "secrets.*"]:
+    for pat in ["credentials.json", "*.pfx", "*.p12", "*.cer", "*.crt", "*.pem", "*.key", "keyring/", "secrets.*"]:
         assert pat in content, f"Secret pattern {pat} missing in .gitignore"
+
+    # Test artifact protection
+    for test_pat in ["pytest_out.txt", "pytest*.txt"]:
+        assert test_pat in content, f"Test pattern {test_pat} missing in .gitignore"
 
     # Multi-host sync hardening
     for host_pat in ["*-WORKSTATION-LG*", "*-ASUS-GEI*", "*.sync-conflict-*", "*.conflict"]:
@@ -138,13 +154,27 @@ def test_security_policy_bilingual_and_sla() -> None:
 
     # Contact addresses
     assert "security@file-bricks.org" in sec_text, "SECURITY.md must list security@file-bricks.org"
+    assert "security@open-bricks.org" in sec_text, "SECURITY.md must list security@open-bricks.org"
+    assert "security@ellmos.ai" in sec_text, "SECURITY.md must list security@ellmos.ai"
     assert "support@lukasgeiger.com" in sec_text, "SECURITY.md must list support@lukasgeiger.com"
+    assert "lukas@open-bricks.org" in sec_text, "SECURITY.md must list lukas@open-bricks.org"
+
+    # Direct advisory link
+    assert "security/advisories/new" in sec_text, "SECURITY.md must contain direct advisory drafting link"
 
     # SLA commitment
-    assert "48 Stunden" in sec_text or "48-Stunden" in sec_text or "48 Stunden" in sec_text, "SECURITY.md must define 48h SLA in German"
+    assert "48 Stunden" in sec_text or "48-Stunden" in sec_text, "SECURITY.md must define 48h SLA in German"
     assert "48 hours" in sec_text or "48-hour" in sec_text, "SECURITY.md must define 48h SLA in English"
     assert "5 Werktagen" in sec_text or "5 business days" in sec_text, "SECURITY.md must define triage window"
     assert "Local-First" in sec_text, "SECURITY.md must document Local-First commitment"
+
+
+def test_security_advisories_url_in_pyproject_toml() -> None:
+    """Verify pyproject.toml defines direct Security Advisories URL."""
+    pyproject_file = ROOT / "pyproject.toml"
+    assert pyproject_file.is_file(), "pyproject.toml must exist"
+    pyproject_text = pyproject_file.read_text(encoding="utf-8")
+    assert "security/advisories/new" in pyproject_text, "pyproject.toml must define Security Advisories URL"
 
 
 def test_local_first_and_offline_invariants() -> None:

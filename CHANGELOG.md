@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-10-30)
+- **Sicherheits-, Dependency- & Lizenz-Compliance-Audit (Turnusgemäßer Audit):**
+  - **Standardisiertes 5-Felder-SBOM-Inventar (`THIRD_PARTY_LICENSES.txt`):** Vollständig auf das kanonische 5-Felder-Schema (`Package:`, `License:`, `SPDX:`, `URL:`, `Notice:`) für alle 19 Laufzeit-, Tooling-, Test- und Packaging-Abhängigkeiten umgestellt; Re-Audit auf Stand 2026-10-30 verankert; LGPL-3.0 § 4 dynamische Bindung (PySide6, shiboken6), LGPL-2.1 SFTP-Transport (paramiko) und MIT/Apache-2.0 Lizenzen re-zertifiziert.
+  - **Sicherheitsrichtlinie & Private Security Advisories (`SECURITY.md`):** Direkter Link zur vertraulichen GitHub Security Advisory Meldung (`https://github.com/file-bricks/ProSync/security/advisories/new`) zweisprachig (DE/EN) integriert; verbindliche 48h-Erstbestätigungs- und 5-Werktage-Triage-SLAs sowie offizielle Sicherheitskontakte (`security@file-bricks.org`, `security@open-bricks.org`, `security@ellmos.ai`, `support@lukasgeiger.com`, `lukas@open-bricks.org`) und Local-First / Zero-Egress Invarianten bekräftigt.
+  - **Dependency-Floors & Build-Metadaten (`pyproject.toml`, `requirements-dev.txt`):** Pytest-Mindestversion in `pyproject.toml` `[tool.pytest.ini_options]` auf `minversion = "9.1.1"` gehärtet (Schutz vor CVE-2025-7117 / GHSA-6w46-j5rx-g56g); `pyproject.toml` um `[project.optional-dependencies]` für `build` und `test` sowie `Security Advisories` URL erweitert; reproduzierbare Toolchain-Spezifikation `requirements-dev.txt` angelegt.
+  - **Repository- & Gitignore-Hygiene (`.gitignore`):** Schutzregeln für Zertifikate (`*.p12`) und Test-Artefakt-Muster (`pytest_out.txt`, `pytest*.txt`) ergänzt.
+  - **Automatisierte Vertragstests (`tests/test_security_license_contract.py`):** Auf 7-Punkte-Vertragstestsuite ausgebaut (Floors, 5-Felder-SBOM-Schema, Gitignore-Hygiene, Pfad-Hygiene, Security-Policy mit Advisory-Link, pyproject.toml URL und Local-First/Zero-Egress-Invarianten); 100% grün (241 passed, 3 skipped).
+
+
 ### Hinzugefügt / Added (2026-10-18)
 - **Barrierefreiheit, Tastatur-Ergonomie & WCAG 2.1 AA / BITV 2.0 Konformität (Software-UX- & Barrierefreiheits-Review):**
   - **Barrierefreie Menüleiste (`QMenuBar`) mit Alt-Mnemonics:** Vollständige Menüstruktur in `ProSyncStart_V3.1.py` implementiert mit Tastatur-Direktzugriff (`&Datei` Alt+D, `&Bearbeiten` Alt+B, `&Aktionen` Alt+K, `&Ansicht` Alt+A, `&Sprache` Alt+S, `&Hilfe` Alt+H), aussagekräftigen Statustipps und standardisierten Tastaturkürzeln (`Ctrl+N`, `Ctrl+Shift+N`, `Ctrl+Alt+N`, `Ctrl+E`, `Ctrl+I`, `Ctrl+Q`, `F2`, `Del`, `Ctrl+C`, `Ctrl+Shift+A`, `F5`, `F6`, `Escape`, `Ctrl+F`, `Ctrl+Shift+P`, `Ctrl+F5`, `Ctrl+1`, `Ctrl+2`, `F1`, `Shift+F1`).

@@ -67,7 +67,17 @@ dev = [
     "pip-licenses>=4.0.0",
     "ruff>=0.9.0",
     "pyinstaller>=6.10.0",
-    "altgraph>=0.17.4"
+    "altgraph>=0.17.4",
+    "packaging>=24.0"
+]
+build = [
+    "pyinstaller>=6.10.0",
+    "altgraph>=0.17.4",
+    "packaging>=24.0"
+]
+test = [
+    "pytest>=9.1.1",
+    "ruff>=0.9.0"
 ]
 
 [project.urls]
@@ -80,6 +90,7 @@ Issues = "https://github.com/file-bricks/ProSync/issues"
 Privacy = "https://github.com/file-bricks/ProSync/blob/master/PRIVACY_POLICY.md"
 Support = "https://github.com/file-bricks/ProSync/blob/master/SUPPORT.md"
 Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
+"Security Advisories" = "https://github.com/file-bricks/ProSync/security/advisories/new"
 "Parent Organization" = "https://github.com/file-bricks"
 "Umbrella Ecosystem" = "https://github.com/open-bricks"
 "LLM Ready" = "https://github.com/file-bricks/ProSync/blob/master/llms.txt"
@@ -91,7 +102,7 @@ Security = "https://github.com/file-bricks/ProSync/blob/master/SECURITY.md"
 Notice = "https://github.com/file-bricks/ProSync/blob/master/NOTICE"
 
 [tool.pytest.ini_options]
-minversion = "7.0"
+minversion = "9.1.1"
 addopts = "-ra -v --basetemp=.pytest_temp"
 norecursedirs = [
     ".git",

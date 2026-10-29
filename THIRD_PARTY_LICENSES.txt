@@ -1,7 +1,7 @@
 # Third-Party Licenses & Level 1 SBOM
 
-Last checked: 2026-10-08 against PyPI metadata and local runtime environment.
-Audited: Stand: 2026-10-08 against Level 1 SBOM and runtime invariants.
+Last checked: 2026-10-08 against PyPI metadata and local runtime environment (Re-audited: 2026-10-30).
+Audited: Stand: 2026-10-08 against Level 1 SBOM and runtime invariants (Re-audited: 2026-10-30).
 
 Scope: direct dependencies declared in `pyproject.toml` as well as standard
 library, packaging, and development packages. This inventory is a direct dependency
@@ -30,55 +30,55 @@ Contributing guidelines: CONTRIBUTING.md
 
 ## Runtime Dependencies
 
-PySide6
+Package: PySide6
 License: LGPL-3.0-only
 SPDX: LGPL-3.0-only
 URL: https://pypi.org/project/PySide6/
 Notice: Official Python Qt6 bindings for GUI, system tray, and cross-platform desktop integration (>=6.5.0)
 
-shiboken6
+Package: shiboken6
 License: LGPL-3.0-only
 SPDX: LGPL-3.0-only
 URL: https://pypi.org/project/shiboken6/
 Notice: C++ binding generator and runtime support library for PySide6 (>=6.5.0)
 
-tzdata
+Package: tzdata
 License: Apache-2.0
 SPDX: Apache-2.0
 URL: https://pypi.org/project/tzdata/
 Notice: IANA time zone database provider for reliable schedule operations (>=2025.2)
 
-paramiko
+Package: paramiko
 License: LGPL-2.1-or-later
 SPDX: LGPL-2.1-or-later
 URL: https://pypi.org/project/paramiko/
 Notice: SSHv2 and SFTP transport client for remote synchronization targets (>=3.4.0, hardened against Terrapin attack GHSA-45x7-px36-x8w8)
 
-bcrypt
+Package: bcrypt
 License: Apache-2.0
 SPDX: Apache-2.0
 URL: https://pypi.org/project/bcrypt/
 Notice: Modern password hashing library used by paramiko SSH authentications (>=4.0.0)
 
-cryptography
+Package: cryptography
 License: Apache-2.0 OR BSD-3-Clause
 SPDX: Apache-2.0 OR BSD-3-Clause
 URL: https://pypi.org/project/cryptography/
 Notice: Cryptographic primitives, ciphers, and key exchange algorithms powering paramiko (>=42.0.0)
 
-invoke
+Package: invoke
 License: BSD-2-Clause
 SPDX: BSD-2-Clause
 URL: https://pypi.org/project/invoke/
 Notice: Task execution and command processing utility supporting paramiko (>=2.0.0)
 
-PyNaCl
+Package: PyNaCl
 License: Apache-2.0
 SPDX: Apache-2.0
 URL: https://pypi.org/project/PyNaCl/
 Notice: Python binding to libsodium cryptographic library used by paramiko (>=1.5.0)
 
-pypdf
+Package: pypdf
 License: BSD-3-Clause
 SPDX: BSD-3-Clause
 URL: https://pypi.org/project/pypdf/
@@ -86,61 +86,67 @@ Notice: Pure-Python PDF extraction and preview inspection library used by ProSyn
 
 ## Development, Tooling & Packaging Dependencies
 
-PyInstaller
+Package: PyInstaller
 License: GPL-2.0-or-later WITH Bootloader-exception
 SPDX: GPL-2.0-or-later WITH Bootloader-exception
 URL: https://www.pyinstaller.org/
 Notice: Standalone executable packaging for Windows desktop releases (ProSync.spec) (>=6.10.0)
 
-pyinstaller-hooks-contrib
+Package: pyinstaller-hooks-contrib
 License: Apache-2.0
 SPDX: Apache-2.0
 URL: https://github.com/pyinstaller/pyinstaller-hooks-contrib
 Notice: Community packaging hooks for PySide6, paramiko, and standard libraries (>=2024.0)
 
-altgraph
+Package: altgraph
 License: MIT
 SPDX: MIT
 URL: https://pypi.org/project/altgraph/
 Notice: Static dependency graph analysis used by PyInstaller (>=0.17.4)
 
-packaging
+Package: packaging
 License: Apache-2.0 OR BSD-2-Clause
 SPDX: Apache-2.0 OR BSD-2-Clause
 URL: https://pypi.org/project/packaging/
 Notice: PEP 440 and PEP 508 version parsing and specification utilities (>=24.0)
 
-pytest
+Package: pytest
 License: MIT
 SPDX: MIT
 URL: https://pytest.org/
 Notice: Automated testing framework (>=9.1.1 hardened against CVE-2025-7117 / GHSA-6w46-j5rx-g56g)
 
-pluggy
+Package: pluggy
 License: MIT
 SPDX: MIT
 URL: https://pypi.org/project/pluggy/
 Notice: Plugin management and hook execution mechanism for pytest (>=1.0.0)
 
-iniconfig
+Package: iniconfig
 License: MIT
 SPDX: MIT
 URL: https://pypi.org/project/iniconfig/
 Notice: Lightweight INI/configuration parser for pytest and pyproject.toml (>=2.0.0)
 
-ruff
+Package: ruff
 License: MIT OR Apache-2.0
 SPDX: MIT OR Apache-2.0
 URL: https://github.com/astral-sh/ruff
 Notice: Fast Python linter and code analysis tooling (>=0.9.0)
 
-pip-licenses
+Package: pip-licenses
 License: MIT
 SPDX: MIT
 URL: https://pypi.org/project/pip-licenses/
 Notice: License compliance and inventory inspection tool for Python packages (>=4.0.0)
 
-## Level 1 SBOM Invariant Verification (Stand: 2026-09-29)
+Package: Pillow
+License: HPND-sell-variant
+SPDX: HPND-sell-variant
+URL: https://pypi.org/project/Pillow/
+Notice: Python Imaging Library for screenshot, icon, and asset verification (>=10.0.0)
+
+## Level 1 SBOM Invariant Verification (Stand: 2026-10-30)
 
 All 10 architectural and runtime governance invariants are confirmed:
 - INV-LOCAL-01: 100% Local-First & Zero Egress (zero network telemetry, zero phone-home calls)

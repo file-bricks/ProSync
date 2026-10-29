@@ -24,11 +24,12 @@
 Wenn Sie eine Sicherheitslücke oder ein kritisches Datenintegritätsproblem in ProSync entdecken:
 
 1. **Bevorzugter Meldeweg:** Nutzen Sie die private Vulnerability-Reporting-Funktion direkt auf GitHub:
-   - Öffnen Sie den Tab **Security** in diesem Repository
+   - Öffnen Sie [GitHub Security Advisories](https://github.com/file-bricks/ProSync/security/advisories/new)
    - Wählen Sie **Report a vulnerability**
    - Beschreiben Sie das Verhalten, Schritte zur Reproduktion und mögliche Auswirkungen
 2. **Direkter E-Mail-Kontakt:** Alternativ können Sie sich direkt an unser Sicherheitsteam wenden:
    - `security@file-bricks.org`
+   - `security@open-bricks.org`
    - `security@ellmos.ai`
    - `support@lukasgeiger.com`
    - `lukas@open-bricks.org`
@@ -64,12 +65,13 @@ Wir bestätigen den Eingang jeder Sicherheitsmeldung innerhalb von **48 Stunden*
 
 If you discover a security vulnerability or critical data integrity issue in ProSync:
 
-1. **Preferred Method:** Report privately via GitHub's Security Advisories flow:
-   - Navigate to the **Security** tab of this repository
+1. **Preferred Method:** Report privately via GitHub Security Advisories:
+   - Open [GitHub Security Advisories](https://github.com/file-bricks/ProSync/security/advisories/new)
    - Click **Report a vulnerability**
    - Provide reproduction steps, affected environment, and potential impact
 2. **Direct Security Email:** Alternatively, email the security coordinators directly:
    - `security@file-bricks.org`
+   - `security@open-bricks.org`
    - `security@ellmos.ai`
    - `support@lukasgeiger.com`
    - `lukas@open-bricks.org`
