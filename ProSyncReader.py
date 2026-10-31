@@ -129,12 +129,14 @@ class SearchWorker(QThread):
         results = []
 
         for db_path in self.manager.dbs:
-            if not os.path.exists(db_path): continue
+            if not os.path.exists(db_path):
+                continue
+            conn = None
             try:
                 conn = sqlite3.connect(db_path)
                 conn.row_factory = sqlite3.Row
                 cur = conn.cursor()
-                
+
                 # Search Logic
                 query = """
                     SELECT DISTINCT v.name, v.path, v.mtime, 'file' as match_type
@@ -150,7 +152,7 @@ class SearchWorker(QThread):
                 """
                 wildcard = f"%{self.term}%"
                 cur.execute(query, (wildcard, wildcard, wildcard))
-                
+
                 rows = cur.fetchmany(SEARCH_RESULT_LIMIT)
                 for row in rows:
                     results.append({
@@ -159,11 +161,17 @@ class SearchWorker(QThread):
                         "mtime": row["mtime"],
                         "type": row["match_type"]
                     })
-                conn.close()
             except Exception as e:
-                print(f"DB Error {db_path}: {e}")
-                
-            if len(results) >= SEARCH_RESULT_LIMIT: break
+                log_error(f"DB Error {db_path}: {e}")
+            finally:
+                if conn is not None:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
+            if len(results) >= SEARCH_RESULT_LIMIT:
+                break
             
         self.results_found.emit(results)
         self.finished.emit()

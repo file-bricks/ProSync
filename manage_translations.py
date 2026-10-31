@@ -15,8 +15,20 @@ import sys
 from pathlib import Path
 from prosync_utils import atomic_write_json
 
+APP_DIR = Path(__file__).resolve().parent
 SUPPORTED_LANGUAGES = ("de", "en", "es", "zh", "ja", "ru")
 TRANSLATION_FILE = "locales/translations.json"
+
+
+def _ensure_utf8_streams() -> None:
+    """Sichert UTF-8-Stream-Encoding für stdout und stderr unter Windows."""
+    for stream in (sys.stdout, sys.stderr):
+        if stream and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (OSError, ValueError, AttributeError):
+                pass
+
 
 STRING_PATTERNS = [
     re.compile(r'text\s*=\s*"([^"]+)"'),
@@ -45,14 +57,17 @@ def is_german(text: str) -> bool:
     return any(w in text_lower for w in GERMAN_HINTS)
 
 
-def find_german_strings(source_dir: str) -> set:
+def find_german_strings(source_dir: str | None = None) -> set:
+    if not source_dir:
+        source_dir = str(APP_DIR)
     german_strings = set()
     skip_dirs = {"build", "dist", "venv", ".venv", "__pycache__", "releases", "scratch"}
+    skip_files = {"run_tests.py", "manage_translations.py", "translator.py"}
 
     for root, dirs, files in os.walk(source_dir):
         dirs[:] = [d for d in dirs if d not in skip_dirs]
         for file in files:
-            if file.endswith(".py") and not file.startswith("test_") and file != "run_tests.py":
+            if file.endswith(".py") and not file.startswith("test_") and file not in skip_files:
                 path = os.path.join(root, file)
                 try:
                     with open(path, "r", encoding="utf-8") as f:
@@ -66,8 +81,11 @@ def find_german_strings(source_dir: str) -> set:
     return german_strings
 
 
-def check_translations(source_dir: str = ".") -> int:
+def check_translations(source_dir: str | None = None) -> int:
     """CI Check: Überprüft Vollständigkeit aller 6 Zielsprachen in translations.json."""
+    _ensure_utf8_streams()
+    if not source_dir:
+        source_dir = str(APP_DIR)
     trans_file = os.path.join(source_dir, TRANSLATION_FILE)
     if not os.path.exists(trans_file):
         print(f"[FAIL] Übersetzungsdatei {trans_file} existiert nicht!")
@@ -114,7 +132,10 @@ def check_translations(source_dir: str = ".") -> int:
     return 0
 
 
-def manage_translations(source_dir: str = ".") -> None:
+def manage_translations(source_dir: str | None = None) -> None:
+    _ensure_utf8_streams()
+    if not source_dir:
+        source_dir = str(APP_DIR)
     trans_file = os.path.join(source_dir, TRANSLATION_FILE)
 
     if os.path.exists(trans_file):
@@ -150,9 +171,10 @@ def manage_translations(source_dir: str = ".") -> None:
 
 
 def main() -> int:
+    _ensure_utf8_streams()
     parser = argparse.ArgumentParser(description="ProSync Translation Manager (Policy P-006 Tier-2)")
     parser.add_argument("--check", action="store_true", help="Validiert 100%% Sprachabdeckung aller 6 Zielsprachen")
-    parser.add_argument("--dir", default=".", help="Wurzelverzeichnis des Projekts")
+    parser.add_argument("--dir", default=str(APP_DIR), help="Wurzelverzeichnis des Projekts (Default: Skriptpfad)")
     args, _ = parser.parse_known_args()
 
     if args.check:

@@ -5,6 +5,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-10-31)
+- **Windows-atomare Dateisystem-Resilienz & Translation CLI CWD-Unabhängigkeit (Software-Bugsearch / Bugsweep):**
+  - **Windows ReadOnly-Overwrite & WinError 5/32 Resilienz (`prosync_utils.py`):** `atomic_write_text` und `atomic_write_json` heben unter Windows vorübergehend den Schreibschutz auf (`stat.S_IWRITE`), wenn die Zieldatei schreibgeschützt existiert, wodurch `PermissionError: [WinError 5] Zugriff verweigert` beim atomaren `os.replace` verhindert wird (inkl. Wiederherstellung des ursprünglichen Dateimodus im Fehlerfall).
+  - **Transiente Sperren & Backoff-Retry (`prosync_utils.py`):** `_atomic_replace_with_retry` implementiert exponentiellen Backoff (bis zu 8 Versuche, Start 10ms, Cap 200ms) gegen transiente Windows-Sperren (`WinError 5` / `WinError 32`) durch Antivirus, Cloud-Sync (OneDrive) oder parallele Dateizugriffe.
+  - **Verzeichnisschutz (`prosync_utils.py`):** `atomic_write_text` und `atomic_write_json` weisen Verzeichnispfade explizit mit `IsADirectoryError` ab, bevor temporäre Dateien angelegt werden.
+  - **CWD-Unabhängigkeit & UTF-8 Stream-Encoding (`manage_translations.py`):** Wurzelverzeichnis dynamisch an Skriptpfad gebunden (`APP_DIR = Path(__file__).resolve().parent`), wodurch `--check` und Sync-Läufe aus beliebigen Arbeitsverzeichnissen fehlerfrei durchlaufen; defensive UTF-8-Stream-Rekonfiguration für `sys.stdout` und `sys.stderr` unter Windows zur Vermeidung von `cp1252`-Umlautfehlern; Ausschluss von `translator.py` und `manage_translations.py` aus Quelltext-Scans zur Vermeidung von Phantomschlüsseln.
+  - **SQLite Connection-Leak-Prävention (`ProSyncReader.py`):** `SearchWorker.run()` sichert SQLite-Verbindungen `conn` in einem `try...finally`-Block ab, um Ressourcenlecks bei fehlerhaften Abfragen oder korrupten Indexdateien zuverlässig zu verhindern.
+  - **7 neue hermetische Regressionstests (`tests/test_bugsweep_atomic_io_and_cli_resilience_20261031.py`):** Vollsuite auf 248 passed, 3 skipped erhöht (100% grün).
+
 ### Hinzugefügt / Added (2026-10-30)
 - **Sicherheits-, Dependency- & Lizenz-Compliance-Audit (Turnusgemäßer Audit):**
   - **Standardisiertes 5-Felder-SBOM-Inventar (`THIRD_PARTY_LICENSES.txt`):** Vollständig auf das kanonische 5-Felder-Schema (`Package:`, `License:`, `SPDX:`, `URL:`, `Notice:`) für alle 19 Laufzeit-, Tooling-, Test- und Packaging-Abhängigkeiten umgestellt; Re-Audit auf Stand 2026-10-30 verankert; LGPL-3.0 § 4 dynamische Bindung (PySide6, shiboken6), LGPL-2.1 SFTP-Transport (paramiko) und MIT/Apache-2.0 Lizenzen re-zertifiziert.
