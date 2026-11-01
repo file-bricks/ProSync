@@ -5,6 +5,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-11-01)
+- **PEP 639 Metadaten-Standardisierung & CI-Matrix-Härtung (Pfad A Repository-Hygiene):**
+  - **PEP 639 Lizenz-Spezifikation (`pyproject.toml`):** `license = { text = "MIT" }` auf standardkonformen SPDX-String `license = "MIT"` migriert; veralteten Classifier `"License :: OSI Approved :: MIT License"` aus `classifiers` entfernt, um strikte Build-Validierungsfehler (`ValueError: invalid pyproject.toml config: project.license`) in modernen Setuptools-Versionen (>=82.0) fail-closed zu beheben.
+  - **CI-Matrix-Härtung (`.github/workflows/tests.yml`):** Test-Matrix um Python 3.13 (`"3.13"`) erweitert zur Sicherung der Vorwärtskompatibilität über die gesamte Python 3.10–3.13 Matrix unter Ubuntu-Runnern.
+  - **Automatisierte Vertragstest-Erweiterung (`tests/test_metadata.py`):** Neuer hermetischer Vertragstest `test_pep_639_license_specification` verankert die PEP-639-Konformität und das Classifier-Verbot; `test_ci_workflow_integrity` um Python 3.13 Matrix-Prüfung ergänzt.
+
 ### Behoben / Fixed (2026-10-31)
 - **Windows-atomare Dateisystem-Resilienz & Translation CLI CWD-Unabhängigkeit (Software-Bugsearch / Bugsweep):**
   - **Windows ReadOnly-Overwrite & WinError 5/32 Resilienz (`prosync_utils.py`):** `atomic_write_text` und `atomic_write_json` heben unter Windows vorübergehend den Schreibschutz auf (`stat.S_IWRITE`), wenn die Zieldatei schreibgeschützt existiert, wodurch `PermissionError: [WinError 5] Zugriff verweigert` beim atomaren `os.replace` verhindert wird (inkl. Wiederherstellung des ursprünglichen Dateimodus im Fehlerfall).
