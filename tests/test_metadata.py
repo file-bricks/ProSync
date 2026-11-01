@@ -119,6 +119,18 @@ def test_pyproject_pep621_metadata() -> None:
     assert "norecursedirs =" in content, "norecursedirs missing in pyproject.toml"
 
 
+def test_pep_639_license_specification() -> None:
+    """Verify pyproject.toml defines license as a valid PEP 639 SPDX string without deprecated license classifiers."""
+    pyproject_file = ROOT / "pyproject.toml"
+    assert pyproject_file.is_file(), "pyproject.toml must exist"
+    content = pyproject_file.read_text(encoding="utf-8")
+
+    assert 'license = "MIT"' in content, "pyproject.toml must declare license as SPDX string 'license = \"MIT\"'"
+    assert "License :: OSI Approved ::" not in content, (
+        "pyproject.toml must not include 'License :: OSI Approved :: ...' in classifiers when PEP 639 SPDX string license is used"
+    )
+
+
 def test_ci_workflow_integrity() -> None:
     """Verify GitHub Actions CI workflows exist and have test coverage."""
     workflow_dir = ROOT / ".github" / "workflows"
@@ -128,6 +140,7 @@ def test_ci_workflow_integrity() -> None:
     tests_yml = (workflow_dir / "tests.yml").read_text(encoding="utf-8")
     assert "python run_tests.py" in tests_yml
     assert "python -m pytest -ra -v" in tests_yml
+    assert '"3.13"' in tests_yml, "Python 3.13 matrix entry missing in tests.yml"
 
 
 def test_ci_concurrency_and_timeout_guardrails() -> None:
