@@ -1670,19 +1670,41 @@ class SyncWalker:
 
         return tree
 
-    def _should_exclude(self, name: str, patterns: list) -> bool:
+    INTERNAL_STAGE_PATTERNS = (
+        ".prosync-*",
+        "*.prosync_tmp*",
+        "*.prosync_backup_*",
+    )
+
+    def _should_exclude(
+        self,
+        name: str,
+        patterns: list,
+        *,
+        include_internal: bool = True,
+    ) -> bool:
         """
         Prüft ob eine Datei/Ordner ausgeschlossen werden soll.
 
         V3 NEW: Verwendet fnmatch für Glob-Pattern-Matching.
+        Architekturhärtung: Schließt ProSync-eigene Staging- und Backup-Muster
+        (.prosync-*, *.prosync_tmp*, *.prosync_backup_*) standardmäßig hermetisch
+        aus, damit überlappende Ordnerscans niemals in-flight Stages als Nutzdaten
+        erfassen, spiegeln oder löschen.
 
         Args:
             name: Datei- oder Ordnername (nicht vollständiger Pfad)
             patterns: Liste von Glob-Patterns (z.B. ["*.wal", "temp_*"])
+            include_internal: Ob ProSync-eigene Staging-Muster ausgeschlossen werden sollen
 
         Returns:
             True wenn der Name auf ein Pattern matcht, sonst False
         """
+        if include_internal:
+            for stage_pattern in self.INTERNAL_STAGE_PATTERNS:
+                if fnmatch(name, stage_pattern):
+                    return True
+
         if isinstance(patterns, (str, bytes)):
             patterns = [patterns]
         elif not isinstance(patterns, (list, tuple, set)):
@@ -2317,10 +2339,15 @@ class SftpTargetSyncWorker(QThread):
         walk(remote_root)
         return tree
 
+    @staticmethod
+    def _make_remote_tmp_path(remote_path: str) -> str:
+        """Erzeugt einen kollisionsfreien temporären Remotepfad mit eindeutiger Kennung."""
+        return f"{remote_path}.prosync_tmp_{uuid.uuid4().hex}"
+
     def _upload_file(self, sftp, local_path, remote_path):
         remote_dir = posixpath.dirname(remote_path)
         self._ensure_remote_dir(sftp, remote_dir)
-        tmp_remote = f"{remote_path}.prosync_tmp"
+        tmp_remote = self._make_remote_tmp_path(remote_path)
         try:
             sftp.put(local_path, tmp_remote)
             posix_rename = getattr(sftp, "posix_rename", None)

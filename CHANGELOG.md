@@ -5,6 +5,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-11-01)
+- **High-End Architekturhärtung: Staging-Isolierung, Scan-Abwehr & SFTP-Kollisionsschutz ([SOFTWARE_HIGH_END] / Turnusgemäßer Lauf):**
+  - **Kollisionsfreie temporäre SFTP-Uploadpfade (`ProSyncStart_V3.1.py`):** `SftpTargetSyncWorker._make_remote_tmp_path()` erzeugt für jeden Upload eindeutige Remotepfade mit UUID (`f"{remote_path}.prosync_tmp_{uuid.uuid4().hex}"`). Schließt Kollisionen, Datenkorruption und Race Conditions bei gleichzeitigen/wiederholten Uploads oder Verbindungsabbrüchen hermetisch aus; sauberes Fail-Cleanup via `sftp.remove(tmp_remote)`.
+  - **Hermetische Staging-Isolierung in `SyncWalker` (`ProSyncStart_V3.1.py`):** `SyncWalker._should_exclude()` schließt ProSync-eigene Staging- und Backup-Artefakte (`.prosync-*`, `*.prosync_tmp*`, `*.prosync_backup_*`) standardmäßig automatisch aus (`INTERNAL_STAGE_PATTERNS`).
+  - **Schutz vor Erfassung in-flight Stages bei überlappenden Ordnerscans:** Weder lokale Scans (`SyncWalker.scan`) noch Remote-Scans (`SftpTargetSyncWorker._scan_remote_tree`) erfassen temporäre Dateien. In-flight Stages werden in Zwei-Wege- und Mirror-Synchronisationen weder als neue Dateien repliziert noch als verwaiste Dateien fälschlich gelöscht.
+  - **5 neue automatisierte Vertragstests (`tests/test_stage_isolation_and_scan_defense.py`):** Deckt Standard-Ausschluss von Staging-Mustern, SFTP-Remotebaum-Ausschluss, eindeutige Remote-Staging-Pfade sowie Nicht-Replikation und Nicht-Löschung in Zwei-Wege- und Mirror-Läufen ab; Pytest-Vollsuite auf 256 passed erhöht (100% grün).
+
 ### Behoben / Fixed (2026-10-31)
 - **Windows-atomare Dateisystem-Resilienz & Translation CLI CWD-Unabhängigkeit (Software-Bugsearch / Bugsweep):**
   - **Windows ReadOnly-Overwrite & WinError 5/32 Resilienz (`prosync_utils.py`):** `atomic_write_text` und `atomic_write_json` heben unter Windows vorübergehend den Schreibschutz auf (`stat.S_IWRITE`), wenn die Zieldatei schreibgeschützt existiert, wodurch `PermissionError: [WinError 5] Zugriff verweigert` beim atomaren `os.replace` verhindert wird (inkl. Wiederherstellung des ursprünglichen Dateimodus im Fehlerfall).

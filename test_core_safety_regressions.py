@@ -269,7 +269,10 @@ def test_sftp_overwrite_prefers_posix_rename(tmp_path):
     make_sftp_worker(prosync)._upload_file(sftp, str(local), "/file.txt")
 
     assert sftp.files["/file.txt"] == b"new"
-    assert sftp.posix_calls == [("/file.txt.prosync_tmp", "/file.txt")]
+    assert len(sftp.posix_calls) == 1
+    src_call, dst_call = sftp.posix_calls[0]
+    assert src_call.startswith("/file.txt.prosync_tmp_")
+    assert dst_call == "/file.txt"
     assert sftp.rename_calls == []
 
 
@@ -282,7 +285,7 @@ def test_sftp_overwrite_fallback_moves_old_target_out_of_the_way(tmp_path):
     make_sftp_worker(prosync)._upload_file(sftp, str(local), "/file.txt")
 
     assert sftp.files == {"/file.txt": b"new"}
-    assert all(old != "/file.txt.prosync_tmp" or new == "/file.txt" for old, new in sftp.rename_calls)
+    assert all(not old.startswith("/file.txt.prosync_tmp") or new == "/file.txt" for old, new in sftp.rename_calls)
 
 
 def test_sftp_failed_atomic_replace_cleans_temp_file(tmp_path):
@@ -295,7 +298,7 @@ def test_sftp_failed_atomic_replace_cleans_temp_file(tmp_path):
         make_sftp_worker(prosync)._upload_file(sftp, str(local), "/file.txt")
 
     assert sftp.files == {"/file.txt": b"old"}
-    assert "/file.txt.prosync_tmp" in sftp.removed
+    assert any(p.startswith("/file.txt.prosync_tmp_") for p in sftp.removed)
 
 
 @pytest.mark.parametrize("invalid_content", ["{broken json", "[]"])
