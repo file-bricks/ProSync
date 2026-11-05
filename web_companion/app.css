@@ -67,6 +67,41 @@ body {
   align-content: start;
 }
 
+.lang-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+}
+
+.lang-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.lang-select {
+  padding: 0.35rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #ffffff;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.lang-select:focus {
+  border-color: var(--accent);
+}
+
 .eyebrow {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;

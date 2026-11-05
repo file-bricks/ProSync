@@ -18,15 +18,26 @@
   <div class="page-shell">
     <header class="hero">
       <div class="hero__copy">
-        <p class="eyebrow">ProSync Web/PWA Companion</p>
-        <h1>Profile und letzte Sync-Berichte lokal lesen</h1>
-        <p class="hero__text">
+        <p class="eyebrow" data-i18n="app_eyebrow">ProSync Web/PWA Companion</p>
+        <h1 data-i18n="app_title">Profile und letzte Sync-Berichte lokal lesen</h1>
+        <p class="hero__text" data-i18n="hero_text">
           Dieser Companion importiert <code>prosync-profile-v1.json</code> aus der Desktop-App,
           zeigt Verbindungen und Report-Metadaten read-only an und speichert den letzten Stand
           lokal für Offline-Starts.
         </p>
       </div>
       <div class="hero__aside">
+        <div class="lang-bar">
+          <label for="lang-select" class="lang-label" data-i18n="lbl_language">Sprache / Language:</label>
+          <select id="lang-select" class="lang-select" aria-label="Language selection">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="zh">简体中文</option>
+            <option value="ja">日本語</option>
+            <option value="ru">Русский</option>
+          </select>
+        </div>
         <p id="install-hint" class="hint-card"></p>
         <p id="offline-hint" class="hint-card hint-card--muted"></p>
       </div>
@@ -36,16 +47,16 @@
       <section class="panel panel--wide">
         <div class="toolbar">
           <input id="import-input" type="file" accept=".json,application/json" hidden>
-          <button id="import-button" type="button">Profil importieren</button>
-          <button id="paste-button" type="button">JSON aus Text laden</button>
-          <button id="demo-button" type="button">Demo laden</button>
-          <button id="reset-button" type="button" class="button-ghost">Zurücksetzen</button>
+          <button id="import-button" type="button" data-i18n="btn_import">Profil importieren</button>
+          <button id="paste-button" type="button" data-i18n="btn_paste">JSON aus Text laden</button>
+          <button id="demo-button" type="button" data-i18n="btn_demo">Demo laden</button>
+          <button id="reset-button" type="button" class="button-ghost" data-i18n="btn_reset">Zurücksetzen</button>
         </div>
-        <p id="load-status" class="status" data-kind="info">
+        <p id="load-status" class="status" data-kind="info" data-i18n="status_initial">
           Noch kein Profil geladen. Importiere eine <code>prosync-profile-v1.json</code> oder starte mit Demo.
         </p>
         <label class="input-block" for="json-input">
-          <span>Optionaler JSON-Paste</span>
+          <span data-i18n="label_json_paste">Optionaler JSON-Paste</span>
           <textarea
             id="json-input"
             rows="8"
@@ -60,51 +71,51 @@
       </section>
 
       <aside class="panel">
-        <h2>Filter</h2>
+        <h2 data-i18n="heading_filters">Filter</h2>
         <label class="input-block" for="search-input">
-          <span>Suche</span>
-          <input id="search-input" type="search" placeholder="Name, Modus, Labels, Muster">
+          <span data-i18n="lbl_search">Suche</span>
+          <input id="search-input" type="search" placeholder="Name, Modus, Labels, Muster" data-i18n-placeholder="placeholder_search">
         </label>
         <label class="input-block" for="type-filter">
-          <span>Verbindungstyp</span>
+          <span data-i18n="lbl_connection_type">Verbindungstyp</span>
           <select id="type-filter">
-            <option value="all">Alle Typen</option>
+            <option value="all" data-i18n="opt_all_types">Alle Typen</option>
           </select>
         </label>
         <label class="input-block" for="mode-filter">
-          <span>Sync-Modus</span>
+          <span data-i18n="lbl_sync_mode">Sync-Modus</span>
           <select id="mode-filter">
-            <option value="all">Alle Modi</option>
+            <option value="all" data-i18n="opt_all_modes">Alle Modi</option>
           </select>
         </label>
         <label class="input-block" for="autosync-filter">
-          <span>Autosync</span>
+          <span data-i18n="lbl_autosync">Autosync</span>
           <select id="autosync-filter">
-            <option value="all">Alle</option>
-            <option value="enabled">Aktiv</option>
-            <option value="disabled">Inaktiv</option>
+            <option value="all" data-i18n="opt_all">Alle</option>
+            <option value="enabled" data-i18n="opt_enabled">Aktiv</option>
+            <option value="disabled" data-i18n="opt_disabled">Inaktiv</option>
           </select>
         </label>
         <label class="input-block" for="sort-select">
-          <span>Sortierung</span>
+          <span data-i18n="lbl_sorting">Sortierung</span>
           <select id="sort-select">
-            <option value="name-asc">Name A–Z</option>
-            <option value="name-desc">Name Z–A</option>
-            <option value="autosync-first">Autosync aktiv zuerst</option>
-            <option value="type">Nach Typ</option>
+            <option value="name-asc" data-i18n="opt_sort_name_asc">Name A–Z</option>
+            <option value="name-desc" data-i18n="opt_sort_name_desc">Name Z–A</option>
+            <option value="autosync-first" data-i18n="opt_sort_autosync_first">Autosync aktiv zuerst</option>
+            <option value="type" data-i18n="opt_sort_type">Nach Typ</option>
           </select>
         </label>
       </aside>
 
       <section class="panel">
-        <h2>Typen und Modi</h2>
+        <h2 data-i18n="heading_types_modes">Typen und Modi</h2>
         <div class="meta-columns">
           <div>
-            <h3>Typen</h3>
+            <h3 data-i18n="heading_types">Typen</h3>
             <ul id="type-list" class="meta-list"></ul>
           </div>
           <div>
-            <h3>Modi</h3>
+            <h3 data-i18n="heading_modes">Modi</h3>
             <ul id="mode-list" class="meta-list"></ul>
           </div>
         </div>
@@ -113,12 +124,12 @@
       <section class="panel panel--wide">
         <div class="section-head">
           <div>
-            <h2>Verbindungen</h2>
-            <p>Read-only Ansicht des exportierten ProSync-Profils ohne echte lokale Pfade.</p>
+            <h2 data-i18n="heading_connections">Verbindungen</h2>
+            <p data-i18n="connections_desc">Read-only Ansicht des exportierten ProSync-Profils ohne echte lokale Pfade.</p>
           </div>
           <span id="connection-count" class="pill">0 sichtbar</span>
         </div>
-        <div id="empty-state" class="empty-state">
+        <div id="empty-state" class="empty-state" data-i18n="empty_connections">
           Noch keine Verbindungen sichtbar.
         </div>
         <div id="connection-list" class="connection-list" hidden></div>
@@ -127,11 +138,11 @@
       <section class="panel panel--wide">
         <div class="section-head">
           <div>
-            <h2>Berichte</h2>
-            <p>Der Export liefert nur redigierte Report-Metadaten. Trigger und Live-Sync bleiben Desktop-Aufgabe.</p>
+            <h2 data-i18n="heading_reports">Berichte</h2>
+            <p data-i18n="reports_desc">Der Export liefert nur redigierte Report-Metadaten. Trigger und Live-Sync bleiben Desktop-Aufgabe.</p>
           </div>
         </div>
-        <div id="report-empty" class="empty-state">Keine Report-Metadaten im Profil enthalten.</div>
+        <div id="report-empty" class="empty-state" data-i18n="empty_reports">Keine Report-Metadaten im Profil enthalten.</div>
         <div id="report-list" class="report-list" hidden></div>
       </section>
     </main>

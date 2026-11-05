@@ -12,14 +12,82 @@
   "pfx_path": "",
   "pfx_password": "",
   "timestamp_url": "http://timestamp.digicert.com",
-  "license_files": ["../../LICENSE"],
+  "license_files": [
+    "../../LICENSE"
+  ],
   "enable_i18n": true,
   "capabilities": "internetClient,runFullTrust",
   "privacy_url": "https://github.com/file-bricks/ProSync/blob/master/README.md#datenschutz-und-lokale-dateien",
   "support_url": "https://github.com/file-bricks/ProSync/issues",
   "category": "Utilities",
   "age_rating": "3+",
-  "description_de": "Lokales Backup- und Synchronisationstool mit Datenbankschutz, Batch-Sync und redigiertem Profil-Export.",
-  "description_en": "Local backup and synchronization tool with database safety, batch sync, and redacted profile export.",
-  "keywords": "backup, sync, file sync, folder sync, SQLite, database safety, batch sync"
+  "languages": [
+    "de-DE",
+    "en-US",
+    "es-ES",
+    "zh-CN",
+    "ja-JP",
+    "ru-RU"
+  ],
+  "description_de": "Lokales Backup- und Sync-Tool mit Datenbankschutz, Batch-Sync und redigiertem Profil-Export.",
+  "description_en": "Local backup and sync tool with database safety, batch runs, and redacted profile exchange.",
+  "description_es": "Herramienta local de copia y sincronización con protección de bases de datos y exportación.",
+  "description_zh": "本地备份与同步工具，具备数据库安全保护、批量同步与脱敏配置文件导出功能。",
+  "description_ja": "データベース保護、一括同期、秘匿化プロファイル出力対応のローカル同期・バックアップツール。",
+  "description_ru": "Локальный инструмент резервного копирования и синхронизации с защитой БД и экспортом.",
+  "keywords": "backup, sync, file sync, folder sync, SQLite, database safety, batch sync",
+  "keywords_de": [
+    "backup",
+    "synchronisation",
+    "datei sync",
+    "ordner sync",
+    "sqlite",
+    "datenbankschutz",
+    "batch sync"
+  ],
+  "keywords_en": [
+    "backup",
+    "sync",
+    "file sync",
+    "folder sync",
+    "sqlite",
+    "database safety",
+    "batch sync"
+  ],
+  "keywords_es": [
+    "copia seguridad",
+    "sincronizacion",
+    "sincronizar archivos",
+    "sincronizar carpetas",
+    "sqlite",
+    "seguridad base datos",
+    "sincronizacion lotes"
+  ],
+  "keywords_zh": [
+    "备份",
+    "同步",
+    "文件同步",
+    "文件夹同步",
+    "sqlite",
+    "数据库安全",
+    "批量同步"
+  ],
+  "keywords_ja": [
+    "バックアップ",
+    "同期",
+    "ファイル同期",
+    "フォルダ同期",
+    "sqlite",
+    "データベース保護",
+    "一括同期"
+  ],
+  "keywords_ru": [
+    "резервное копирование",
+    "синхронизация",
+    "синхронизация файлов",
+    "синхронизация папок",
+    "sqlite",
+    "защита баз данных",
+    "пакетная синхронизация"
+  ]
 }

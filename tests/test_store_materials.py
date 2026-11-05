@@ -104,8 +104,8 @@ def test_store_package_has_complete_non_placeholder_metadata() -> None:
     assert "runFullTrust" in config["capabilities"]
     assert config["category"] == "Utilities"
     assert config["license"] == "MIT"
-    assert "de-DE" in config["languages"]
-    assert "en-US" in config["languages"]
+    for lang in ("de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"):
+        assert lang in config["languages"], f"Language {lang} missing in store_package.json"
     assert config["privacy_url"].startswith("https://")
     assert config["support_url"].startswith("https://")
 
@@ -133,14 +133,18 @@ def test_store_manifest_is_valid_xml_and_has_required_elements() -> None:
     assert "runFullTrust" in manifest_text
     assert "ProSync.exe" in manifest_text
     assert "StoreLogo.png" in manifest_text
+    for lang_tag in ("de-de", "en-us", "es-es", "zh-cn", "ja-jp", "ru-ru"):
+        assert f'Language="{lang_tag}"' in manifest_text or f'language="{lang_tag}"' in manifest_text, (
+            f"AppxManifest lacks Resource Language {lang_tag}"
+        )
 
 
 def test_store_listing_and_support_are_bilingual_and_privacy_aligned() -> None:
     listing = (ROOT / "STORE_LISTING.md").read_text(encoding="utf-8")
     support = (ROOT / "SUPPORT.md").read_text(encoding="utf-8")
 
-    assert "## Deutsch" in listing
-    assert "## English" in listing
+    for heading in ("## Deutsch", "## English", "## Español", "## 简体中文", "## 日本語", "## Русский"):
+        assert heading in listing, f"Heading {heading} missing in STORE_LISTING.md"
     assert "Keine Pflicht-Cloud" in listing or "Lokal zuerst" in listing or "Local first" in listing
     assert "## Deutsch" in support
     assert "## English" in support
@@ -173,6 +177,13 @@ def test_store_listing_keywords_adhere_to_policy_10_1_3() -> None:
     assert en_match is not None, "English keywords section missing"
     en_keywords = [k.strip() for k in en_match.group(1).split(",") if k.strip()]
     assert 1 <= len(en_keywords) <= 7, f"English keywords must be 1-7 (found {len(en_keywords)})"
+
+    # All 6 language keyword sections must adhere to max 7
+    all_kw_blocks = re.findall(r"### (?:Keywords|Schlüsselwörter)\s*\n+([^\n#]+)", listing)
+    assert len(all_kw_blocks) == 6, f"Expected 6 keyword blocks in STORE_LISTING.md, found {len(all_kw_blocks)}"
+    for block in all_kw_blocks:
+        kws = [k.strip() for k in block.split(",") if k.strip()]
+        assert 1 <= len(kws) <= 7, f"Keyword block exceeds 7: {kws}"
 
 
 def test_windows_store_prep_matches_metadata_and_policy() -> None:
@@ -221,6 +232,10 @@ def test_windowsstore_release_staging_complete() -> None:
         "store_settings.json",
         "store_listing_de.md",
         "store_listing_en.md",
+        "store_listing_es.md",
+        "store_listing_zh.md",
+        "store_listing_ja.md",
+        "store_listing_ru.md",
         "StoreLogo.png",
     ):
         target = store_dir / filename
@@ -233,6 +248,9 @@ def test_windowsstore_release_staging_complete() -> None:
     assert settings["publisher"] == "CN=52596601-BAB4-4F3F-B182-E8F3F273B202"
     keywords = [k.strip() for k in settings["keywords"].split(",") if k.strip()]
     assert 1 <= len(keywords) <= 7, f"store_settings.json keywords count invalid: {len(keywords)}"
+    for lang in ("de", "en", "es", "zh", "ja", "ru"):
+        assert f"description_{lang}" in settings
+        assert f"keywords_{lang}" in settings
 
 
 def test_german_umlaut_integrity_in_store_materials() -> None:

@@ -5,6 +5,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-11-05)
+- **Windows Store Packaging & Web-Companion Tier-2 6-Sprachen-Harmonisierung (TW-PS-10 / Software-Entwicklung):**
+  - **Windows Store Manifest & Metadaten (Policy P-006 Tier-2):** `store_package.json` und `releases/windowsstore/store_settings.json` um alle 6 Tier-2-Zielsprachen (Deutsch `de-DE`, Englisch `en-US`, Spanisch `es-ES`, Chinesisch `zh-CN`, Japanisch `ja-JP`, Russisch `ru-RU`), Kurzbeschreibungen (<= 100 Zeichen) und jeweils exakt 7 Richtlinien-konforme Keywords (<= 30 Zeichen, keine markenrechtlichen Fremdbegriffe gemäß Partner Center Policy 10.1.3) erweitert.
+  - **AppxManifest Sprachressourcen:** `store_package/ProSync/AppxManifest.xml` um die 6 Sprachressourcen (`de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`) ergänzt.
+  - **6-Sprachen Store-Listings & Release-Staging:** `STORE_LISTING.md` um vollständige, strukturierte Abschnitte für Spanisch, Chinesisch, Japanisch und Russisch ergänzt; Staging-Dateien `releases/windowsstore/store_listing_es.md`, `store_listing_zh.md`, `store_listing_ja.md` und `store_listing_ru.md` bereitgestellt und in `.gitignore` explizit gewhitelistet.
+  - **Web-Companion PWA Lokalisierung (`web_companion/`):** Vollständiger `TRANSLATIONS`-Katalog mit 81 semantischen Schlüsseln in `app.js` über alle 6 Sprachen; dynamischer Sprachwähler `<select id="lang-select">` im Header; automatische Initialisierung via `localStorage` (`prosync_companion_lang`) mit Fallback auf Browser-Präferenz und Deutsch; unterbrechungsfreie Re-Render-Unterstützung für alle Datenansichten und leere Zustände.
+  - **Spanische Gesamtdokumentation:** `README_es.md` als 1:1 Parität zu `README.es.md` hinterlegt.
+  - **Store-Readiness-Prüfung:** `scripts/check_store_readiness.py` auf Prüfung aller 6 Sprachen in Metadaten, XML-Manifest, Listing und Staging-Dateien gehärtet.
+  - **Automatisierte Vertragstests:** Neue hermetische Testsuite `tests/test_web_companion.py` (7 Pytest-Tests), Node.js Testsuite `web_companion/tests/companion_i18n.test.mjs` (35 Tests) und Aktualisierung von `tests/test_store_materials.py` auf alle 6 Staging-Dateien und Spracheinstellungen.
+
 ### Behoben / Fixed (2026-11-01)
 - **High-End Architekturhärtung: Staging-Isolierung, Scan-Abwehr & SFTP-Kollisionsschutz ([SOFTWARE_HIGH_END] / Turnusgemäßer Lauf):**
   - **Kollisionsfreie temporäre SFTP-Uploadpfade (`ProSyncStart_V3.1.py`):** `SftpTargetSyncWorker._make_remote_tmp_path()` erzeugt für jeden Upload eindeutige Remotepfade mit UUID (`f"{remote_path}.prosync_tmp_{uuid.uuid4().hex}"`). Schließt Kollisionen, Datenkorruption und Race Conditions bei gleichzeitigen/wiederholten Uploads oder Verbindungsabbrüchen hermetisch aus; sauberes Fail-Cleanup via `sftp.remove(tmp_remote)`.

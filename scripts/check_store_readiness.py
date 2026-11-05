@@ -93,6 +93,10 @@ def _check_repository(project_root: Path) -> list[str]:
         languages = config.get("languages")
         if not isinstance(languages, list) or not languages:
             findings.append("[repository] store_package.json field 'languages' is missing or empty")
+        else:
+            for req_lang in ("de-DE", "en-US", "es-ES", "zh-CN", "ja-JP", "ru-RU"):
+                if req_lang not in languages:
+                    findings.append(f"[repository] store_package.json lacks Tier-2 language {req_lang}")
 
         app_name = config.get("name") or config.get("app_name")
         if not isinstance(app_name, str) or not app_name.strip():
@@ -148,15 +152,23 @@ def _check_repository(project_root: Path) -> list[str]:
                 if token not in manifest:
                     findings.append(f"[repository] AppxManifest.xml lacks {label}")
 
+            for req_lang in ("de-de", "en-us", "es-es", "zh-cn", "ja-jp", "ru-ru"):
+                if f'language="{req_lang}"' not in manifest.lower():
+                    findings.append(f"[repository] AppxManifest.xml lacks Resource Language {req_lang}")
+
     for name in REQUIRED_DOCUMENTS:
         doc_path = project_root / name
         content = _read_nonempty(doc_path)
         if content is None:
             findings.append(f"[repository] {name} is missing or empty")
-        elif name in ("STORE_LISTING.md", "SUPPORT.md"):
+        elif name == "SUPPORT.md":
             for heading in ("Deutsch", "English"):
                 if heading not in content:
                     findings.append(f"[repository] {name} lacks heading {heading}")
+        elif name == "STORE_LISTING.md":
+            for heading in ("Deutsch", "English", "Español", "简体中文", "日本語", "Русский"):
+                if heading not in content:
+                    findings.append(f"[repository] {name} lacks Tier-2 heading {heading}")
 
     license_content = _read_nonempty(project_root / "LICENSE")
     if license_content is None or "MIT" not in license_content:
@@ -222,7 +234,18 @@ def _check_repository(project_root: Path) -> list[str]:
     if not win_store_dir.is_dir():
         findings.append("[repository] releases/windowsstore directory is missing")
     else:
-        for req_name in ("BUILD.md", "WACK_PROTOCOL.md", "store_settings.json", "store_listing_de.md", "store_listing_en.md", "StoreLogo.png"):
+        for req_name in (
+            "BUILD.md",
+            "WACK_PROTOCOL.md",
+            "store_settings.json",
+            "store_listing_de.md",
+            "store_listing_en.md",
+            "store_listing_es.md",
+            "store_listing_zh.md",
+            "store_listing_ja.md",
+            "store_listing_ru.md",
+            "StoreLogo.png",
+        ):
             if not (win_store_dir / req_name).is_file():
                 findings.append(f"[repository] releases/windowsstore lacks {req_name}")
 
