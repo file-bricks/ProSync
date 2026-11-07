@@ -5,6 +5,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Hinzugefügt / Added (2026-11-07)
+- **Windows Store WACK-Preflight Runner & Store-Readiness-Audit (TW-PS-11 / Software-Entwicklung):**
+  - **Hermetischer WACK-Preflight Runner (`scripts/run_windows_wack.py`):** Statisches WACK-Preflight-Prüfprogramm implementiert zur Validierung aller Windows App Certification Kit Anforderungen (AppxManifest XML-Wohlgeformtheit, `runFullTrust` Restricted Capabilities, 6 Tier-2 Zielsprachen-Ressourcen `de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`, Pflichtfelder in `store_package.json`, AppX Tile- und Store-Logo-Dimensionen für alle 6 Icon-Dateien, Mindestanzahl Store-Screenshots, 6 Sprach-Listings in `releases/windowsstore/`, Staging-Dokumente `BUILD.md`, `WACK_PROTOCOL.md` und `store_settings.json`, Partner Center Policy 10.1.3 Keywords- und Kurzbeschreibungs-Grenzwerte). Erzeugt standardisierte XML-Prüfberichte (`releases/windowsstore/test_reports/wack_preflight_*.xml`).
+  - **Automatisierte Store-Readiness-Vertragstestsuite (`tests/test_store_readiness.py`):** 9 neue Vertragstests zur kontinuierlichen Verifikation von `store_package.json`, `AppxManifest.xml`, Tile-Icon-Dimensionen, Policy 10.1.3 Keywords und Kurzbeschreibungen, Parität zu `store_settings.json` und fehlerfreier Ausführung von `check_store_readiness.py` und `run_windows_wack.py` (100% grün).
+  - **WACK-Protokoll & Preflight-Report (`releases/windowsstore/WACK_PROTOCOL.md`, `releases/windowsstore/test_reports/wack_preflight_20261107.xml`):** Protokoll mit neuem WACK-Preflight-Lauf (11/11 PASS, 0 FAIL, 0 WARNING) aktualisiert; WACK-Report hermetisch generiert.
+
 ### Hinzugefügt / Added (2026-11-05)
 - **Windows Store Packaging & Web-Companion Tier-2 6-Sprachen-Harmonisierung (TW-PS-10 / Software-Entwicklung):**
   - **Windows Store Manifest & Metadaten (Policy P-006 Tier-2):** `store_package.json` und `releases/windowsstore/store_settings.json` um alle 6 Tier-2-Zielsprachen (Deutsch `de-DE`, Englisch `en-US`, Spanisch `es-ES`, Chinesisch `zh-CN`, Japanisch `ja-JP`, Russisch `ru-RU`), Kurzbeschreibungen (<= 100 Zeichen) und jeweils exakt 7 Richtlinien-konforme Keywords (<= 30 Zeichen, keine markenrechtlichen Fremdbegriffe gemäß Partner Center Policy 10.1.3) erweitert.
