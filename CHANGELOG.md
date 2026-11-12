@@ -5,6 +5,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-11-12)
+- **Store-Readiness-Tests in frischem Checkout (`tests/test_store_readiness.py`, `scripts/run_windows_wack.py`):** Zwei Tests schlugen auf `master` seit TW-PS-11 in jedem sauberen Klon fehl, weil sie Dateien verlangten, die nicht versioniert sind.
+  - `run_windows_wack.py` zählt Store-Screenshots jetzt auch im versionierten Ordner `README/screenshots/store/` (wie `check_store_readiness.py`); gleichnamige Kopien aus den lokalen Staging-Ordnern werden nicht doppelt gezählt.
+  - `test_required_documents_exist` verlangt die per `.gitignore` ausgeschlossene, interne `PORTIERUNGSPLAN.md` nicht mehr.
+  - `test_run_windows_wack_preflight_passes` schreibt den XML-Bericht in ein temporäres Verzeichnis statt in den Arbeitsbaum.
+
 ### Hinzugefügt / Added (2026-11-07)
 - **Windows Store WACK-Preflight Runner & Store-Readiness-Audit (TW-PS-11 / Software-Entwicklung):**
   - **Hermetischer WACK-Preflight Runner (`scripts/run_windows_wack.py`):** Statisches WACK-Preflight-Prüfprogramm implementiert zur Validierung aller Windows App Certification Kit Anforderungen (AppxManifest XML-Wohlgeformtheit, `runFullTrust` Restricted Capabilities, 6 Tier-2 Zielsprachen-Ressourcen `de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`, Pflichtfelder in `store_package.json`, AppX Tile- und Store-Logo-Dimensionen für alle 6 Icon-Dateien, Mindestanzahl Store-Screenshots, 6 Sprach-Listings in `releases/windowsstore/`, Staging-Dokumente `BUILD.md`, `WACK_PROTOCOL.md` und `store_settings.json`, Partner Center Policy 10.1.3 Keywords- und Kurzbeschreibungs-Grenzwerte). Erzeugt standardisierte XML-Prüfberichte (`releases/windowsstore/test_reports/wack_preflight_*.xml`).
