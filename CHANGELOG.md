@@ -5,6 +5,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-11-12)
+- **Store-Readiness-Tests in frischem Checkout (`tests/test_store_readiness.py`, `scripts/run_windows_wack.py`):** Zwei Tests schlugen auf `master` seit TW-PS-11 in jedem sauberen Klon fehl, weil sie Dateien verlangten, die nicht versioniert sind.
+  - `run_windows_wack.py` zählt Store-Screenshots jetzt auch im versionierten Ordner `README/screenshots/store/` (wie `check_store_readiness.py`); gleichnamige Kopien aus den lokalen Staging-Ordnern werden nicht doppelt gezählt.
+  - `test_required_documents_exist` verlangt die per `.gitignore` ausgeschlossene, interne `PORTIERUNGSPLAN.md` nicht mehr.
+  - `test_run_windows_wack_preflight_passes` schreibt den XML-Bericht in ein temporäres Verzeichnis statt in den Arbeitsbaum.
+
 ### Hinzugefügt / Added (2026-11-07)
 - **Windows Store WACK-Preflight Runner & Store-Readiness-Audit (TW-PS-11 / Software-Entwicklung):**
   - **Hermetischer WACK-Preflight Runner (`scripts/run_windows_wack.py`):** Statisches WACK-Preflight-Prüfprogramm implementiert zur Validierung aller Windows App Certification Kit Anforderungen (AppxManifest XML-Wohlgeformtheit, `runFullTrust` Restricted Capabilities, 6 Tier-2 Zielsprachen-Ressourcen `de-de`, `en-us`, `es-es`, `zh-cn`, `ja-jp`, `ru-ru`, Pflichtfelder in `store_package.json`, AppX Tile- und Store-Logo-Dimensionen für alle 6 Icon-Dateien, Mindestanzahl Store-Screenshots, 6 Sprach-Listings in `releases/windowsstore/`, Staging-Dokumente `BUILD.md`, `WACK_PROTOCOL.md` und `store_settings.json`, Partner Center Policy 10.1.3 Keywords- und Kurzbeschreibungs-Grenzwerte). Erzeugt standardisierte XML-Prüfberichte (`releases/windowsstore/test_reports/wack_preflight_*.xml`).
@@ -27,6 +33,11 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
   - **Hermetische Staging-Isolierung in `SyncWalker` (`ProSyncStart_V3.1.py`):** `SyncWalker._should_exclude()` schließt ProSync-eigene Staging- und Backup-Artefakte (`.prosync-*`, `*.prosync_tmp*`, `*.prosync_backup_*`) standardmäßig automatisch aus (`INTERNAL_STAGE_PATTERNS`).
   - **Schutz vor Erfassung in-flight Stages bei überlappenden Ordnerscans:** Weder lokale Scans (`SyncWalker.scan`) noch Remote-Scans (`SftpTargetSyncWorker._scan_remote_tree`) erfassen temporäre Dateien. In-flight Stages werden in Zwei-Wege- und Mirror-Synchronisationen weder als neue Dateien repliziert noch als verwaiste Dateien fälschlich gelöscht.
   - **5 neue automatisierte Vertragstests (`tests/test_stage_isolation_and_scan_defense.py`):** Deckt Standard-Ausschluss von Staging-Mustern, SFTP-Remotebaum-Ausschluss, eindeutige Remote-Staging-Pfade sowie Nicht-Replikation und Nicht-Löschung in Zwei-Wege- und Mirror-Läufen ab; Pytest-Vollsuite auf 256 passed erhöht (100% grün).
+- **PEP 639 Metadaten-Standardisierung & CI-Matrix-Härtung (Pfad A Repository-Hygiene):**
+  - **PEP 639 Lizenz-Spezifikation (`pyproject.toml`):** `license = { text = "MIT" }` auf standardkonformen SPDX-String `license = "MIT"` migriert; veralteten Classifier `"License :: OSI Approved :: MIT License"` aus `classifiers` entfernt, um strikte Build-Validierungsfehler (`ValueError: invalid pyproject.toml config: project.license`) in modernen Setuptools-Versionen (>=82.0) fail-closed zu beheben.
+  - **Build-Backend-Mindestversion (`pyproject.toml`):** `[build-system] requires` von `setuptools>=61.0` auf `setuptools>=77.0.3` angehoben. Erst ab dieser Version versteht Setuptools den SPDX-String `license = "MIT"`; mit einer älteren, noch zulässigen Version schlug der Build fehl.
+  - **CI-Matrix-Härtung (`.github/workflows/tests.yml`):** Test-Matrix um Python 3.13 (`"3.13"`) erweitert zur Sicherung der Vorwärtskompatibilität über die gesamte Python 3.10–3.13 Matrix unter Ubuntu-Runnern.
+  - **Automatisierte Vertragstest-Erweiterung (`tests/test_metadata.py`):** Neuer hermetischer Vertragstest `test_pep_639_license_specification` verankert die PEP-639-Konformität und das Classifier-Verbot; `test_ci_workflow_integrity` um Python 3.13 Matrix-Prüfung ergänzt.
 
 ### Behoben / Fixed (2026-10-31)
 - **Windows-atomare Dateisystem-Resilienz & Translation CLI CWD-Unabhängigkeit (Software-Bugsearch / Bugsweep):**

@@ -6,6 +6,7 @@ import json
 import struct
 import subprocess
 import sys
+import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -67,19 +68,28 @@ class TestStoreReadiness(unittest.TestCase):
         self.assertIn("STORE READINESS: METADATA & REPOSITORY STAGED", result.stdout)
 
     def test_run_windows_wack_preflight_passes(self):
-        result = subprocess.run(
-            [sys.executable, str(PROJECT_ROOT / "scripts" / "run_windows_wack.py"), "--json"],
-            cwd=PROJECT_ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        self.assertEqual(result.returncode, 0, f"run_windows_wack.py fehlgeschlagen:\n{result.stdout}\n{result.stderr}")
-        summary = json.loads(result.stdout)
-        self.assertEqual(summary["overall_result"], "PASS")
-        self.assertEqual(summary["fail_count"], 0)
-        self.assertGreaterEqual(summary["pass_count"], 10)
-        self.assertTrue(Path(summary["report"]).is_file())
+        # Bericht in ein temporäres Verzeichnis schreiben, damit der Testlauf
+        # keine Datei im Arbeitsbaum hinterlässt.
+        with tempfile.TemporaryDirectory() as report_dir:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PROJECT_ROOT / "scripts" / "run_windows_wack.py"),
+                    "--json",
+                    "--report-dir",
+                    report_dir,
+                ],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, f"run_windows_wack.py fehlgeschlagen:\n{result.stdout}\n{result.stderr}")
+            summary = json.loads(result.stdout)
+            self.assertEqual(summary["overall_result"], "PASS")
+            self.assertEqual(summary["fail_count"], 0)
+            self.assertGreaterEqual(summary["pass_count"], 10)
+            self.assertTrue(Path(summary["report"]).is_file())
 
     def test_required_documents_exist(self):
         for doc in (
@@ -87,7 +97,6 @@ class TestStoreReadiness(unittest.TestCase):
             "SUPPORT.md",
             "STORE_LISTING.md",
             "WINDOWS_STORE_PREP.md",
-            "PORTIERUNGSPLAN.md",
             "THIRD_PARTY_LICENSES.txt",
         ):
             p = PROJECT_ROOT / doc
