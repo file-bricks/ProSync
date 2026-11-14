@@ -1,3 +1,4 @@
+import codecs
 import sys
 import os
 import json
@@ -198,8 +199,15 @@ class PreviewWorker(QThread):
 
         try:
             if ext in [".txt", ".md", ".py", ".json", ".xml", ".log", ".csv"]:
-                with open(self.path, "r", encoding="utf-8", errors="replace") as f:
-                    text = f.read(3000) 
+                with open(self.path, "rb") as f:
+                    raw = f.read(12000)
+                # Windows-Textdateien sind oft ANSI (cp1252): UTF-8 zuerst, sonst cp1252 statt „�“.
+                try:
+                    # final=False: ein am Leseende abgeschnittenes UTF-8-Zeichen ist kein Kodierungsfehler.
+                    text = codecs.getincrementaldecoder("utf-8-sig")().decode(raw, final=False)
+                except UnicodeDecodeError:
+                    text = raw.decode("cp1252", errors="replace")
+                text = text[:3000]
             
             elif ext == ".pdf" and HAS_PDF and _PDF_READER is not None:
                 with open(self.path, "rb") as f:

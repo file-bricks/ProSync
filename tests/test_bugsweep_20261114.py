@@ -130,3 +130,33 @@ def test_reader_search_finds_names_with_capital_umlauts(prosync, tmp_path):
         worker.results_found.connect(found.extend)
         worker.run()
         assert [r["name"] for r in found] == [expected], term
+
+
+def test_reader_preview_reads_windows_ansi_text(prosync, tmp_path):
+    """Die Vorschau las nur UTF-8 (errors=replace): ANSI-Umlaute/€ erschienen als „�“."""
+    sys.path.insert(0, str(ROOT))
+    import ProSyncReader
+
+    text = "Prüfbericht „Müller“ – 5 €"
+    for name, data in (("ansi.txt", text.encode("cp1252")), ("utf8.txt", text.encode("utf-8-sig"))):
+        (tmp_path / name).write_bytes(data)
+        shown = []
+        worker = ProSyncReader.PreviewWorker(str(tmp_path / name))
+        worker.preview_ready.connect(shown.append)
+        worker.run()
+        assert shown == [text], name
+
+
+def test_reader_preview_keeps_long_utf8_text_utf8(prosync, tmp_path):
+    """Ein am 12-kB-Leseende abgeschnittenes UTF-8-Zeichen darf nicht zur cp1252-Dekodierung führen."""
+    sys.path.insert(0, str(ROOT))
+    import ProSyncReader
+
+    text = "ä" * 9000  # 18 kB UTF-8 aus Zwei-Byte-Zeichen
+    # Das führende „x“ versetzt die Zeichen um ein Byte: Byte 12000 liegt mitten in einem „ä“.
+    (tmp_path / "lang.txt").write_bytes(("x" + text).encode("utf-8"))
+    shown = []
+    worker = ProSyncReader.PreviewWorker(str(tmp_path / "lang.txt"))
+    worker.preview_ready.connect(shown.append)
+    worker.run()
+    assert shown[0] == ("x" + text)[:3000]
