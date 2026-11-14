@@ -2048,7 +2048,11 @@ class FolderSyncWorker(QThread):
                     t_meta = tgt_tree[f]
 
                     if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
-                        if mode in ("mirror", "update", "one_way"):
+                        if mode == "update" and t_meta["mtime"] - s_meta["mtime"] > 1:
+                            # „update“ überträgt laut Doku nur neuere Dateien: eine im Ziel
+                            # neuer bearbeitete Datei darf nicht mit der älteren Quelle überschrieben werden.
+                            actions.append(("SKIP_NEWER_TARGET", f))
+                        elif mode in ("mirror", "update", "one_way"):
                             actions.append(("COPY_L2R", f))
                         elif mode == "two_way":
                             if conflict_policy == "source":
@@ -2117,6 +2121,10 @@ class FolderSyncWorker(QThread):
                                 pass
                             os.remove(t_abs)
                             _stats["deleted"] += 1
+
+                    elif act == "SKIP_NEWER_TARGET":
+                        self.status.emit(f"Übersprungen (Ziel neuer): {rel_path}")
+                        _stats["skipped"] += 1
 
                     elif act in ("INDEX_SRC", "INDEX_BOTH"):
                         _stats["skipped"] += 1
@@ -2420,6 +2428,8 @@ class SftpTargetSyncWorker(QThread):
                     src_meta["size"] != remote_meta["size"]
                     or abs(src_meta["mtime"] - remote_meta["mtime"]) > 1
                 ):
+                    if mode == "update" and remote_meta["mtime"] - src_meta["mtime"] > 1:
+                        continue  # „update“: neuere Zieldatei nicht mit älterer Quelle überschreiben
                     actions.append(("UPLOAD", rel_path))
             elif in_remote and not in_src and mode == "mirror":
                 actions.append(("DELETE_REMOTE", rel_path))
