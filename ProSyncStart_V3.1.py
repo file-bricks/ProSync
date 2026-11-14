@@ -753,6 +753,11 @@ def validate_sftp_connection(conn):
     mode = conn.get("mode", "update")
     if mode not in ("mirror", "update", "one_way"):
         raise ValueError("SFTP unterstützt nur mirror, update oder one_way")
+    if mode == "mirror" and target in ("/", ".", "~"):
+        raise ValueError(
+            "Spiegel auf die Server-Wurzel oder das Login-Verzeichnis ist gesperrt: er löscht dort "
+            "alles, was in der Quelle fehlt (z. B. .ssh). Bitte einen eigenen Unterordner als Ziel wählen."
+        )
     if conn.get("checkpoint_before_sync"):
         raise ValueError(REMOTE_UNSAFE_DATABASE_WARNING)
     return True

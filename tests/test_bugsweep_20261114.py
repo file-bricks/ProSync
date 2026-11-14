@@ -338,3 +338,38 @@ def test_daily_timer_that_wakes_early_neither_syncs_early_nor_twice(prosync):
         assert scheduler.timers["d1"].interval() == (24 * 60 * 60 - 1) * 1000
     finally:
         scheduler.stop_all()
+
+
+@pytest.mark.parametrize("target", ["/", ".", "./", "//", "~", "~/"])
+def test_sftp_mirror_refuses_server_root_and_login_home(prosync, tmp_path, target):
+    """Spiegel löscht am Ziel alles, was in der Quelle fehlt. Ziel "/" (Server-Wurzel) oder "."/"~"
+    (Login-Verzeichnis) hätte dort z. B. .ssh/authorized_keys gelöscht — danach kommt ProSync selbst
+    nicht mehr auf den Server. „update“ löscht nichts und bleibt erlaubt."""
+    src = tmp_path / "src"
+    src.mkdir()
+    cfg = {"id": "s", "name": "S", "type": "sftp", "source": str(src), "target": target,
+           "remote_host": "host", "mode": "mirror"}
+    with pytest.raises(ValueError, match="Spiegel"):
+        prosync.validate_sftp_connection(cfg)
+    assert prosync.validate_sftp_connection({**cfg, "mode": "update"}) is True
+
+
+def test_sftp_mirror_to_root_deletes_nothing_on_the_server(prosync, tmp_path):
+    sys.path.insert(0, str(ROOT))
+    from test_sftp_target import FakeSftp, FakeSsh
+
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "a.txt").write_text("a", encoding="utf-8")
+    sftp = FakeSftp()
+    for d in ("/home", "/home/u", "/home/u/.ssh"):
+        sftp.mkdir(d)
+    sftp.files["/home/u/.ssh/authorized_keys"] = {"content": b"ssh-ed25519 AAAA", "mtime": 1}
+    cfg = {"id": "s", "name": "S", "type": "sftp", "source": str(src), "target": "/",
+           "remote_host": "host", "mode": "mirror"}
+    errors = []
+    worker = prosync.SftpTargetSyncWorker(cfg, transport_factory=lambda _c: (FakeSsh(), sftp))
+    worker.error.connect(errors.append)
+    worker.run()
+    assert "/home/u/.ssh/authorized_keys" in sftp.files
+    assert errors and "Spiegel" in errors[0]
