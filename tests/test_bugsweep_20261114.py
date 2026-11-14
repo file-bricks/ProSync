@@ -202,3 +202,22 @@ def test_mirror_keeps_case_renamed_file_for_every_hash_order(tmp_path):
         # Datei bleibt erhalten (Windows behält beim Ersetzen die alte Schreibweise) und ist aktuell.
         assert out.lower() == "['bericht.pdf']", (seed, out)
         assert (run_root / "tgt" / "Bericht.pdf").read_text(encoding="utf-8") == "neu"
+
+
+def test_stopping_a_batch_releases_ui_and_auto_sync(tmp_path):
+    """Wächter (kein Fehlerfund, geprüft 2026-11-14): Nach dem Abbrechen eines Batches müssen
+    Queue, Start-Button und Worker freigegeben sein — sonst würde jeder Auto-Sync bis zum Neustart
+    übersprungen. Der Worker kehrt beim Abbruch ohne eigenes emit zurück; das Thread-Ende löst
+    worker_finished trotzdem aus (gleichnamiges Signal)."""
+    import json
+    import subprocess
+
+    env = {**os.environ, "QT_QPA_PLATFORM": "offscreen"}
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("_batch_stop_scenario.py")),
+         str(ROOT / "ProSyncStart_V3.1.py"), str(tmp_path)],
+        env=env, capture_output=True, text=True, timeout=90,
+    )
+    assert result.stdout.strip(), result.stderr[-800:]
+    state = json.loads(result.stdout.strip().splitlines()[-1])
+    assert state == {"batch_active": False, "run_enabled": True, "worker_none": True}, state
