@@ -327,18 +327,23 @@ def run_preflight_checks(project_root: Path, store_config: dict[str, object]) ->
         })
 
     # 4. Screenshots
+    # README/screenshots/store ist der versionierte Ablageort; die beiden anderen
+    # Ordner sind lokale Staging-Kopien und fehlen in einem frischen Checkout.
     screenshot_dirs = [
         project_root / "releases" / "windowsstore" / "screenshots",
         project_root / "store_assets" / "screenshots",
+        project_root / "README" / "screenshots" / "store",
     ]
     shots = []
+    seen_names = set()
     for sdir in screenshot_dirs:
         if sdir.is_dir():
-            for p in sdir.glob("*.png"):
+            for p in sorted(sdir.glob("*.png")):
                 try:
-                    if p.is_file() and p.stat().st_size > 1000:
+                    if p.name not in seen_names and p.is_file() and p.stat().st_size > 1000:
                         _png_size(p)
                         shots.append(p)
+                        seen_names.add(p.name)
                 except Exception:
                     continue
     if len(shots) >= 3:
@@ -346,7 +351,7 @@ def run_preflight_checks(project_root: Path, store_config: dict[str, object]) ->
             "id": "SCREENSHOTS_PRESENCE",
             "name": "Store Screenshots Vorhandensein & Mindestanzahl",
             "result": "PASS",
-            "details": f"{len(shots)} Screenshots in releases/windowsstore/screenshots/ vorhanden",
+            "details": f"{len(shots)} gültige Store-Screenshots vorhanden",
         })
     else:
         checks.append({
