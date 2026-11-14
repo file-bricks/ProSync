@@ -18,7 +18,7 @@ test("manifest beschreibt den ProSync Companion", () => {
 
 test("service worker cached die Shell-Dateien", () => {
   const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
-  assert.match(sw, /prosync-web-companion-v2/);
+  assert.match(sw, /prosync-web-companion-v\d+/);
   assert.match(sw, /"\.\/index\.html"/);
   assert.match(sw, /"\.\/app\.js"/);
   assert.match(sw, /"\.\/library\.js"/);
@@ -136,4 +136,26 @@ describe("Bug-Regression Lauf 13", () => {
       "clearStoredProfile: localStorage.removeItem nicht in try/catch — wirft SecurityError in policy-gesperrter Umgebung (Safari Private Mode)",
     );
   });
+});
+
+// Bugsweep 2026-11-14: Der Service Worker ist cache-first. Ändert sich eine App-Datei, ohne dass sw.js
+// sich ändert, installieren Browser keinen neuen Worker und liefern dauerhaft die alte Fassung aus
+// (CACHE_NAME stand seit 2026-06-16 auf v2, app.js/index.html/app.css änderten sich zuletzt am
+// 2026-11-05 — installierte Companions sahen die 6-Sprachen-Fassung nie). ASSET_HASH in sw.js muss
+// deshalb zum aktuellen Stand passen; bei Abweichung CACHE_NAME erhöhen und den Hash eintragen.
+test("sw.js ASSET_HASH passt zu den ausgelieferten App-Dateien (CACHE_NAME erhöhen bei Änderung)", async () => {
+  const { createHash } = await import("node:crypto");
+  const hash = createHash("sha256");
+  for (const file of ["index.html", "app.js", "library.js", "app.css", "manifest.webmanifest"]) {
+    hash.update(file + "\n");
+    hash.update(fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n"));
+  }
+  const expected = hash.digest("hex").slice(0, 12);
+  const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  const declared = sw.match(/const ASSET_HASH = "([0-9a-f]{12})";/)?.[1];
+  assert.equal(
+    declared,
+    expected,
+    `App-Dateien geändert: CACHE_NAME in sw.js erhöhen und ASSET_HASH = "${expected}" eintragen.`,
+  );
 });
