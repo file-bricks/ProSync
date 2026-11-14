@@ -279,3 +279,19 @@ def test_packaged_reader_keeps_its_db_list_in_appdata(packaged, monkeypatch, tmp
 
     monkeypatch.chdir(tmp_path)  # Hauptprogramm startet den Reader mit cwd = Programmordner
     assert Path(ProSyncReader.config_path()) == packaged / "search_config.json"
+
+
+@pytest.mark.parametrize("content", ['<<<<<<< HEAD\n{"Hallo": {"de": "Hallo"}}\n', "[]\n"])
+def test_translation_scan_never_empties_an_unreadable_file(tmp_path, content):
+    """manage_translations.py (Scan) ersetzte eine kaputte translations.json (z. B. Merge-Konfliktmarker)
+    durch nur die neu gefundenen Schlüssel und meldete Erfolg — alle Übersetzungen weg. Gleiches Muster
+    wie promptboard#4."""
+    sys.path.insert(0, str(ROOT))
+    import manage_translations as mt
+
+    (tmp_path / "sample.py").write_text('button.setText("Datei öffnen")\n', encoding="utf-8")
+    trans_file = tmp_path / "locales" / "translations.json"
+    trans_file.parent.mkdir()
+    trans_file.write_text(content, encoding="utf-8")
+    assert mt.manage_translations(str(tmp_path)) == 1
+    assert trans_file.read_text(encoding="utf-8") == content
