@@ -1845,6 +1845,15 @@ class FileSyncWorker(QThread):
             filename = os.path.basename(source_file)
             self.status.emit(f"[{self.cfg.get('name')}] Bereite Sync vor...")
 
+            # Zwei-Wege (im Dialog wählbar): eine am Ziel neuer bearbeitete Datei zurückholen statt
+            # sie mit der älteren Quelle zu überschreiben. Datenbanken mit WAL-Checkpoint bleiben einseitig.
+            copy_from, copy_to = source_file, target_file
+            if (self.cfg.get("mode") == "two_way" and not self.cfg.get("checkpoint_before_sync")
+                    and os.path.isfile(target_file)
+                    and os.path.getmtime(target_file) - os.path.getmtime(source_file) > 1):
+                copy_from, copy_to = target_file, source_file
+                self.status.emit(f"Ziel ist neuer – übernehme zurück: {filename}")
+
             while self.is_paused and not self.is_killed:
                 time.sleep(0.05)
 
@@ -1872,7 +1881,7 @@ class FileSyncWorker(QThread):
 
             # Step 2: Create target directory
             self.progress.emit(PROGRESS_PREPARE, "prepare")
-            target_dir = os.path.dirname(target_file)
+            target_dir = os.path.dirname(copy_to)
             if target_dir:
                 os.makedirs(target_dir, exist_ok=True)
 
@@ -1887,7 +1896,7 @@ class FileSyncWorker(QThread):
             self.status.emit(f"Kopiere: {filename}")
 
             try:
-                _atomic_copy2(source_file, target_file)
+                _atomic_copy2(copy_from, copy_to)
                 self.status.emit(f"✓ Datei kopiert: {filename}")
             except (OSError, IOError, PermissionError, shutil.Error) as e:
                 self.error.emit(f"Fehler beim Kopieren: {e}")
@@ -1902,12 +1911,12 @@ class FileSyncWorker(QThread):
             # Step 4: Verify
             self.progress.emit(PROGRESS_VERIFY, "verify")
 
-            if not os.path.exists(target_file):
-                self.error.emit(f"Zieldatei nach dem Kopieren nicht gefunden: {target_file}")
+            if not os.path.exists(copy_to):
+                self.error.emit(f"Zieldatei nach dem Kopieren nicht gefunden: {copy_to}")
                 return
 
-            src_size = os.path.getsize(source_file)
-            tgt_size = os.path.getsize(target_file)
+            src_size = os.path.getsize(copy_from)
+            tgt_size = os.path.getsize(copy_to)
 
             if src_size != tgt_size:
                 self.error.emit(f"Größen stimmen nicht überein! ({src_size} vs {tgt_size})")
@@ -1916,8 +1925,8 @@ class FileSyncWorker(QThread):
             self.status.emit(f"✓ Verifizierung erfolgreich ({src_size:,} Bytes)")
 
             if self.cfg.get("verify_checksum"):
-                src_hash = sha256_file(source_file)
-                tgt_hash = sha256_file(target_file)
+                src_hash = sha256_file(copy_from)
+                tgt_hash = sha256_file(copy_to)
                 if src_hash != tgt_hash:
                     self.error.emit(
                         f"Prüfsummen stimmen nicht überein! ({src_hash[:8]} vs {tgt_hash[:8]})"

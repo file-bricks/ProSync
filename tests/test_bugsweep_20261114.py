@@ -81,3 +81,27 @@ def test_sftp_update_skips_newer_remote_files(prosync):
     assert actions == [("UPLOAD", "b.txt")]
     actions = prosync.SftpTargetSyncWorker._build_actions(None, src, remote, "one_way")
     assert actions == [("UPLOAD", "a.txt"), ("UPLOAD", "b.txt")]
+
+
+def test_file_connection_two_way_brings_back_a_newer_target(prosync, tmp_path):
+    """Der Dateidialog bietet „two_way“ an, der FileSyncWorker kopierte aber immer Quelle → Ziel:
+    eine am Ziel bearbeitete Datei wurde beim nächsten Sync überschrieben."""
+    source, target = tmp_path / "a" / "notizen.txt", tmp_path / "b" / "notizen.txt"
+    source.parent.mkdir()
+    target.parent.mkdir()
+    _file(source, "Stand Laptop", 1_700_000_000)
+    _file(target, "am Zielrechner ergänzt", 1_700_003_600)
+    cfg = {"id": "f", "name": "Datei", "type": "file", "source_file": str(source),
+           "target_file": str(target), "mode": "two_way"}
+    errors = []
+    worker = prosync.FileSyncWorker(cfg)
+    worker.error.connect(errors.append)
+    worker.run()
+    assert errors == []
+    assert source.read_text(encoding="utf-8") == "am Zielrechner ergänzt"
+    assert target.read_text(encoding="utf-8") == "am Zielrechner ergänzt"
+
+    # one_way bleibt eine Sicherung: Quelle gewinnt immer.
+    _file(target, "am Ziel geändert", 1_700_009_000)
+    prosync.FileSyncWorker({**cfg, "mode": "one_way"}).run()
+    assert target.read_text(encoding="utf-8") == "am Zielrechner ergänzt"
