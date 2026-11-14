@@ -394,3 +394,22 @@ def test_reader_ignores_stale_results_and_never_terminates_threads(tmp_path):
     assert all("VERALTET" not in text for text in state["shown"]), state["shown"]
     assert any("aktuell" in text for text in state["shown"]), state["shown"]
     assert state["preview"] == "NEUE VORSCHAU"
+
+
+def test_quit_from_tray_waits_for_a_running_sync(tmp_path):
+    """„Beenden“ (force_quit) während eines Syncs: QApplication.quit() sofort, der Worker lief weiter und
+    Qt zerstörte den laufenden Thread beim Aufräumen — Prozess brach ab (Exitcode ≠ 0), der Sync wurde
+    mitten im Lauf abgeschnitten."""
+    import json
+    import subprocess
+
+    env = {**os.environ, "QT_QPA_PLATFORM": "offscreen"}
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("_quit_during_sync_scenario.py")),
+         str(ROOT / "ProSyncStart_V3.1.py"), str(tmp_path / "w")],
+        env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+    )
+    assert result.stdout.strip(), result.stderr[-800:]
+    state = json.loads(result.stdout.strip().splitlines()[-1])
+    assert state == {"worker_running_after_quit": False}
+    assert result.returncode == 0, result.stderr[-800:]

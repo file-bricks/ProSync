@@ -4763,6 +4763,13 @@ class MainWindow(QMainWindow):
 
     def force_quit(self):
         self.scheduler.stop_all()
+        if self.worker is not None and self.worker.isRunning():
+            # Laufenden Sync am nächsten sicheren Punkt beenden und erst danach schließen: sonst zerstört
+            # Qt den noch laufenden Thread (Prozessabbruch) und der Sync endet mitten im Kopieren.
+            self.lbl_status.setText("Beende nach dem aktuellen Schritt...")
+            self.worker.finished.connect(QApplication.quit)
+            self.stop_worker()
+            return
         QApplication.quit()
 
     def setup_menu_bar(self):
