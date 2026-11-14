@@ -328,6 +328,9 @@ class SearchWindow(QMainWindow):
         self.manager = manager
         self.search_worker = None
         self.preview_worker = None
+        # Abgelöste Worker laufen zu Ende (kein terminate()) und bleiben bis dahin referenziert,
+        # sonst zerstört Python einen noch laufenden QThread.
+        self._retired_workers = set()
         
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
@@ -404,16 +407,35 @@ class SearchWindow(QMainWindow):
             
         self.status_bar.showMessage("Suche läuft...")
         self.results_list.clear()
-        
-        if self.search_worker and self.search_worker.isRunning():
-            self.search_worker.terminate()
-            
+
+        self._retire(self.search_worker)
         self.search_worker = SearchWorker(self.manager, term)
         self.search_worker.results_found.connect(self.update_results)
-        self.search_worker.finished.connect(lambda: self.status_bar.showMessage("Bereit"))
+        self.search_worker.finished.connect(self._search_finished)
         self.search_worker.start()
 
+    def _retire(self, worker):
+        """Alten Worker auslaufen lassen statt QThread.terminate() (laut Qt gefährlich: kann mitten in
+        SQLite/pypdf mit gehaltenem GIL sterben); seine späten Signale werden über sender() verworfen."""
+        if worker is not None and worker.isRunning():
+            self._retired_workers.add(worker)
+            worker.finished.connect(lambda w=worker: self._retired_workers.discard(w))
+
+    def _is_stale(self):
+        sender = self.sender()
+        return sender is not None and sender is not self.search_worker and sender is not self.preview_worker
+
+    def _search_finished(self):
+        if not self._is_stale():
+            self.status_bar.showMessage("Bereit")
+
+    def _show_preview(self, text):
+        if not self._is_stale():
+            self.preview_text.setText(text)
+
     def update_results(self, results):
+        if self._is_stale():
+            return  # Treffer einer bereits abgelösten Suche
         if not results:
             self.results_list.addItem("Keine Treffer.")
             return
@@ -444,11 +466,9 @@ class SearchWindow(QMainWindow):
         self.lbl_path.setText(path)
         self.preview_text.setText("Lade Vorschau...")
         
-        if self.preview_worker and self.preview_worker.isRunning():
-            self.preview_worker.terminate()
-
+        self._retire(self.preview_worker)
         self.preview_worker = PreviewWorker(path)
-        self.preview_worker.preview_ready.connect(self.preview_text.setText)
+        self.preview_worker.preview_ready.connect(self._show_preview)
         self.preview_worker.start()
 
     def open_file(self, item=None):
@@ -481,6 +501,9 @@ class SearchWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.search_timer.stop()
+        for worker in [self.search_worker, self.preview_worker, *self._retired_workers]:
+            if worker is not None and worker.isRunning():
+                worker.wait(3000)  # ponytail: begrenzt warten statt terminate(); Suche/Vorschau sind kurz
         super().closeEvent(event)
 
 def main():

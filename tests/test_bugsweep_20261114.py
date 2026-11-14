@@ -373,3 +373,24 @@ def test_sftp_mirror_to_root_deletes_nothing_on_the_server(prosync, tmp_path):
     worker.run()
     assert "/home/u/.ssh/authorized_keys" in sftp.files
     assert errors and "Spiegel" in errors[0]
+
+
+def test_reader_ignores_stale_results_and_never_terminates_threads(tmp_path):
+    """Neue Suche/Vorschau beendete den laufenden Worker per QThread.terminate() (laut Qt gefährlich:
+    unter Windows TerminateThread, kann mitten in SQLite/pypdf mit gehaltenem GIL sterben) und ließ ihn
+    mit der Ergebnisliste verbunden — spät eintreffende alte Treffer/Vorschauen überschrieben die neuen."""
+    import json
+    import subprocess
+
+    env = {**os.environ, "QT_QPA_PLATFORM": "offscreen"}
+    result = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("_reader_stale_scenario.py")),
+         str(ROOT / "ProSyncReader.py"), str(tmp_path)],
+        env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=90,
+    )
+    assert result.stdout.strip(), result.stderr[-800:]
+    state = json.loads(result.stdout.strip().splitlines()[-1])
+    assert state["terminated"] is False
+    assert all("VERALTET" not in text for text in state["shown"]), state["shown"]
+    assert any("aktuell" in text for text in state["shown"]), state["shown"]
+    assert state["preview"] == "NEUE VORSCHAU"
