@@ -32,7 +32,7 @@ from PySide6.QtGui import QAction, QActionGroup, QIcon, QShortcut, QKeySequence
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
 from schedule_time import next_daily_run, parse_daily_time, resolve_iana_timezone
-from prosync_utils import atomic_write_json, atomic_write_text
+from prosync_utils import atomic_write_json, atomic_write_text, user_data_dir
 
 
 def _configure_windows_utf8_streams() -> None:
@@ -62,6 +62,11 @@ def app_base_dir() -> str:
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
+
+
+def default_config_path() -> str:
+    """ProSync_config.json neben dem Programm; im MSIX-Paket in %APPDATA%/ProSync."""
+    return os.path.join(user_data_dir(app_base_dir()), "ProSync_config.json")
 
 
 def load_app_icon() -> QIcon:
@@ -5008,7 +5013,7 @@ def build_cli_parser():
     )
     parser.add_argument(
         "--config",
-        default=os.path.join(app_base_dir(), "ProSync_config.json"),
+        default=default_config_path(),
         help="Path to ProSync_config.json. Defaults to the app directory.",
     )
     parser.add_argument(
@@ -5231,9 +5236,7 @@ def main() -> None:
     app.setQuitOnLastWindowClosed(False)
     app.setStyle("Fusion")
 
-    cfg = ConfigManager(
-        os.path.join(app_base_dir(), "ProSync_config.json")
-    )
+    cfg = ConfigManager(default_config_path())
 
     win = MainWindow(cfg)
     win.show()

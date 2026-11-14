@@ -221,3 +221,61 @@ def test_stopping_a_batch_releases_ui_and_auto_sync(tmp_path):
     assert result.stdout.strip(), result.stderr[-800:]
     state = json.loads(result.stdout.strip().splitlines()[-1])
     assert state == {"batch_active": False, "run_enabled": True, "worker_none": True}, state
+
+
+# --- Store/MSIX: Programmordner ist schreibgeschützt -----------------------------------------
+# Logger (beim Import), ProSync_config.json und search_config.json lagen im Programmordner bzw.
+# im Arbeitsverzeichnis. Im MSIX-Paket (C:/Program Files/WindowsApps/...) ist der schreibgeschützt:
+# die Store-Version wäre schon beim Import des Loggers mit PermissionError abgebrochen.
+
+
+@pytest.fixture
+def packaged(monkeypatch, tmp_path):
+    sys.path.insert(0, str(ROOT))
+    import prosync_utils
+
+    monkeypatch.setattr(prosync_utils, "is_msix_packaged", lambda: True)
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+    return tmp_path / "Roaming" / "ProSync"
+
+
+def test_user_data_dir_stays_beside_the_program_when_not_packaged(tmp_path):
+    sys.path.insert(0, str(ROOT))
+    import prosync_utils
+
+    assert prosync_utils.is_msix_packaged() is False  # Testlauf ist kein Paket
+    assert prosync_utils.user_data_dir(tmp_path) == tmp_path
+
+
+def test_packaged_config_goes_to_appdata(prosync, packaged):
+    path = Path(prosync.default_config_path())
+    assert path == packaged / "ProSync_config.json"
+    prosync.ConfigManager(str(path))  # legt die Datei an, statt im Programmordner zu scheitern
+    assert path.is_file()
+
+
+def test_packaged_logger_writes_to_appdata(packaged):
+    import logging
+
+    import logger as logger_module
+
+    log = logging.getLogger("ProSync")
+    saved = log.handlers[:]
+    log.handlers.clear()
+    try:
+        instance = object.__new__(logger_module.ProSyncLogger)
+        instance._logger = None
+        instance._initialize_logger()
+        files = [Path(h.baseFilename) for h in log.handlers if hasattr(h, "baseFilename")]
+        assert files == [packaged / "prosync.log"]
+    finally:
+        for handler in log.handlers:
+            handler.close()
+        log.handlers[:] = saved
+
+
+def test_packaged_reader_keeps_its_db_list_in_appdata(packaged, monkeypatch, tmp_path):
+    import ProSyncReader
+
+    monkeypatch.chdir(tmp_path)  # Hauptprogramm startet den Reader mit cwd = Programmordner
+    assert Path(ProSyncReader.config_path()) == packaged / "search_config.json"

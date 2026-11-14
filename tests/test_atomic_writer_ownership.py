@@ -135,7 +135,7 @@ def test_prosync_reader_db_manager_save_preserves_foreign_tmp(tmp_path: Path) ->
     foreign_tmp = tmp_path / "search_config.json.tmp"
     foreign_tmp.write_text("fremdes reader tmp", encoding="utf-8")
 
-    with mock.patch.object(reader, "CONFIG_PATH", str(cfg_path)):
+    with mock.patch.object(reader, "config_path", lambda: str(cfg_path)):
         db_mgr = reader.DBManager()
         db_mgr.add_db(str(tmp_path / "test.db"))
 

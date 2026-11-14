@@ -10,7 +10,12 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QTextEdit, QLabel, QSplitter, QMenu
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
-from prosync_utils import open_file_cross_platform, open_folder_cross_platform, atomic_write_json
+from prosync_utils import (
+    atomic_write_json,
+    open_file_cross_platform,
+    open_folder_cross_platform,
+    user_data_dir,
+)
 from logger import log_error
 
 # Optional libraries for preview
@@ -33,10 +38,21 @@ try:
 except ImportError:
     HAS_DOCX = False
 
-CONFIG_PATH = "search_config.json"
+CONFIG_NAME = "search_config.json"
 SEARCH_RESULT_LIMIT = 500  # Maximum number of search results
 
 # ---------------- CONFIG & DB ----------------
+
+
+def config_path():
+    """search_config.json neben dem Reader (bisher: relativ zum Arbeitsverzeichnis), im MSIX-Paket
+    in %APPDATA%/ProSync — der Installationsordner ist dort schreibgeschützt."""
+    if getattr(sys, "frozen", False):
+        app_dir = os.path.dirname(sys.executable)
+    else:
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+    return str(user_data_dir(app_dir) / CONFIG_NAME)
+
 class DBManager:
     """
     Verwaltet die Liste der zu durchsuchenden ProSync-Indexdatenbanken.
@@ -55,9 +71,10 @@ class DBManager:
 
         Bei Fehler oder fehlender Datei wird eine neue Config erstellt.
         """
-        if os.path.exists(CONFIG_PATH):
+        path = config_path()
+        if os.path.exists(path):
             try:
-                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     self.dbs = json.load(f).get("databases", [])
             except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
                 log_error(f"Config load error: {e}")
@@ -72,7 +89,7 @@ class DBManager:
         Schreibt JSON mit indent=2 für bessere Lesbarkeit.
         Atomar und sicher mit exklusiver Tempdatei via atomic_write_json.
         """
-        atomic_write_json(CONFIG_PATH, {"databases": self.dbs}, indent=2)
+        atomic_write_json(config_path(), {"databases": self.dbs}, indent=2)
 
     def add_db(self, path):
         """
