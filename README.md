@@ -357,7 +357,7 @@ ProSync provides five deterministic synchronization modes to suit various backup
 |---|---|---|
 | **`mirror`** | Target is maintained as an exact replica of source (deleting orphaned target files) | Full system & repository backups |
 | **`update`** | Transfers only newer and missing files from source to target (no target deletions) | Incremental day-to-day backups |
-| **`two_way`** | Bidirectional synchronization resolving conflicts by newest timestamp | Active sync between laptop and workstation |
+| **`two_way`** | Bidirectional synchronization; conflicts follow the connection's conflict policy (default `source`, alternatively `target` or `newest`). Deletions are not propagated: a file deleted on one side is restored from the other | Active sync between laptop and workstation |
 | **`one_way`** | Source files copied to target without ever deleting files from target | Safe non-destructive archival |
 | **`index_only`** | Indexes metadata and file structure without moving payload bytes | Cataloging & ProFiler search preparation |
 

@@ -5,6 +5,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
 
 ## [Unreleased]
 
+### Behoben / Fixed (2026-11-14)
+- **Modus `update` überschreibt keine neuere Zieldatei mehr:** Laut Doku überträgt `update` nur neuere Dateien; Ordner- und SFTP-Sync kopierten aber bei jedem Unterschied und überschrieben eine am Ziel später bearbeitete Datei mit der älteren Quellfassung. Neuere Ziele werden jetzt übersprungen (im Bericht als übersprungen gezählt).
+- **Dateiverbindungen mit `two_way`:** Der Dialog bot `two_way` an, der Worker kopierte aber immer Quelle → Ziel. Eine am Ziel neuer bearbeitete Datei wird jetzt zurückübernommen; Verbindungen mit WAL-Checkpoint bleiben einseitig.
+- **Doku `two_way`:** Konflikte folgen der Konfliktregel der Verbindung (Standard `source`), nicht automatisch der neuesten Datei; Löschungen werden nicht übertragen.
+- `BEFUNDE.md` (internes Befundlog) wird nicht mehr versioniert.
+
 ### Behoben / Fixed (2026-11-12)
 - **Store-Readiness-Tests in frischem Checkout (`tests/test_store_readiness.py`, `scripts/run_windows_wack.py`):** Zwei Tests schlugen auf `master` seit TW-PS-11 in jedem sauberen Klon fehl, weil sie Dateien verlangten, die nicht versioniert sind.
   - `run_windows_wack.py` zählt Store-Screenshots jetzt auch im versionierten Ordner `README/screenshots/store/` (wie `check_store_readiness.py`); gleichnamige Kopien aus den lokalen Staging-Ordnern werden nicht doppelt gezählt.
