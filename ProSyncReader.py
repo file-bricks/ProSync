@@ -117,7 +117,7 @@ class SearchWorker(QThread):
         """
         super().__init__()
         self.manager = manager
-        self.term = term.lower()
+        self.term = term.casefold()
 
     def run(self):
         """
@@ -135,6 +135,11 @@ class SearchWorker(QThread):
             try:
                 conn = sqlite3.connect(db_path)
                 conn.row_factory = sqlite3.Row
+                # SQLite-lower()/LIKE kennen nur ASCII: „Übersicht“ fand sonst „Übersicht.pdf“ nicht.
+                conn.create_function(
+                    "casefold", 1, lambda value: value.casefold() if isinstance(value, str) else value,
+                    deterministic=True,
+                )
                 cur = conn.cursor()
 
                 # Search Logic
@@ -142,13 +147,13 @@ class SearchWorker(QThread):
                     SELECT DISTINCT v.name, v.path, v.mtime, 'file' as match_type
                     FROM versions v
                     JOIN files f ON f.id = v.file_id
-                    WHERE lower(v.name) LIKE ? OR lower(v.path) LIKE ?
+                    WHERE casefold(v.name) LIKE ? OR casefold(v.path) LIKE ?
                     UNION
                     SELECT DISTINCT v.name, v.path, v.mtime, 'tag' as match_type
                     FROM versions v
                     JOIN files f ON f.id = v.file_id
                     JOIN tags t ON t.file_id = f.id
-                    WHERE lower(t.tag) LIKE ?
+                    WHERE casefold(t.tag) LIKE ?
                 """
                 wildcard = f"%{self.term}%"
                 cur.execute(query, (wildcard, wildcard, wildcard))

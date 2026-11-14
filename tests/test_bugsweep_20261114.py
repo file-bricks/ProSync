@@ -105,3 +105,28 @@ def test_file_connection_two_way_brings_back_a_newer_target(prosync, tmp_path):
     _file(target, "am Ziel geändert", 1_700_009_000)
     prosync.FileSyncWorker({**cfg, "mode": "one_way"}).run()
     assert target.read_text(encoding="utf-8") == "am Zielrechner ergänzt"
+
+
+def test_reader_search_finds_names_with_capital_umlauts(prosync, tmp_path):
+    """SQLite-lower()/LIKE kennen nur ASCII: „Übersicht“ oder „übersicht“ fanden
+    „Übersicht_2026.pdf“ nicht (Ä/Ö/Ü am Wortanfang sind im Deutschen häufig)."""
+    sys.path.insert(0, str(ROOT))
+    import ProSyncReader
+
+    db = prosync.ConnectionDB(str(tmp_path / "profiler_index.db"))
+    try:
+        db.log_version("Übersicht_2026.pdf", str(tmp_path / "Übersicht_2026.pdf"), 1.0, 10, "h1", "source")
+        db.log_version("Ölrechnung.pdf", str(tmp_path / "Ölrechnung.pdf"), 1.0, 10, "h2", "source")
+    finally:
+        db.close()
+
+    class _Manager:
+        dbs = [str(tmp_path / "profiler_index.db")]
+
+    for term, expected in (("Übersicht", "Übersicht_2026.pdf"), ("übersicht", "Übersicht_2026.pdf"),
+                           ("öl", "Ölrechnung.pdf")):
+        found = []
+        worker = ProSyncReader.SearchWorker(_Manager(), term)
+        worker.results_found.connect(found.extend)
+        worker.run()
+        assert [r["name"] for r in found] == [expected], term
