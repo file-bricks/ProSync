@@ -1790,6 +1790,63 @@ def _atomic_copy2(src, dst):
         raise
 
 
+def plan_folder_actions(src_tree, tgt_tree, mode, conflict_policy="source", *, path_key=os.path.normcase):
+    """Plant die Ordner-Sync-Aktionen aus Quell- und Ziel-Scan.
+
+    Pfade werden über ``path_key`` verglichen (Windows: ohne Groß-/Kleinschreibung).
+    Vorher galt „bericht.pdf“ (Ziel) und „Bericht.pdf“ (Quelle) als zwei Dateien: Mirror
+    plante Kopieren UND Löschen derselben physischen Datei und ließ das Ziel je nach
+    Reihenfolge leer; two_way konnte die bearbeitete Quelle überschreiben.
+    """
+    src_by_key = {path_key(rel): rel for rel in src_tree}
+    tgt_by_key = {path_key(rel): rel for rel in tgt_tree}
+    actions = []
+    for key in sorted(set(src_by_key) | set(tgt_by_key)):
+        s_rel = src_by_key.get(key)
+        t_rel = tgt_by_key.get(key)
+
+        if s_rel is not None and t_rel is None:
+            if mode in ["mirror", "update", "one_way", "two_way"]:
+                actions.append(("COPY_L2R", s_rel))
+            elif mode == "index_only":
+                actions.append(("INDEX_SRC", s_rel))
+
+        elif t_rel is not None and s_rel is None:
+            if mode == "mirror":
+                actions.append(("DELETE_R", t_rel))
+            elif mode == "two_way":
+                actions.append(("COPY_R2L", t_rel))
+
+        else:
+            f = s_rel
+            s_meta = src_tree[s_rel]
+            t_meta = tgt_tree[t_rel]
+
+            if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
+                if mode == "update" and t_meta["mtime"] - s_meta["mtime"] > 1:
+                    # „update“ überträgt laut Doku nur neuere Dateien: eine im Ziel
+                    # neuer bearbeitete Datei darf nicht mit der älteren Quelle überschrieben werden.
+                    actions.append(("SKIP_NEWER_TARGET", f))
+                elif mode in ("mirror", "update", "one_way"):
+                    actions.append(("COPY_L2R", f))
+                elif mode == "two_way":
+                    if conflict_policy == "source":
+                        actions.append(("COPY_L2R", f))
+                    elif conflict_policy == "target":
+                        actions.append(("COPY_R2L", f))
+                    else:  # newest
+                        if s_meta["mtime"] > t_meta["mtime"]:
+                            actions.append(("COPY_L2R", f))
+                        else:
+                            actions.append(("COPY_R2L", f))
+            else:
+                if mode == "index_only":
+                    actions.append(("INDEX_SRC", f))
+                else:
+                    actions.append(("INDEX_BOTH", f))
+    return actions
+
+
 class FileSyncWorker(QThread):
     """
     V3.1 NEW: Worker for single-file synchronization.
@@ -2033,51 +2090,7 @@ class FolderSyncWorker(QThread):
 
             # 2. Compare
             self.status.emit(f"[{self.cfg['name']}] Vergleiche...")
-            all_files = set(src_tree.keys()) | set(tgt_tree.keys())
-            actions = []
-
-            for f in all_files:
-                in_src = f in src_tree
-                in_tgt = f in tgt_tree
-
-                if in_src and not in_tgt:
-                    if mode in ["mirror", "update", "one_way", "two_way"]:
-                        actions.append(("COPY_L2R", f))
-                    elif mode == "index_only":
-                        actions.append(("INDEX_SRC", f))
-
-                elif in_tgt and not in_src:
-                    if mode == "mirror":
-                        actions.append(("DELETE_R", f))
-                    elif mode == "two_way":
-                        actions.append(("COPY_R2L", f))
-
-                elif in_src and in_tgt:
-                    s_meta = src_tree[f]
-                    t_meta = tgt_tree[f]
-
-                    if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
-                        if mode == "update" and t_meta["mtime"] - s_meta["mtime"] > 1:
-                            # „update“ überträgt laut Doku nur neuere Dateien: eine im Ziel
-                            # neuer bearbeitete Datei darf nicht mit der älteren Quelle überschrieben werden.
-                            actions.append(("SKIP_NEWER_TARGET", f))
-                        elif mode in ("mirror", "update", "one_way"):
-                            actions.append(("COPY_L2R", f))
-                        elif mode == "two_way":
-                            if conflict_policy == "source":
-                                actions.append(("COPY_L2R", f))
-                            elif conflict_policy == "target":
-                                actions.append(("COPY_R2L", f))
-                            else:  # newest
-                                if s_meta["mtime"] > t_meta["mtime"]:
-                                    actions.append(("COPY_L2R", f))
-                                else:
-                                    actions.append(("COPY_R2L", f))
-                    else:
-                        if mode == "index_only":
-                            actions.append(("INDEX_SRC", f))
-                        else:
-                            actions.append(("INDEX_BOTH", f))
+            actions = plan_folder_actions(src_tree, tgt_tree, mode, conflict_policy)
 
             # 3. Execute
             total = len(actions)

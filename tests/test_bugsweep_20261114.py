@@ -160,3 +160,45 @@ def test_reader_preview_keeps_long_utf8_text_utf8(prosync, tmp_path):
     worker.preview_ready.connect(shown.append)
     worker.run()
     assert shown[0] == ("x" + text)[:3000]
+
+
+def test_case_only_rename_is_one_file_on_windows(prosync):
+    """„bericht.pdf“ (Ziel) vs. „Bericht.pdf“ (Quelle) galten als zwei Dateien: Mirror plante
+    Kopieren UND Löschen derselben physischen Datei (gemessen: Ziel in 3 von 6 Läufen leer)."""
+    src = {"Bericht.pdf": {"size": 3, "mtime": 200.0}}
+    tgt = {"bericht.pdf": {"size": 3, "mtime": 100.0}}
+    casefold = lambda rel: rel.lower()  # noqa: E731 - Windows-Verhalten auch auf Linux-CI prüfen
+    for mode in ("mirror", "two_way", "update", "one_way"):
+        actions = prosync.plan_folder_actions(src, tgt, mode, "newest", path_key=casefold)
+        assert actions == [("COPY_L2R", "Bericht.pdf")], (mode, actions)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="case-insensitives Dateisystem (Windows) nötig")
+def test_mirror_keeps_case_renamed_file_for_every_hash_order(tmp_path):
+    import subprocess
+
+    script = (
+        "import importlib.util, os, sys\n"
+        "from PySide6.QtCore import QCoreApplication\n"
+        "app = QCoreApplication(sys.argv)\n"
+        f"spec = importlib.util.spec_from_file_location('p', {str(ROOT / 'ProSyncStart_V3.1.py')!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "root = sys.argv[1]\n"
+        "w = m.FolderSyncWorker({'id': 'c', 'name': 'case', 'source': root + '/src', 'target': root + '/tgt', 'mode': 'mirror'})\n"
+        "w.run()\n"
+        "print(sorted(os.listdir(root + '/tgt')))\n"
+    )
+    for seed in range(1, 7):
+        run_root = tmp_path / f"run{seed}"
+        (run_root / "src").mkdir(parents=True)
+        (run_root / "tgt").mkdir()
+        (run_root / "src" / "Bericht.pdf").write_text("neu", encoding="utf-8")
+        (run_root / "tgt" / "bericht.pdf").write_text("alt", encoding="utf-8")
+        _file(run_root / "tgt" / "bericht.pdf", "alt", 1_700_000_000)
+        _file(run_root / "src" / "Bericht.pdf", "neu", 1_700_003_600)  # Quelle später bearbeitet
+        env = {**os.environ, "PYTHONHASHSEED": str(seed), "QT_QPA_PLATFORM": "offscreen"}
+        out = subprocess.run([sys.executable, "-c", script, str(run_root)], env=env,
+                             capture_output=True, text=True, timeout=60).stdout.strip()
+        # Datei bleibt erhalten (Windows behält beim Ersetzen die alte Schreibweise) und ist aktuell.
+        assert out.lower() == "['bericht.pdf']", (seed, out)
+        assert (run_root / "tgt" / "Bericht.pdf").read_text(encoding="utf-8") == "neu"
