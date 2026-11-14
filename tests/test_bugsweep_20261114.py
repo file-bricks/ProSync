@@ -295,3 +295,46 @@ def test_translation_scan_never_empties_an_unreadable_file(tmp_path, content):
     trans_file.write_text(content, encoding="utf-8")
     assert mt.manage_translations(str(tmp_path)) == 1
     assert trans_file.read_text(encoding="utf-8") == content
+
+
+def test_daily_timer_that_wakes_early_neither_syncs_early_nor_twice(prosync):
+    """Qt-CoarseTimer (Standard) darf bis 5 % des Intervalls zu früh aufwachen — bei 20 h bis 1 h.
+    Dann lief der Sync vor der eingestellten Zeit und der Timer wurde erneut auf denselben, noch
+    kommenden Termin gestellt: zweiter Lauf kurz darauf."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    from PySide6.QtCore import Qt
+
+    berlin = ZoneInfo("Europe/Berlin")
+
+    class _Cfg:
+        def __init__(self, conns):
+            self.conns = conns
+
+        def list_connections(self):
+            return self.conns
+
+    conn = {"id": "d1", "name": "Täglich", "autosync": {
+        "enabled": True, "mode": "daily", "daily_time": "13:00", "timezone": "Europe/Berlin"}}
+    moments = iter([
+        datetime(2026, 1, 15, 17, 0, tzinfo=berlin),       # Einplanen: 20 h bis morgen 13:00
+        datetime(2026, 1, 16, 12, 10, tzinfo=berlin),      # Timer wacht 50 min zu früh auf
+        datetime(2026, 1, 16, 13, 0, 1, tzinfo=berlin),    # pünktlich
+    ])
+    scheduler = prosync.ConnectionScheduler(_Cfg([conn]), now_provider=lambda _tz: next(moments))
+    triggered = []
+    scheduler.trigger_sync.connect(lambda c: triggered.append(c["id"]))
+    try:
+        scheduler.update_all()
+        assert scheduler.timers["d1"].timerType() == Qt.TimerType.PreciseTimer
+
+        scheduler._on_daily_timer("d1")
+        assert triggered == [], "zu früh aufgewacht: darf noch nicht synchronisieren"
+        assert scheduler.timers["d1"].interval() == 50 * 60 * 1000
+
+        scheduler._on_daily_timer("d1")
+        assert triggered == ["d1"]
+        assert scheduler.timers["d1"].interval() == (24 * 60 * 60 - 1) * 1000
+    finally:
+        scheduler.stop_all()

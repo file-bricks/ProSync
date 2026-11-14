@@ -2582,6 +2582,7 @@ class ConnectionScheduler(QObject):
         super().__init__()
         self.cfg = cfg
         self.timers = {}
+        self._daily_due = {}  # conn_id -> eingeplanter Termin (aware datetime)
         self._now_provider = now_provider or (lambda tz: datetime.now(tz))
 
     def update_all(self):
@@ -2599,7 +2600,7 @@ class ConnectionScheduler(QObject):
         for conn in self.cfg.list_connections():
             self.update_connection(conn)
 
-    def update_connection(self, conn):
+    def update_connection(self, conn, now=None):
         """
         Erstellt/aktualisiert den Timer für eine Verbindung.
 
@@ -2608,18 +2609,20 @@ class ConnectionScheduler(QObject):
 
         Args:
             conn: Connection-Dict mit autosync-Konfiguration
+            now: bereits gemessener Zeitpunkt (sonst wird neu gemessen)
         """
         cid = conn["id"]
         if cid in self.timers:
             self.timers[cid].stop()
             del self.timers[cid]
+        self._daily_due.pop(cid, None)
 
         autosync = conn.get("autosync", {})
         if not isinstance(autosync, dict):
             autosync = {}
         if autosync.get("enabled", False):
             if autosync.get("mode", "interval") == "daily":
-                self._start_daily_timer(conn, autosync)
+                self._start_daily_timer(conn, autosync, now=now)
                 return
             raw_interval = autosync.get("interval_minutes", 15)
             try:
@@ -2636,14 +2639,15 @@ class ConnectionScheduler(QObject):
             timer.start(interval_min * 60 * 1000)
             self.timers[cid] = timer
 
-    def _start_daily_timer(self, conn, autosync):
+    def _start_daily_timer(self, conn, autosync, now=None):
         """Arm one daily timer from an explicit local time and IANA timezone."""
         try:
             run_at = parse_daily_time(autosync.get("daily_time", DEFAULT_DAILY_TIME))
             tz = resolve_iana_timezone(
                 autosync.get("timezone", DEFAULT_DAILY_TIMEZONE)
             )
-            now = self._now_provider(tz)
+            if now is None:
+                now = self._now_provider(tz)
             weekdays = autosync.get("weekdays")
             next_run = next_daily_run(now, run_at, tz, weekdays=weekdays)
         except (TypeError, ValueError, RuntimeError) as exc:
@@ -2662,9 +2666,12 @@ class ConnectionScheduler(QObject):
         )
         timer = QTimer(self)
         timer.setSingleShot(True)
+        # Standard-CoarseTimer darf bis 5 % zu früh aufwachen (20 h -> bis 1 h); PreciseTimer nie.
+        timer.setTimerType(Qt.TimerType.PreciseTimer)
         timer.timeout.connect(lambda cid=conn["id"]: self._on_daily_timer(cid))
         timer.start(delay_ms)
         self.timers[conn["id"]] = timer
+        self._daily_due[conn["id"]] = next_run
 
     def _connection_by_id(self, conn_id):
         """Return the current saved connection to avoid rearming stale data."""
@@ -2683,10 +2690,17 @@ class ConnectionScheduler(QObject):
             return
         if autosync.get("mode", "interval") != "daily":
             return
+        due = self._daily_due.get(conn_id)
+        now = self._now_provider(due.tzinfo) if due is not None else None
+        if due is not None and now < due:
+            # Zu früh geweckt (Uhr umgestellt, grober Timer): nur auf denselben Termin neu stellen,
+            # sonst liefe der Sync vor der Zeit und am Termin ein zweites Mal.
+            self.update_connection(conn, now=now)
+            return
         self.trigger_sync.emit(conn)
         refreshed = self._connection_by_id(conn_id)
         if refreshed is not None:
-            self.update_connection(refreshed)
+            self.update_connection(refreshed, now=now)
 
     def rearm_daily(self):
         """Recalculate daily timers after an application resume."""
