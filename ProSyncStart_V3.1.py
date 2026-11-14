@@ -750,6 +750,13 @@ def validate_sftp_connection(conn):
         raise ValueError("SFTP-Host fehlt")
     if not target:
         raise ValueError("SFTP-Zielpfad fehlt")
+    raw_port = conn.get("remote_port")
+    try:
+        port = int(str(raw_port).strip()) if raw_port not in (None, "") and not isinstance(raw_port, bool) else 22
+    except ValueError:
+        port = 0
+    if isinstance(raw_port, bool) or not 1 <= port <= 65535:
+        raise ValueError(f"SFTP-Port ungültig: {raw_port!r} (erlaubt: 1 bis 65535)")
     mode = conn.get("mode", "update")
     if mode not in ("mirror", "update", "one_way"):
         raise ValueError("SFTP unterstützt nur mirror, update oder one_way")
@@ -3245,7 +3252,10 @@ class FileConnectionDialog(QDialog):
         source_file = self.source_file.text()
         target_file = self.target_file.text()
 
-        conn_config = {
+        # Vom bestehenden Eintrag ausgehen: Einstellungen, die der Dialog nicht zeigt (z. B. die nur per
+        # Konfigurationsdatei setzbare verify_checksum), gingen beim Bearbeiten sonst still verloren.
+        conn_config = dict(self.existing or {})
+        conn_config.update({
             "id": self.existing["id"] if self.existing else f"conn-{uuid.uuid4().hex[:6]}",
             "type": ConnectionType.FILE,  # V3.1: Mark as FILE connection
             "name": self.name.text(),
@@ -3254,7 +3264,7 @@ class FileConnectionDialog(QDialog):
             "mode": self.mode.currentText(),
             "checkpoint_before_sync": self.chk_checkpoint.isChecked(),
             "autosync": self.existing.get("autosync", {"enabled": False, "interval_minutes": 15}) if self.existing else {"enabled": False}
-        }
+        })
 
         # V3.1: Apply file safety settings
         if source_file and os.path.exists(source_file):
@@ -3409,10 +3419,11 @@ class SftpTargetDialog(QDialog):
         ]
 
     def get_result(self):
+        raw_port = str(self.remote_port.text()).strip() or "22"
         try:
-            port = int(str(self.remote_port.text()).strip() or "22")
+            port = int(raw_port)
         except ValueError:
-            port = 22
+            port = raw_port  # validate_sftp_connection weist es mit Meldung ab, statt still Port 22
 
         conn_config = {
             "id": self.existing["id"] if self.existing.get("id") else f"conn-{uuid.uuid4().hex[:6]}",

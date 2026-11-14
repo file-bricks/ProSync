@@ -444,3 +444,38 @@ def test_folder_sync_never_copies_its_own_index_database(prosync, tmp_path, mode
     assert foreign.read_bytes() == b"FREMDER INDEX", "eigene Index-DB ins Ziel kopiert"
     with sqlite3.connect(src / "profiler_index.db") as db:  # eigene DB intakt, nicht ersetzt
         assert db.execute("SELECT count(*) FROM versions").fetchone()[0] >= 1
+
+
+@pytest.mark.parametrize("port", ["22a", "0", "70000", "", True])
+def test_sftp_rejects_an_invalid_port(prosync, tmp_path, port):
+    """Der SFTP-Dialog machte aus einer unlesbaren Portangabe still Port 22 (Verbindung zum falschen
+    Port ohne Hinweis). Ungültige Ports werden jetzt mit Meldung abgewiesen; leer bleibt 22."""
+    src = tmp_path / "src"
+    src.mkdir()
+    cfg = {"id": "s", "name": "S", "type": "sftp", "source": str(src), "target": "/backup",
+           "remote_host": "host", "mode": "update", "remote_port": port}
+    if port == "":
+        assert prosync.validate_sftp_connection(cfg) is True
+        return
+    with pytest.raises(ValueError, match="Port"):
+        prosync.validate_sftp_connection(cfg)
+
+
+def test_editing_a_file_connection_keeps_settings_the_dialog_does_not_show(prosync, tmp_path):
+    """Der Datei-Dialog baute das Ergebnis neu auf: die nur per Konfigurationsdatei setzbare
+    Prüfsummen-Verifizierung (verify_checksum) war nach dem Bearbeiten still abgeschaltet."""
+    from types import SimpleNamespace
+
+    def field(value):
+        return SimpleNamespace(text=lambda: value, currentText=lambda: value, isChecked=lambda: value)
+
+    existing = {"id": "f1", "type": "file", "name": "DB", "source_file": str(tmp_path / "fehlt.db"),
+                "target_file": str(tmp_path / "ziel.db"), "mode": "one_way", "verify_checksum": True,
+                "autosync": {"enabled": True, "interval_minutes": 30}}
+    fake = SimpleNamespace(existing=existing, source_file=field(existing["source_file"]),
+                           target_file=field(existing["target_file"]), name=field("DB neu"),
+                           mode=field("one_way"), chk_checkpoint=field(False))
+    result = prosync.FileConnectionDialog.get_result(fake)
+    assert result["name"] == "DB neu"
+    assert result["verify_checksum"] is True
+    assert result["autosync"] == {"enabled": True, "interval_minutes": 30}
