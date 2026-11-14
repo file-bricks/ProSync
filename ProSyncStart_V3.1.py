@@ -1800,6 +1800,24 @@ def _atomic_copy2(src, dst):
         raise
 
 
+def _own_index_rel_paths(db_path, *roots):
+    """Relative Pfade (normcase) der eigenen Index-DB samt -wal/-shm/-journal, sofern sie in einem
+    der Sync-Wurzelordner liegt; leer, wenn keine Indexierung oder die DB außerhalb liegt."""
+    if not db_path:
+        return set()
+    db_abs = os.path.abspath(db_path)
+    found = set()
+    for root in roots:
+        try:
+            rel = os.path.relpath(db_abs, os.path.abspath(root))
+        except ValueError:  # anderes Laufwerk
+            continue
+        if rel == os.pardir or rel.startswith(os.pardir + os.sep):
+            continue
+        found.update(os.path.normcase(rel + suffix) for suffix in ("", "-wal", "-shm", "-journal"))
+    return found
+
+
 def plan_folder_actions(src_tree, tgt_tree, mode, conflict_policy="source", *, path_key=os.path.normcase):
     """Plant die Ordner-Sync-Aktionen aus Quell- und Ziel-Scan.
 
@@ -2097,6 +2115,14 @@ class FolderSyncWorker(QThread):
             if mode != "index_only":
                 self.status.emit(f"[{self.cfg['name']}] Scanne Ziel...")
                 tgt_tree = SyncWalker().scan(tgt_root, exclude_patterns)
+
+            # Die eigene Indexdatenbank (Standard: in der Quelle) ist während des Laufs offen und nie
+            # Sync-Gut: weder ins Ziel kopieren noch eine fremde gleichnamige DB von dort zurückholen.
+            own_index = _own_index_rel_paths(self.cfg.get("db_path") if self.cfg.get("indexing") else "",
+                                             src_root, tgt_root)
+            if own_index:
+                src_tree = {k: v for k, v in src_tree.items() if os.path.normcase(k) not in own_index}
+                tgt_tree = {k: v for k, v in tgt_tree.items() if os.path.normcase(k) not in own_index}
 
             # 2. Compare
             self.status.emit(f"[{self.cfg['name']}] Vergleiche...")

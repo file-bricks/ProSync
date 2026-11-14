@@ -413,3 +413,34 @@ def test_quit_from_tray_waits_for_a_running_sync(tmp_path):
     state = json.loads(result.stdout.strip().splitlines()[-1])
     assert state == {"worker_running_after_quit": False}
     assert result.returncode == 0, result.stderr[-800:]
+
+
+@pytest.mark.parametrize("mode", ["mirror", "two_way"])
+def test_folder_sync_never_copies_its_own_index_database(prosync, tmp_path, mode):
+    """Mit Indexierung und Standardpfad liegt profiler_index.db in der Quelle. Der Sync kopierte die
+    laufend beschriebene DB ins Ziel; bei „two_way“ konnte eine neuere fremde Index-DB im Ziel (zweiter
+    Rechner, gleiches NAS-Ziel) die eigene ersetzen."""
+    import sqlite3
+    import time
+
+    src, tgt = tmp_path / "src", tmp_path / "tgt"
+    src.mkdir()
+    tgt.mkdir()
+    (src / "doc.txt").write_text("inhalt", encoding="utf-8")
+    foreign = tgt / "profiler_index.db"
+    foreign.write_bytes(b"FREMDER INDEX")
+    future = time.time() + 3600
+    os.utime(foreign, (future, future))
+    conn = {"id": "i", "name": "I", "type": "folder", "source": str(src), "target": str(tgt), "mode": mode,
+            "conflict_policy": "newest", "indexing": True, "db_path": str(src / "profiler_index.db"),
+            "exclude_patterns": []}
+    for _ in range(2):
+        errors = []
+        worker = prosync.create_cli_worker(conn)
+        worker.error.connect(errors.append)
+        worker.run()
+        assert errors == []
+    assert (tgt / "doc.txt").is_file()
+    assert foreign.read_bytes() == b"FREMDER INDEX", "eigene Index-DB ins Ziel kopiert"
+    with sqlite3.connect(src / "profiler_index.db") as db:  # eigene DB intakt, nicht ersetzt
+        assert db.execute("SELECT count(*) FROM versions").fetchone()[0] >= 1
