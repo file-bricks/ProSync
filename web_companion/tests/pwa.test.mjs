@@ -144,14 +144,27 @@ describe("Bug-Regression Lauf 13", () => {
 // 2026-11-05 — installierte Companions sahen die 6-Sprachen-Fassung nie). ASSET_HASH in sw.js muss
 // deshalb zum aktuellen Stand passen; bei Abweichung CACHE_NAME erhöhen und den Hash eintragen.
 test("sw.js ASSET_HASH passt zu den ausgelieferten App-Dateien (CACHE_NAME erhöhen bei Änderung)", async () => {
+  // Die Dateiliste kommt aus APP_SHELL selbst: alles, was der Service Worker vorhält (auch Icons),
+  // zählt. Eine eigene Liste hier veraltet still (so bei mediplaner#8, manifest.webmanifest fehlte).
   const { createHash } = await import("node:crypto");
+  const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  const block = sw.match(/const APP_SHELL\s*=\s*\[([\s\S]*?)\];/);
+  assert.ok(block, "APP_SHELL fehlt in sw.js");
+  const files = [...block[1].matchAll(/["']([^"']+)["']/g)]
+    .map((m) => m[1].replace(/^\.\//, ""))
+    .filter((rel) => rel !== ""); // "./" liefert index.html aus, das selbst gelistet ist
+  assert.ok(files.includes("index.html"), "index.html fehlt in APP_SHELL");
+  const TEXT = /\.(html|js|css|webmanifest|json|svg)$/i;
   const hash = createHash("sha256");
-  for (const file of ["index.html", "app.js", "library.js", "app.css", "manifest.webmanifest"]) {
+  for (const file of files) {
+    const full = path.join(root, file);
+    assert.ok(fs.existsSync(full), `In APP_SHELL gelistet, aber nicht vorhanden: ${file}`);
     hash.update(file + "\n");
-    hash.update(fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n"));
+    hash.update(
+      TEXT.test(file) ? fs.readFileSync(full, "utf8").replace(/\r\n/g, "\n") : fs.readFileSync(full),
+    );
   }
   const expected = hash.digest("hex").slice(0, 12);
-  const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
   const declared = sw.match(/const ASSET_HASH = "([0-9a-f]{12})";/)?.[1];
   assert.equal(
     declared,
