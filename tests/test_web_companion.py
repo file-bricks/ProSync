@@ -121,7 +121,7 @@ def test_companion_node_tests_pass() -> None:
         pytest.skip("Node.js is not installed in the environment")
 
     res = subprocess.run(
-        [node, "--test", "tests/library.test.mjs", "tests/pwa.test.mjs", "tests/companion_i18n.test.mjs"],
+        [node, "--test", "tests/library.test.mjs", "tests/pwa.test.mjs", "tests/companion_i18n.test.mjs", "tests/sw_asset_hash.test.mjs"],
         cwd=COMPANION_DIR,
         capture_output=True,
         text=True,

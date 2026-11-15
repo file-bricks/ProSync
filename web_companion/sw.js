@@ -1,4 +1,7 @@
 const CACHE_NAME = "prosync-web-companion-v2";
+// Inhalts-Hash aller APP_SHELL-Dateien inkl. Manifest und Icons (web_companion/tests/sw_asset_hash.test.mjs prueft ihn):
+// aendert sich eine davon, CACHE_NAME erhoehen, sonst behalten installierte PWAs den alten Code.
+const ASSET_HASH = '356dcace9f48'; // eslint-disable-line no-unused-vars
 const APP_SHELL = [
   "./",
   "./index.html",
