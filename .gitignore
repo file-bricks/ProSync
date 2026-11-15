@@ -203,3 +203,6 @@ releases/windowsstore/*
 
 search_config.json
 
+
+# Interne Befundlogs (GITHUB-POLICY §3; Heimat: OneDrive-Projekt)
+BEFUNDE.md

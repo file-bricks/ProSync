@@ -32,7 +32,7 @@ from PySide6.QtGui import QAction, QActionGroup, QIcon, QShortcut, QKeySequence
 # ProSync Logger
 from logger import log_debug, log_info, log_warning, log_error
 from schedule_time import next_daily_run, parse_daily_time, resolve_iana_timezone
-from prosync_utils import atomic_write_json, atomic_write_text
+from prosync_utils import atomic_write_json, atomic_write_text, user_data_dir
 
 
 def _configure_windows_utf8_streams() -> None:
@@ -62,6 +62,11 @@ def app_base_dir() -> str:
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
+
+
+def default_config_path() -> str:
+    """ProSync_config.json neben dem Programm; im MSIX-Paket in %APPDATA%/ProSync."""
+    return os.path.join(user_data_dir(app_base_dir()), "ProSync_config.json")
 
 
 def load_app_icon() -> QIcon:
@@ -745,9 +750,21 @@ def validate_sftp_connection(conn):
         raise ValueError("SFTP-Host fehlt")
     if not target:
         raise ValueError("SFTP-Zielpfad fehlt")
+    raw_port = conn.get("remote_port")
+    try:
+        port = int(str(raw_port).strip()) if raw_port not in (None, "") and not isinstance(raw_port, bool) else 22
+    except ValueError:
+        port = 0
+    if isinstance(raw_port, bool) or not 1 <= port <= 65535:
+        raise ValueError(f"SFTP-Port ungültig: {raw_port!r} (erlaubt: 1 bis 65535)")
     mode = conn.get("mode", "update")
     if mode not in ("mirror", "update", "one_way"):
         raise ValueError("SFTP unterstützt nur mirror, update oder one_way")
+    if mode == "mirror" and target in ("/", ".", "~"):
+        raise ValueError(
+            "Spiegel auf die Server-Wurzel oder das Login-Verzeichnis ist gesperrt: er löscht dort "
+            "alles, was in der Quelle fehlt (z. B. .ssh). Bitte einen eigenen Unterordner als Ziel wählen."
+        )
     if conn.get("checkpoint_before_sync"):
         raise ValueError(REMOTE_UNSAFE_DATABASE_WARNING)
     return True
@@ -1790,6 +1807,81 @@ def _atomic_copy2(src, dst):
         raise
 
 
+def _own_index_rel_paths(db_path, *roots):
+    """Relative Pfade (normcase) der eigenen Index-DB samt -wal/-shm/-journal, sofern sie in einem
+    der Sync-Wurzelordner liegt; leer, wenn keine Indexierung oder die DB außerhalb liegt."""
+    if not db_path:
+        return set()
+    db_abs = os.path.abspath(db_path)
+    found = set()
+    for root in roots:
+        try:
+            rel = os.path.relpath(db_abs, os.path.abspath(root))
+        except ValueError:  # anderes Laufwerk
+            continue
+        if rel == os.pardir or rel.startswith(os.pardir + os.sep):
+            continue
+        found.update(os.path.normcase(rel + suffix) for suffix in ("", "-wal", "-shm", "-journal"))
+    return found
+
+
+def plan_folder_actions(src_tree, tgt_tree, mode, conflict_policy="source", *, path_key=os.path.normcase):
+    """Plant die Ordner-Sync-Aktionen aus Quell- und Ziel-Scan.
+
+    Pfade werden über ``path_key`` verglichen (Windows: ohne Groß-/Kleinschreibung).
+    Vorher galt „bericht.pdf“ (Ziel) und „Bericht.pdf“ (Quelle) als zwei Dateien: Mirror
+    plante Kopieren UND Löschen derselben physischen Datei und ließ das Ziel je nach
+    Reihenfolge leer; two_way konnte die bearbeitete Quelle überschreiben.
+    """
+    src_by_key = {path_key(rel): rel for rel in src_tree}
+    tgt_by_key = {path_key(rel): rel for rel in tgt_tree}
+    actions = []
+    for key in sorted(set(src_by_key) | set(tgt_by_key)):
+        s_rel = src_by_key.get(key)
+        t_rel = tgt_by_key.get(key)
+
+        if s_rel is not None and t_rel is None:
+            if mode in ["mirror", "update", "one_way", "two_way"]:
+                actions.append(("COPY_L2R", s_rel))
+            elif mode == "index_only":
+                actions.append(("INDEX_SRC", s_rel))
+
+        elif t_rel is not None and s_rel is None:
+            if mode == "mirror":
+                actions.append(("DELETE_R", t_rel))
+            elif mode == "two_way":
+                actions.append(("COPY_R2L", t_rel))
+
+        else:
+            f = s_rel
+            s_meta = src_tree[s_rel]
+            t_meta = tgt_tree[t_rel]
+
+            if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
+                if mode == "update" and t_meta["mtime"] - s_meta["mtime"] > 1:
+                    # „update“ überträgt laut Doku nur neuere Dateien: eine im Ziel
+                    # neuer bearbeitete Datei darf nicht mit der älteren Quelle überschrieben werden.
+                    actions.append(("SKIP_NEWER_TARGET", f))
+                elif mode in ("mirror", "update", "one_way"):
+                    actions.append(("COPY_L2R", f))
+                elif mode == "two_way":
+                    if conflict_policy == "source":
+                        actions.append(("COPY_L2R", f))
+                    elif conflict_policy == "target":
+                        actions.append(("COPY_R2L", f))
+                    else:  # newest
+                        if s_meta["mtime"] > t_meta["mtime"]:
+                            actions.append(("COPY_L2R", f))
+                        else:
+                            actions.append(("COPY_R2L", f))
+            else:
+                if mode == "index_only":
+                    actions.append(("INDEX_SRC", f))
+                else:
+                    actions.append(("INDEX_BOTH", f))
+    return actions
+
+
 class FileSyncWorker(QThread):
     """
     V3.1 NEW: Worker for single-file synchronization.
@@ -1845,6 +1937,15 @@ class FileSyncWorker(QThread):
             filename = os.path.basename(source_file)
             self.status.emit(f"[{self.cfg.get('name')}] Bereite Sync vor...")
 
+            # Zwei-Wege (im Dialog wählbar): eine am Ziel neuer bearbeitete Datei zurückholen statt
+            # sie mit der älteren Quelle zu überschreiben. Datenbanken mit WAL-Checkpoint bleiben einseitig.
+            copy_from, copy_to = source_file, target_file
+            if (self.cfg.get("mode") == "two_way" and not self.cfg.get("checkpoint_before_sync")
+                    and os.path.isfile(target_file)
+                    and os.path.getmtime(target_file) - os.path.getmtime(source_file) > 1):
+                copy_from, copy_to = target_file, source_file
+                self.status.emit(f"Ziel ist neuer – übernehme zurück: {filename}")
+
             while self.is_paused and not self.is_killed:
                 time.sleep(0.05)
 
@@ -1872,7 +1973,7 @@ class FileSyncWorker(QThread):
 
             # Step 2: Create target directory
             self.progress.emit(PROGRESS_PREPARE, "prepare")
-            target_dir = os.path.dirname(target_file)
+            target_dir = os.path.dirname(copy_to)
             if target_dir:
                 os.makedirs(target_dir, exist_ok=True)
 
@@ -1887,7 +1988,7 @@ class FileSyncWorker(QThread):
             self.status.emit(f"Kopiere: {filename}")
 
             try:
-                _atomic_copy2(source_file, target_file)
+                _atomic_copy2(copy_from, copy_to)
                 self.status.emit(f"✓ Datei kopiert: {filename}")
             except (OSError, IOError, PermissionError, shutil.Error) as e:
                 self.error.emit(f"Fehler beim Kopieren: {e}")
@@ -1902,12 +2003,12 @@ class FileSyncWorker(QThread):
             # Step 4: Verify
             self.progress.emit(PROGRESS_VERIFY, "verify")
 
-            if not os.path.exists(target_file):
-                self.error.emit(f"Zieldatei nach dem Kopieren nicht gefunden: {target_file}")
+            if not os.path.exists(copy_to):
+                self.error.emit(f"Zieldatei nach dem Kopieren nicht gefunden: {copy_to}")
                 return
 
-            src_size = os.path.getsize(source_file)
-            tgt_size = os.path.getsize(target_file)
+            src_size = os.path.getsize(copy_from)
+            tgt_size = os.path.getsize(copy_to)
 
             if src_size != tgt_size:
                 self.error.emit(f"Größen stimmen nicht überein! ({src_size} vs {tgt_size})")
@@ -1916,8 +2017,8 @@ class FileSyncWorker(QThread):
             self.status.emit(f"✓ Verifizierung erfolgreich ({src_size:,} Bytes)")
 
             if self.cfg.get("verify_checksum"):
-                src_hash = sha256_file(source_file)
-                tgt_hash = sha256_file(target_file)
+                src_hash = sha256_file(copy_from)
+                tgt_hash = sha256_file(copy_to)
                 if src_hash != tgt_hash:
                     self.error.emit(
                         f"Prüfsummen stimmen nicht überein! ({src_hash[:8]} vs {tgt_hash[:8]})"
@@ -2022,49 +2123,17 @@ class FolderSyncWorker(QThread):
                 self.status.emit(f"[{self.cfg['name']}] Scanne Ziel...")
                 tgt_tree = SyncWalker().scan(tgt_root, exclude_patterns)
 
+            # Die eigene Indexdatenbank (Standard: in der Quelle) ist während des Laufs offen und nie
+            # Sync-Gut: weder ins Ziel kopieren noch eine fremde gleichnamige DB von dort zurückholen.
+            own_index = _own_index_rel_paths(self.cfg.get("db_path") if self.cfg.get("indexing") else "",
+                                             src_root, tgt_root)
+            if own_index:
+                src_tree = {k: v for k, v in src_tree.items() if os.path.normcase(k) not in own_index}
+                tgt_tree = {k: v for k, v in tgt_tree.items() if os.path.normcase(k) not in own_index}
+
             # 2. Compare
             self.status.emit(f"[{self.cfg['name']}] Vergleiche...")
-            all_files = set(src_tree.keys()) | set(tgt_tree.keys())
-            actions = []
-
-            for f in all_files:
-                in_src = f in src_tree
-                in_tgt = f in tgt_tree
-
-                if in_src and not in_tgt:
-                    if mode in ["mirror", "update", "one_way", "two_way"]:
-                        actions.append(("COPY_L2R", f))
-                    elif mode == "index_only":
-                        actions.append(("INDEX_SRC", f))
-
-                elif in_tgt and not in_src:
-                    if mode == "mirror":
-                        actions.append(("DELETE_R", f))
-                    elif mode == "two_way":
-                        actions.append(("COPY_R2L", f))
-
-                elif in_src and in_tgt:
-                    s_meta = src_tree[f]
-                    t_meta = tgt_tree[f]
-
-                    if s_meta["size"] != t_meta["size"] or abs(s_meta["mtime"] - t_meta["mtime"]) > 1:
-                        if mode in ("mirror", "update", "one_way"):
-                            actions.append(("COPY_L2R", f))
-                        elif mode == "two_way":
-                            if conflict_policy == "source":
-                                actions.append(("COPY_L2R", f))
-                            elif conflict_policy == "target":
-                                actions.append(("COPY_R2L", f))
-                            else:  # newest
-                                if s_meta["mtime"] > t_meta["mtime"]:
-                                    actions.append(("COPY_L2R", f))
-                                else:
-                                    actions.append(("COPY_R2L", f))
-                    else:
-                        if mode == "index_only":
-                            actions.append(("INDEX_SRC", f))
-                        else:
-                            actions.append(("INDEX_BOTH", f))
+            actions = plan_folder_actions(src_tree, tgt_tree, mode, conflict_policy)
 
             # 3. Execute
             total = len(actions)
@@ -2117,6 +2186,10 @@ class FolderSyncWorker(QThread):
                                 pass
                             os.remove(t_abs)
                             _stats["deleted"] += 1
+
+                    elif act == "SKIP_NEWER_TARGET":
+                        self.status.emit(f"Übersprungen (Ziel neuer): {rel_path}")
+                        _stats["skipped"] += 1
 
                     elif act in ("INDEX_SRC", "INDEX_BOTH"):
                         _stats["skipped"] += 1
@@ -2420,6 +2493,8 @@ class SftpTargetSyncWorker(QThread):
                     src_meta["size"] != remote_meta["size"]
                     or abs(src_meta["mtime"] - remote_meta["mtime"]) > 1
                 ):
+                    if mode == "update" and remote_meta["mtime"] - src_meta["mtime"] > 1:
+                        continue  # „update“: neuere Zieldatei nicht mit älterer Quelle überschreiben
                     actions.append(("UPLOAD", rel_path))
             elif in_remote and not in_src and mode == "mirror":
                 actions.append(("DELETE_REMOTE", rel_path))
@@ -2545,6 +2620,7 @@ class ConnectionScheduler(QObject):
         super().__init__()
         self.cfg = cfg
         self.timers = {}
+        self._daily_due = {}  # conn_id -> eingeplanter Termin (aware datetime)
         self._now_provider = now_provider or (lambda tz: datetime.now(tz))
 
     def update_all(self):
@@ -2562,7 +2638,7 @@ class ConnectionScheduler(QObject):
         for conn in self.cfg.list_connections():
             self.update_connection(conn)
 
-    def update_connection(self, conn):
+    def update_connection(self, conn, now=None):
         """
         Erstellt/aktualisiert den Timer für eine Verbindung.
 
@@ -2571,18 +2647,20 @@ class ConnectionScheduler(QObject):
 
         Args:
             conn: Connection-Dict mit autosync-Konfiguration
+            now: bereits gemessener Zeitpunkt (sonst wird neu gemessen)
         """
         cid = conn["id"]
         if cid in self.timers:
             self.timers[cid].stop()
             del self.timers[cid]
+        self._daily_due.pop(cid, None)
 
         autosync = conn.get("autosync", {})
         if not isinstance(autosync, dict):
             autosync = {}
         if autosync.get("enabled", False):
             if autosync.get("mode", "interval") == "daily":
-                self._start_daily_timer(conn, autosync)
+                self._start_daily_timer(conn, autosync, now=now)
                 return
             raw_interval = autosync.get("interval_minutes", 15)
             try:
@@ -2599,14 +2677,15 @@ class ConnectionScheduler(QObject):
             timer.start(interval_min * 60 * 1000)
             self.timers[cid] = timer
 
-    def _start_daily_timer(self, conn, autosync):
+    def _start_daily_timer(self, conn, autosync, now=None):
         """Arm one daily timer from an explicit local time and IANA timezone."""
         try:
             run_at = parse_daily_time(autosync.get("daily_time", DEFAULT_DAILY_TIME))
             tz = resolve_iana_timezone(
                 autosync.get("timezone", DEFAULT_DAILY_TIMEZONE)
             )
-            now = self._now_provider(tz)
+            if now is None:
+                now = self._now_provider(tz)
             weekdays = autosync.get("weekdays")
             next_run = next_daily_run(now, run_at, tz, weekdays=weekdays)
         except (TypeError, ValueError, RuntimeError) as exc:
@@ -2625,9 +2704,12 @@ class ConnectionScheduler(QObject):
         )
         timer = QTimer(self)
         timer.setSingleShot(True)
+        # Standard-CoarseTimer darf bis 5 % zu früh aufwachen (20 h -> bis 1 h); PreciseTimer nie.
+        timer.setTimerType(Qt.TimerType.PreciseTimer)
         timer.timeout.connect(lambda cid=conn["id"]: self._on_daily_timer(cid))
         timer.start(delay_ms)
         self.timers[conn["id"]] = timer
+        self._daily_due[conn["id"]] = next_run
 
     def _connection_by_id(self, conn_id):
         """Return the current saved connection to avoid rearming stale data."""
@@ -2646,10 +2728,17 @@ class ConnectionScheduler(QObject):
             return
         if autosync.get("mode", "interval") != "daily":
             return
+        due = self._daily_due.get(conn_id)
+        now = self._now_provider(due.tzinfo) if due is not None else None
+        if due is not None and now < due:
+            # Zu früh geweckt (Uhr umgestellt, grober Timer): nur auf denselben Termin neu stellen,
+            # sonst liefe der Sync vor der Zeit und am Termin ein zweites Mal.
+            self.update_connection(conn, now=now)
+            return
         self.trigger_sync.emit(conn)
         refreshed = self._connection_by_id(conn_id)
         if refreshed is not None:
-            self.update_connection(refreshed)
+            self.update_connection(refreshed, now=now)
 
     def rearm_daily(self):
         """Recalculate daily timers after an application resume."""
@@ -3163,7 +3252,10 @@ class FileConnectionDialog(QDialog):
         source_file = self.source_file.text()
         target_file = self.target_file.text()
 
-        conn_config = {
+        # Vom bestehenden Eintrag ausgehen: Einstellungen, die der Dialog nicht zeigt (z. B. die nur per
+        # Konfigurationsdatei setzbare verify_checksum), gingen beim Bearbeiten sonst still verloren.
+        conn_config = dict(self.existing or {})
+        conn_config.update({
             "id": self.existing["id"] if self.existing else f"conn-{uuid.uuid4().hex[:6]}",
             "type": ConnectionType.FILE,  # V3.1: Mark as FILE connection
             "name": self.name.text(),
@@ -3172,7 +3264,7 @@ class FileConnectionDialog(QDialog):
             "mode": self.mode.currentText(),
             "checkpoint_before_sync": self.chk_checkpoint.isChecked(),
             "autosync": self.existing.get("autosync", {"enabled": False, "interval_minutes": 15}) if self.existing else {"enabled": False}
-        }
+        })
 
         # V3.1: Apply file safety settings
         if source_file and os.path.exists(source_file):
@@ -3327,10 +3419,11 @@ class SftpTargetDialog(QDialog):
         ]
 
     def get_result(self):
+        raw_port = str(self.remote_port.text()).strip() or "22"
         try:
-            port = int(str(self.remote_port.text()).strip() or "22")
+            port = int(raw_port)
         except ValueError:
-            port = 22
+            port = raw_port  # validate_sftp_connection weist es mit Meldung ab, statt still Port 22
 
         conn_config = {
             "id": self.existing["id"] if self.existing.get("id") else f"conn-{uuid.uuid4().hex[:6]}",
@@ -4707,6 +4800,13 @@ class MainWindow(QMainWindow):
 
     def force_quit(self):
         self.scheduler.stop_all()
+        if self.worker is not None and self.worker.isRunning():
+            # Laufenden Sync am nächsten sicheren Punkt beenden und erst danach schließen: sonst zerstört
+            # Qt den noch laufenden Thread (Prozessabbruch) und der Sync endet mitten im Kopieren.
+            self.lbl_status.setText("Beende nach dem aktuellen Schritt...")
+            self.worker.finished.connect(QApplication.quit)
+            self.stop_worker()
+            return
         QApplication.quit()
 
     def setup_menu_bar(self):
@@ -4976,7 +5076,7 @@ def build_cli_parser():
     )
     parser.add_argument(
         "--config",
-        default=os.path.join(app_base_dir(), "ProSync_config.json"),
+        default=default_config_path(),
         help="Path to ProSync_config.json. Defaults to the app directory.",
     )
     parser.add_argument(
@@ -5199,9 +5299,7 @@ def main() -> None:
     app.setQuitOnLastWindowClosed(False)
     app.setStyle("Fusion")
 
-    cfg = ConfigManager(
-        os.path.join(app_base_dir(), "ProSync_config.json")
-    )
+    cfg = ConfigManager(default_config_path())
 
     win = MainWindow(cfg)
     win.show()

@@ -357,7 +357,7 @@ ProSync bietet fünf klar definierte Synchronisationsmodi für unterschiedliche 
 |---|---|---|
 | **`mirror`** | Ziel wird als exaktes 1:1 Abbild der Quelle geführt (verwaiste Zieldateien werden gelöscht) | Vollständige System- und Projekt-Backups |
 | **`update`** | Nur neuere oder fehlende Quelldateien werden übertragen (keine Löschungen im Ziel) | Inkrementelle tägliche Arbeits-Backups |
-| **`two_way`** | Beidseitige Synchronisation mit Konfliktauflösung nach neuester Datei | Synchronisation zwischen Laptop und Workstation |
+| **`two_way`** | Beidseitige Synchronisation; Konflikte nach der Konfliktregel der Verbindung (Standard `source`, wahlweise `target` oder `newest`). Löschungen werden nicht übertragen: eine auf einer Seite gelöschte Datei wird von der anderen wiederhergestellt | Synchronisation zwischen Laptop und Workstation |
 | **`one_way`** | Quelldateien werden ins Ziel kopiert, ohne jemals Zieldateien zu entfernen | Sichere, nicht-destruktive Langzeitarchivierung |
 | **`index_only`** | Indexiert Metadaten und Ordnerstrukturen, ohne Dateiinhalte zu kopieren | Vorbereitung für die ProFiler-Suche |
 

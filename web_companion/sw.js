@@ -1,4 +1,6 @@
-const CACHE_NAME = "prosync-web-companion-v2";
+const CACHE_NAME = "prosync-web-companion-v3";
+// Wächter (tests/pwa.test.mjs): bei jeder Änderung an App-Dateien CACHE_NAME erhöhen und Hash erneuern.
+const ASSET_HASH = "f60e4b577ecc";
 const APP_SHELL = [
   "./",
   "./index.html",

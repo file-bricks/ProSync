@@ -10,7 +10,37 @@ import subprocess
 import sys
 import tempfile
 import time
+from pathlib import Path
 from typing import Any
+
+APPMODEL_ERROR_NO_PACKAGE = 15700
+
+
+def is_msix_packaged() -> bool:
+    """True, wenn ProSync als MSIX-/Store-Paket läuft (Installationsordner schreibgeschützt)."""
+    if sys.platform != "win32":
+        return False
+    import ctypes
+
+    length = ctypes.c_uint32(0)
+    try:
+        result = ctypes.windll.kernel32.GetCurrentPackageFullName(ctypes.byref(length), None)
+    except (AttributeError, OSError):  # Windows ohne Paket-API
+        return False
+    return result != APPMODEL_ERROR_NO_PACKAGE
+
+
+def user_data_dir(app_dir) -> Path:
+    """Ordner für Konfiguration und Logs.
+
+    Ungepackt (Quellcode, portable EXE) bleibt alles neben dem Programm. Im MSIX-Paket ist der
+    Installationsordner schreibgeschützt; dann %APPDATA%/ProSync (wie die Sync-Reports).
+    """
+    if not is_msix_packaged():
+        return Path(app_dir)
+    base = Path(os.environ.get("APPDATA") or Path.home()) / "ProSync"
+    base.mkdir(parents=True, exist_ok=True)
+    return base
 
 
 def _atomic_replace_with_retry(

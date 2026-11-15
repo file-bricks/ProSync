@@ -8,6 +8,8 @@ from logging.handlers import RotatingFileHandler
 import os
 from pathlib import Path
 
+from prosync_utils import user_data_dir
+
 
 class ProSyncLogger:
     """
@@ -40,8 +42,8 @@ class ProSyncLogger:
         if self._logger.handlers:
             return
 
-        # Log-Datei im gleichen Verzeichnis wie die Anwendung
-        log_dir = Path(__file__).parent
+        # Log-Datei neben der Anwendung; im MSIX-Paket in %APPDATA%/ProSync
+        log_dir = user_data_dir(Path(__file__).parent)
         log_file = log_dir / "prosync.log"
 
         # RotatingFileHandler (max 5MB, 3 Backups)

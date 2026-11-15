@@ -67,7 +67,7 @@ Eine **Verbindung** definiert Quelle, Ziel und Synchronisationsmodus.
 |-------------|------------------------------------------------|---------------------------|
 | `mirror`    | Ziel = exakte Kopie der Quelle (löscht auch)   | Vollständiges Backup       |
 | `update`    | Nur neuere Dateien übertragen                  | Inkrementelles Backup      |
-| `two_way`   | Bidirektionale Synchronisation                  | Sync zwischen zwei Rechnern |
+| `two_way`   | Bidirektional; Konflikte nach Konfliktregel (Standard `source`); Löschungen werden nicht übertragen | Sync zwischen zwei Rechnern |
 | `one_way`   | Quelle → Ziel, keine Löschungen               | Sichere Archivierung       |
 | `index_only`| Nur Indexierung, kein Kopieren                 | Dateiverwaltung ohne Sync  |
 

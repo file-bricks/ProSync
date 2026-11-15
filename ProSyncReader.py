@@ -1,3 +1,4 @@
+import codecs
 import sys
 import os
 import json
@@ -9,7 +10,12 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QTextEdit, QLabel, QSplitter, QMenu
 )
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
-from prosync_utils import open_file_cross_platform, open_folder_cross_platform, atomic_write_json
+from prosync_utils import (
+    atomic_write_json,
+    open_file_cross_platform,
+    open_folder_cross_platform,
+    user_data_dir,
+)
 from logger import log_error
 
 # Optional libraries for preview
@@ -32,10 +38,21 @@ try:
 except ImportError:
     HAS_DOCX = False
 
-CONFIG_PATH = "search_config.json"
+CONFIG_NAME = "search_config.json"
 SEARCH_RESULT_LIMIT = 500  # Maximum number of search results
 
 # ---------------- CONFIG & DB ----------------
+
+
+def config_path():
+    """search_config.json neben dem Reader (bisher: relativ zum Arbeitsverzeichnis), im MSIX-Paket
+    in %APPDATA%/ProSync — der Installationsordner ist dort schreibgeschützt."""
+    if getattr(sys, "frozen", False):
+        app_dir = os.path.dirname(sys.executable)
+    else:
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+    return str(user_data_dir(app_dir) / CONFIG_NAME)
+
 class DBManager:
     """
     Verwaltet die Liste der zu durchsuchenden ProSync-Indexdatenbanken.
@@ -54,9 +71,10 @@ class DBManager:
 
         Bei Fehler oder fehlender Datei wird eine neue Config erstellt.
         """
-        if os.path.exists(CONFIG_PATH):
+        path = config_path()
+        if os.path.exists(path):
             try:
-                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                with open(path, "r", encoding="utf-8") as f:
                     self.dbs = json.load(f).get("databases", [])
             except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
                 log_error(f"Config load error: {e}")
@@ -71,7 +89,7 @@ class DBManager:
         Schreibt JSON mit indent=2 für bessere Lesbarkeit.
         Atomar und sicher mit exklusiver Tempdatei via atomic_write_json.
         """
-        atomic_write_json(CONFIG_PATH, {"databases": self.dbs}, indent=2)
+        atomic_write_json(config_path(), {"databases": self.dbs}, indent=2)
 
     def add_db(self, path):
         """
@@ -117,7 +135,7 @@ class SearchWorker(QThread):
         """
         super().__init__()
         self.manager = manager
-        self.term = term.lower()
+        self.term = term.casefold()
 
     def run(self):
         """
@@ -135,6 +153,11 @@ class SearchWorker(QThread):
             try:
                 conn = sqlite3.connect(db_path)
                 conn.row_factory = sqlite3.Row
+                # SQLite-lower()/LIKE kennen nur ASCII: „Übersicht“ fand sonst „Übersicht.pdf“ nicht.
+                conn.create_function(
+                    "casefold", 1, lambda value: value.casefold() if isinstance(value, str) else value,
+                    deterministic=True,
+                )
                 cur = conn.cursor()
 
                 # Search Logic
@@ -142,13 +165,13 @@ class SearchWorker(QThread):
                     SELECT DISTINCT v.name, v.path, v.mtime, 'file' as match_type
                     FROM versions v
                     JOIN files f ON f.id = v.file_id
-                    WHERE lower(v.name) LIKE ? OR lower(v.path) LIKE ?
+                    WHERE casefold(v.name) LIKE ? OR casefold(v.path) LIKE ?
                     UNION
                     SELECT DISTINCT v.name, v.path, v.mtime, 'tag' as match_type
                     FROM versions v
                     JOIN files f ON f.id = v.file_id
                     JOIN tags t ON t.file_id = f.id
-                    WHERE lower(t.tag) LIKE ?
+                    WHERE casefold(t.tag) LIKE ?
                 """
                 wildcard = f"%{self.term}%"
                 cur.execute(query, (wildcard, wildcard, wildcard))
@@ -193,8 +216,15 @@ class PreviewWorker(QThread):
 
         try:
             if ext in [".txt", ".md", ".py", ".json", ".xml", ".log", ".csv"]:
-                with open(self.path, "r", encoding="utf-8", errors="replace") as f:
-                    text = f.read(3000) 
+                with open(self.path, "rb") as f:
+                    raw = f.read(12000)
+                # Windows-Textdateien sind oft ANSI (cp1252): UTF-8 zuerst, sonst cp1252 statt „�“.
+                try:
+                    # final=False: ein am Leseende abgeschnittenes UTF-8-Zeichen ist kein Kodierungsfehler.
+                    text = codecs.getincrementaldecoder("utf-8-sig")().decode(raw, final=False)
+                except UnicodeDecodeError:
+                    text = raw.decode("cp1252", errors="replace")
+                text = text[:3000]
             
             elif ext == ".pdf" and HAS_PDF and _PDF_READER is not None:
                 with open(self.path, "rb") as f:
@@ -298,6 +328,9 @@ class SearchWindow(QMainWindow):
         self.manager = manager
         self.search_worker = None
         self.preview_worker = None
+        # Abgelöste Worker laufen zu Ende (kein terminate()) und bleiben bis dahin referenziert,
+        # sonst zerstört Python einen noch laufenden QThread.
+        self._retired_workers = set()
         
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
@@ -374,16 +407,35 @@ class SearchWindow(QMainWindow):
             
         self.status_bar.showMessage("Suche läuft...")
         self.results_list.clear()
-        
-        if self.search_worker and self.search_worker.isRunning():
-            self.search_worker.terminate()
-            
+
+        self._retire(self.search_worker)
         self.search_worker = SearchWorker(self.manager, term)
         self.search_worker.results_found.connect(self.update_results)
-        self.search_worker.finished.connect(lambda: self.status_bar.showMessage("Bereit"))
+        self.search_worker.finished.connect(self._search_finished)
         self.search_worker.start()
 
+    def _retire(self, worker):
+        """Alten Worker auslaufen lassen statt QThread.terminate() (laut Qt gefährlich: kann mitten in
+        SQLite/pypdf mit gehaltenem GIL sterben); seine späten Signale werden über sender() verworfen."""
+        if worker is not None and worker.isRunning():
+            self._retired_workers.add(worker)
+            worker.finished.connect(lambda w=worker: self._retired_workers.discard(w))
+
+    def _is_stale(self):
+        sender = self.sender()
+        return sender is not None and sender is not self.search_worker and sender is not self.preview_worker
+
+    def _search_finished(self):
+        if not self._is_stale():
+            self.status_bar.showMessage("Bereit")
+
+    def _show_preview(self, text):
+        if not self._is_stale():
+            self.preview_text.setText(text)
+
     def update_results(self, results):
+        if self._is_stale():
+            return  # Treffer einer bereits abgelösten Suche
         if not results:
             self.results_list.addItem("Keine Treffer.")
             return
@@ -414,11 +466,9 @@ class SearchWindow(QMainWindow):
         self.lbl_path.setText(path)
         self.preview_text.setText("Lade Vorschau...")
         
-        if self.preview_worker and self.preview_worker.isRunning():
-            self.preview_worker.terminate()
-
+        self._retire(self.preview_worker)
         self.preview_worker = PreviewWorker(path)
-        self.preview_worker.preview_ready.connect(self.preview_text.setText)
+        self.preview_worker.preview_ready.connect(self._show_preview)
         self.preview_worker.start()
 
     def open_file(self, item=None):
@@ -451,6 +501,9 @@ class SearchWindow(QMainWindow):
 
     def closeEvent(self, event):
         self.search_timer.stop()
+        for worker in [self.search_worker, self.preview_worker, *self._retired_workers]:
+            if worker is not None and worker.isRunning():
+                worker.wait(3000)  # ponytail: begrenzt warten statt terminate(); Suche/Vorschau sind kurz
         super().closeEvent(event)
 
 def main():

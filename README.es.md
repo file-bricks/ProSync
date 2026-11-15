@@ -351,7 +351,7 @@ ProSync ofrece cinco modos de sincronización deterministas adaptados a diferent
 |---|---|---|
 | **`mirror`** | Mantiene el destino como una réplica exacta del origen (eliminando archivos huérfanos en destino) | Copias maestras y respaldos completos |
 | **`update`** | Copia únicamente los archivos más recientes y los ausentes (sin borrar nada en destino) | Respaldos incrementales diarios |
-| **`two_way`** | Sincronización bidireccional resolviendo discrepancias según la marca temporal más reciente | Sincronización activa entre dos equipos |
+| **`two_way`** | Sincronización bidireccional; los conflictos siguen la política de la conexión (por defecto `source`, también `target` o `newest`). Las eliminaciones no se propagan: un archivo borrado en un lado se restaura desde el otro | Sincronización activa entre dos equipos |
 | **`one_way`** | Copia desde el origen al destino sin eliminar jamás archivos existentes en el destino | Archivos seguros no destructivos |
 | **`index_only`** | Indexa metadatos y la estructura de directorios sin transferir el contenido | Preparación para búsquedas rápidas con ProFiler |
 
